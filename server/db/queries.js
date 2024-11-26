@@ -15,6 +15,7 @@ async function findUser(username) {
 }
 
 async function findUserById(id) {
+  console.log("*query - find by id");
   const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
   return rows[0];
 }

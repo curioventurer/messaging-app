@@ -24,16 +24,43 @@ function ChatRoom() {
   const userData = useLoaderData();
 
   useEffect(() => {
-    fetch("/api/chat/" + chatId)
+    function addToMessages(msg) {
+      setMessages((prevMessages) => {
+        const newMessages = [...prevMessages, msg];
+        return sortMessages(newMessages);
+      });
+    }
+
+    window.socket.on("message", addToMessages);
+
+    return () => {
+      window.socket.off("message", addToMessages);
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const request = new Request("/api/chat/" + chatId, {
+      signal: controller.signal,
+    });
+
+    fetch(request)
       .then((res) => res.json())
       .then((data) => {
         setRoom(data.room);
         setMessages(data.messages);
-      });
+      })
+      .catch(() => {});
 
-    return () => {};
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      controller.abort(
+        new Error(
+          "FetchAbortError - Fetch request is aborted on component dismount.",
+        ),
+      );
+    };
+  }, [chatId]);
 
   async function submitMessage(event) {
     event.preventDefault();
@@ -42,6 +69,7 @@ function ChatRoom() {
     setInputMessage("");
 
     const id = getSendKey();
+
     setMessages((prevMessages) => [
       ...prevMessages,
       {
@@ -53,36 +81,35 @@ function ChatRoom() {
       },
     ]);
 
-    try {
-      const response = await fetch("/api/message", {
-        method: "POST",
-        body: JSON.stringify({
-          chatId,
-          message: text,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
+    function updateSentMsg(response) {
+      setMessages((prevMessages) => {
+        const sentId = response.clientMsgId;
+
+        const index = prevMessages.findIndex((msg) => msg.id === sentId);
+        const sentMessage = { ...prevMessages[index] };
+
+        sentMessage.id = response.id;
+        sentMessage.created = response.created;
+
+        const newMessages = [
+          ...prevMessages.slice(0, index),
+          sentMessage,
+          ...prevMessages.slice(index + 1),
+        ];
+
+        return sortMessages(newMessages);
       });
-
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      } else {
-        const data = await response.json();
-
-        setMessages((prevMessages) => {
-          const index = prevMessages.findIndex((msg) => msg.id === id);
-          const newMessages = [
-            ...prevMessages.slice(0, index),
-            data,
-            ...prevMessages.slice(index + 1),
-          ];
-          return sortMessages(newMessages);
-        });
-      }
-    } catch (error) {
-      console.log(error.message);
     }
+
+    window.socket.emit(
+      "message",
+      {
+        id,
+        chatId,
+        message: text,
+      },
+      updateSentMsg,
+    );
   }
 
   return (
@@ -94,7 +121,7 @@ function ChatRoom() {
           {DateFormat.timestamp(room.created)}
         </time>
       </p>
-      <MessageList messages={messages} userId={userData.id} />
+      <MessageList messages={messages} userId={userData.id} chatId={chatId} />
       <MessagingForm
         message={inputMessage}
         setMessage={setInputMessage}
