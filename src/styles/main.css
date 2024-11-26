@@ -14,13 +14,14 @@ a.button-link {
   text-decoration: none;
   display: block;
   padding: 5px;
+  color: inherit;
 
   &:hover {
     background: #fff2;
   }
 
-  &:visited {
-    color: inherit;
+  &:active {
+    background: #fff3;
   }
 }
 
@@ -86,7 +87,11 @@ nav ul {
   flex: 1;
   overflow: auto;
   scroll-behavior: smooth;
+
+  /*create gap between scrollbar and contents*/
   padding-right: var(--screen-padding);
+
+  /*remove gap between scrollbar and screen edge*/
   margin-right: calc(-1 * var(--screen-padding));
 
   & > * {

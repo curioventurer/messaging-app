@@ -1,21 +1,33 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLoaderData } from "react-router-dom";
 import ChatItem from "./ChatItem";
 
 function Home() {
   let [rooms, setRooms] = useState([]);
+  const userData = useLoaderData();
 
   useEffect(() => {
-    fetch("/api/chats")
-      .then((res) => res.json())
-      .then((data) => setRooms(data));
+    const controller = new AbortController();
 
-    return () => {};
+    const request = new Request("/api/chats", { signal: controller.signal });
+
+    fetch(request)
+      .then((res) => res.json())
+      .then((data) => setRooms(data))
+      .catch(() => {});
+
+    return () => {
+      controller.abort(
+        new Error(
+          "FetchAbortError - Fetch request is aborted on component dismount.",
+        ),
+      );
+    };
   }, []);
 
   return (
     <>
-      <p>Welcome to our messaging app!</p>
+      <p>Welcome {userData.username}, to our messaging app!</p>
       <nav>
         <ul>
           <li>

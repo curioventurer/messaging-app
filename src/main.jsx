@@ -9,8 +9,11 @@ import Home from "./components/Home";
 import ChatRoom from "./components/ChatRoom";
 import SignUpForm from "./components/SignUpForm";
 import LogInForm from "./components/LogInForm";
+import "/node_modules/socket.io/client-dist/socket.io.js";
 import "normalize.css";
 import "./styles/main.css";
+
+window.socket = window.io();
 
 async function ensureAuthenticated() {
   const res = await fetch("/api/auth-status");

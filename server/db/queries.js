@@ -15,6 +15,7 @@ async function findUser(username) {
 }
 
 async function findUserById(id) {
+  console.log("*query - find by id");
   const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
   return rows[0];
 }
@@ -62,6 +63,7 @@ async function postMessage(chatId, userId, message) {
   );
 
   //to retrieve database entry for message immediately after posting
+  //use client message id to uniquely identify entry? currently, condition and order by is used instead.
   const SQL_FIND = `
     SELECT *
     FROM messages

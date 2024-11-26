@@ -4,7 +4,7 @@ import queries from "./db/queries.js";
 function routes(app) {
   app.get("/api/auth-status", async (req, res) => {
     if (req.isAuthenticated()) {
-      const userInfo = await req.user;
+      const userInfo = await req.user();
       delete userInfo.password;
 
       res.json(userInfo);
@@ -16,7 +16,6 @@ function routes(app) {
       if (err) {
         return next(err);
       }
-      console.log("logged out");
       res.redirect("/log-in");
     });
   });
@@ -61,16 +60,6 @@ function routes(app) {
     const values = await Promise.all([chatRoom, chatMessages]);
 
     res.json({ room: values[0], messages: values[1] });
-  });
-
-  app.post("/api/message", async (req, res) => {
-    const chatId = req.body.chatId;
-    const message = req.body.message;
-
-    const userId = (await req.user).id;
-    const postedMessage = await queries.postMessage(chatId, userId, message);
-
-    res.json(postedMessage);
   });
 }
 
