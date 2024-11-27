@@ -40,7 +40,7 @@ function comm(server, sessionMiddleware) {
       });
     });
 
-    socket.on("message", async (data) => {
+    socket.on("message", async (data, callback) => {
       //make it run only once by saving it in socket props?
       const user = await socket.request.user();
 
@@ -53,7 +53,8 @@ function comm(server, sessionMiddleware) {
 
       //emit to only user with group membership?
       socket.broadcast.emit("message", postedMessage);
-      socket.emit("message", {
+
+      callback({
         clientMsgId: data.id,
         created: postedMessage.created,
         id: postedMessage.id,

@@ -27,24 +27,7 @@ function ChatRoom() {
   useEffect(() => {
     function addToMessages(msg) {
       setMessages((prevMessages) => {
-        let newMessages;
-        const sentId = msg.clientMsgId;
-
-        //if "sentId" is defined, it is an update for a sent message, else it is a new message.
-        if (sentId) {
-          const index = prevMessages.findIndex((msg) => msg.id === sentId);
-          const sentMessage = { ...prevMessages[index] };
-
-          sentMessage.id = msg.id;
-          sentMessage.created = msg.created;
-
-          newMessages = [
-            ...prevMessages.slice(0, index),
-            sentMessage,
-            ...prevMessages.slice(index + 1),
-          ];
-        } else newMessages = [...prevMessages, msg];
-
+        const newMessages = [...prevMessages, msg];
         return sortMessages(newMessages);
       });
     }
@@ -99,11 +82,33 @@ function ChatRoom() {
       },
     ]);
 
-    window.socket.emit("message", {
-      id,
-      chatId,
-      message: text,
-    });
+    window.socket.emit(
+      "message",
+      {
+        id,
+        chatId,
+        message: text,
+      },
+      (response) => {
+        setMessages((prevMessages) => {
+          const sentId = response.clientMsgId;
+
+          const index = prevMessages.findIndex((msg) => msg.id === sentId);
+          const sentMessage = { ...prevMessages[index] };
+
+          sentMessage.id = response.id;
+          sentMessage.created = response.created;
+
+          const newMessages = [
+            ...prevMessages.slice(0, index),
+            sentMessage,
+            ...prevMessages.slice(index + 1),
+          ];
+
+          return sortMessages(newMessages);
+        });
+      },
+    );
   }
 
   return (
