@@ -23,7 +23,6 @@ function ChatRoom() {
   chatId = Number(chatId);
   const userData = useLoaderData();
 
-  //ignore socket "message" event if different chatId?
   useEffect(() => {
     function addToMessages(msg) {
       setMessages((prevMessages) => {
@@ -82,6 +81,26 @@ function ChatRoom() {
       },
     ]);
 
+    function updateSentMsg(response) {
+      setMessages((prevMessages) => {
+        const sentId = response.clientMsgId;
+
+        const index = prevMessages.findIndex((msg) => msg.id === sentId);
+        const sentMessage = { ...prevMessages[index] };
+
+        sentMessage.id = response.id;
+        sentMessage.created = response.created;
+
+        const newMessages = [
+          ...prevMessages.slice(0, index),
+          sentMessage,
+          ...prevMessages.slice(index + 1),
+        ];
+
+        return sortMessages(newMessages);
+      });
+    }
+
     window.socket.emit(
       "message",
       {
@@ -89,25 +108,7 @@ function ChatRoom() {
         chatId,
         message: text,
       },
-      (response) => {
-        setMessages((prevMessages) => {
-          const sentId = response.clientMsgId;
-
-          const index = prevMessages.findIndex((msg) => msg.id === sentId);
-          const sentMessage = { ...prevMessages[index] };
-
-          sentMessage.id = response.id;
-          sentMessage.created = response.created;
-
-          const newMessages = [
-            ...prevMessages.slice(0, index),
-            sentMessage,
-            ...prevMessages.slice(index + 1),
-          ];
-
-          return sortMessages(newMessages);
-        });
-      },
+      updateSentMsg,
     );
   }
 
