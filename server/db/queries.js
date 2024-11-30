@@ -62,7 +62,10 @@ async function postMessage(chatId, userId, message) {
     [chatId, userId, message],
   );
 
-  //to retrieve database entry for message immediately after posting
+  return await findPostedMessage(chatId, userId, message);
+}
+
+async function findPostedMessage(chatId, userId, message) {
   const SQL_FIND = `
     SELECT *
     FROM messages
@@ -86,4 +89,5 @@ export default {
   findChatRoomById,
   getChatMessagesById,
   postMessage,
+  findPostedMessage,
 };

@@ -29,6 +29,8 @@ function comm(server, sessionMiddleware) {
     }),
   );
 
+  let clientMsgOffset = 0;
+
   io.on("connection", (socket) => {
     socket.request.user().then((user) => {
       console.log("*socket: " + user.username + " connected");
@@ -42,18 +44,28 @@ function comm(server, sessionMiddleware) {
 
     socket.on("message", async (data, callback) => {
       const user = await socket.request.user();
+      let postedMessage;
 
-      const postedMessage = await queries.postMessage(
-        data.chatId,
-        user.id,
-        data.message,
-      );
-      postedMessage.username = user.username;
+      if (data.id < clientMsgOffset) {
+        clientMsgOffset = data.id;
 
-      socket.broadcast.emit("message", postedMessage);
+        postedMessage = await queries.postMessage(
+          data.chatId,
+          user.id,
+          data.message,
+        );
+        postedMessage.username = user.username;
+
+        socket.broadcast.emit("message", postedMessage);
+      } else {
+        postedMessage = await queries.findPostedMessage(
+          data.chatId,
+          user.id,
+          data.message,
+        );
+      }
 
       callback({
-        clientMsgId: data.id,
         created: postedMessage.created,
         id: postedMessage.id,
       });
