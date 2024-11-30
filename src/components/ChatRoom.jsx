@@ -14,10 +14,9 @@ function ChatRoom() {
     Negative values are used to differentiate from normal message.
     The key value is only temporary, it will be replaced with message id from server once sent message is successfully processed by the server.
   */
-  const sentKeySeq = useRef(0);
-  function getSendKey() {
-    return --sentKeySeq.current;
-  }
+  const sentMsgSeq = useRef(0);
+  const sentMsgBufferRef = useRef([]);
+  const sentMsgBuffer = sentMsgBufferRef.current;
 
   let { chatId } = useParams();
   chatId = Number(chatId);
@@ -68,7 +67,7 @@ function ChatRoom() {
     const text = inputMessage;
     setInputMessage("");
 
-    const id = getSendKey();
+    const id = --sentMsgSeq.current;
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -81,11 +80,9 @@ function ChatRoom() {
       },
     ]);
 
-    function updateSentMsg(response) {
+    function updateSentMsg(response, id) {
       setMessages((prevMessages) => {
-        const sentId = response.clientMsgId;
-
-        const index = prevMessages.findIndex((msg) => msg.id === sentId);
+        const index = prevMessages.findIndex((msg) => msg.id === id);
         const sentMessage = { ...prevMessages[index] };
 
         sentMessage.id = response.id;
@@ -101,15 +98,27 @@ function ChatRoom() {
       });
     }
 
-    window.socket.emit(
-      "message",
-      {
-        id,
-        chatId,
-        message: text,
-      },
-      updateSentMsg,
-    );
+    sentMsgBuffer.push({
+      id,
+      chatId,
+      message: text,
+    });
+
+    if (sentMsgBuffer.length === 1) sendNextMsg(true);
+
+    function sendNextMsg(err, response) {
+      if (!err) {
+        updateSentMsg(response, sentMsgBuffer[0].id);
+        sentMsgBuffer.shift();
+        if (sentMsgBuffer.length === 0) return;
+      }
+
+      sendMessage(sentMsgBuffer[0]);
+    }
+
+    function sendMessage(msg) {
+      window.socket.timeout(5000).emit("message", msg, sendNextMsg);
+    }
   }
 
   return (
