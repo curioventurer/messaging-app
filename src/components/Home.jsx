@@ -1,29 +1,8 @@
-import { useEffect, useState } from "react";
 import { Link, useLoaderData } from "react-router-dom";
-import ChatItem from "./ChatItem";
+import ChatList from "./ChatList";
 
 function Home() {
-  let [rooms, setRooms] = useState([]);
   const userData = useLoaderData();
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const request = new Request("/api/chats", { signal: controller.signal });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((data) => setRooms(data))
-      .catch(() => {});
-
-    return () => {
-      controller.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
-    };
-  }, []);
 
   return (
     <>
@@ -47,13 +26,7 @@ function Home() {
           </li>
         </ul>
       </nav>
-      <ul className="chat-list">
-        {rooms.map((room) => (
-          <li key={room.id}>
-            <ChatItem room={room} />
-          </li>
-        ))}
-      </ul>
+      <ChatList />
     </>
   );
 }

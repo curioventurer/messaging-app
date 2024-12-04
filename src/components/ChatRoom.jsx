@@ -1,9 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, createContext } from "react";
 import { useParams, useLoaderData } from "react-router-dom";
+import ChatList from "./ChatList";
 import MessageList from "./MessageList";
 import MessagingForm from "./MessagingForm";
 import DateFormat from "../controllers/DateFormat.js";
 import sortMessages from "../controllers/sortMessages.js";
+
+export const ChatIdContext = createContext(0);
 
 function ChatRoom() {
   let [messages, setMessages] = useState([]);
@@ -123,19 +126,24 @@ function ChatRoom() {
 
   return (
     <div className="chat-room">
-      <h1>{room.name}</h1>
-      <p>
-        Created on{" "}
-        <time dateTime={room.created}>
-          {DateFormat.timestamp(room.created)}
-        </time>
-      </p>
-      <MessageList messages={messages} userId={userData.id} chatId={chatId} />
-      <MessagingForm
-        message={inputMessage}
-        setMessage={setInputMessage}
-        submit={submitMessage}
-      />
+      <ChatIdContext.Provider value={chatId}>
+        <ChatList />
+      </ChatIdContext.Provider>
+      <div className="chat-interface">
+        <h1>{room.name}</h1>
+        <p>
+          Created on{" "}
+          <time dateTime={room.created}>
+            {DateFormat.timestamp(room.created)}
+          </time>
+        </p>
+        <MessageList messages={messages} userId={userData.id} chatId={chatId} />
+        <MessagingForm
+          message={inputMessage}
+          setMessage={setInputMessage}
+          submit={submitMessage}
+        />
+      </div>
     </div>
   );
 }
