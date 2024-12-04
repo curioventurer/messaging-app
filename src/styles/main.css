@@ -5,6 +5,7 @@
 
   box-sizing: border-box;
   height: 100vh;
+  overflow: auto;
 
   --screen-padding: 16px;
   padding: var(--screen-padding);
@@ -23,6 +24,10 @@ a.button-link {
   &:active {
     background: #fff3;
   }
+
+  &.button-highlight {
+    background: #0f05;
+  }
 }
 
 ul {
@@ -40,7 +45,6 @@ nav ul {
 }
 
 .chat-list {
-  max-width: 500px;
   color: #ccc;
   border: 1px solid white;
 
@@ -48,10 +52,17 @@ nav ul {
     padding: 10px;
   }
 
+  .chat-item-message {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .chat-item-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    column-gap: 5px;
 
     margin-bottom: 5px;
 
@@ -59,15 +70,44 @@ nav ul {
       font-size: 1.4em;
       color: white;
       font-weight: bold;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    time {
+      width: max-content;
+      flex: none;
     }
   }
 }
 
 .chat-room {
   display: flex;
+  column-gap: 10px;
+
+  height: 100%;
+
+  .chat-list {
+    width: 30ch;
+    flex: none;
+
+    height: 100%;
+    overflow: auto;
+    margin: 0;
+
+    border: none;
+    border-right: 1px solid white;
+  }
+}
+
+.chat-interface {
+  display: flex;
   flex-direction: column;
 
   height: 100%;
+  flex: 1;
 
   & > h1 {
     margin: 0;
@@ -90,9 +130,6 @@ nav ul {
 
   /*create gap between scrollbar and contents*/
   padding-right: var(--screen-padding);
-
-  /*remove gap between scrollbar and screen edge*/
-  margin-right: calc(-1 * var(--screen-padding));
 
   & > * {
     overflow-anchor: none;
