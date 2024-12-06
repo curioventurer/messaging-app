@@ -63,6 +63,7 @@ function comm(server, sessionMiddleware) {
           user.id,
           data.message,
         );
+        if (postedMessage === undefined) return;
       }
 
       callback({

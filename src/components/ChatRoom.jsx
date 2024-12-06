@@ -26,7 +26,67 @@ function ChatRoom() {
   const userData = useLoaderData();
 
   useEffect(() => {
+    function sendNextMsg(err, response) {
+      if (!sendingMsg) return;
+
+      if (!err) {
+        updateSentMsg(response, sentMsgBuffer[0].id);
+        sentMsgBuffer.shift();
+
+        if (sentMsgBuffer.length === 0) {
+          sendingMsg = false;
+          return;
+        }
+      }
+
+      sendMessage(sentMsgBuffer[0]);
+    }
+
+    function sendMessage(msg) {
+      window.socket.timeout(5000).emit("message", msg, sendNextMsg);
+    }
+
+    function updateSentMsg(response, id) {
+      setMessages((prevMessages) => {
+        const index = prevMessages.findIndex((msg) => msg.id === id);
+        const sentMessage = { ...prevMessages[index] };
+
+        sentMessage.id = response.id;
+        sentMessage.created = response.created;
+
+        const newMessages = [
+          ...prevMessages.slice(0, index),
+          sentMessage,
+          ...prevMessages.slice(index + 1),
+        ];
+
+        return sortMessages(newMessages);
+      });
+    }
+
+    let sendingMsg = false;
+
+    const interval = setInterval(() => {
+      if (sentMsgBuffer.length > 0 && !sendingMsg) {
+        sendingMsg = true;
+        sendNextMsg(true);
+      }
+    }, 200);
+
+    return () => {
+      clearInterval(interval);
+      sendingMsg = false;
+
+      window.socket.sendBuffer = [];
+      sentMsgBuffer.splice(0);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
+
+  useEffect(() => {
     function addToMessages(msg) {
+      if (msg.chat_room_id !== chatId) return;
+
       setMessages((prevMessages) => {
         const newMessages = [...prevMessages, msg];
         return sortMessages(newMessages);
@@ -38,6 +98,7 @@ function ChatRoom() {
     return () => {
       window.socket.off("message", addToMessages);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -83,45 +144,11 @@ function ChatRoom() {
       },
     ]);
 
-    function updateSentMsg(response, id) {
-      setMessages((prevMessages) => {
-        const index = prevMessages.findIndex((msg) => msg.id === id);
-        const sentMessage = { ...prevMessages[index] };
-
-        sentMessage.id = response.id;
-        sentMessage.created = response.created;
-
-        const newMessages = [
-          ...prevMessages.slice(0, index),
-          sentMessage,
-          ...prevMessages.slice(index + 1),
-        ];
-
-        return sortMessages(newMessages);
-      });
-    }
-
     sentMsgBuffer.push({
       id,
       chatId,
       message: text,
     });
-
-    if (sentMsgBuffer.length === 1) sendNextMsg(true);
-
-    function sendNextMsg(err, response) {
-      if (!err) {
-        updateSentMsg(response, sentMsgBuffer[0].id);
-        sentMsgBuffer.shift();
-        if (sentMsgBuffer.length === 0) return;
-      }
-
-      sendMessage(sentMsgBuffer[0]);
-    }
-
-    function sendMessage(msg) {
-      window.socket.timeout(5000).emit("message", msg, sendNextMsg);
-    }
   }
 
   return (
