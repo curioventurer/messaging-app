@@ -18,69 +18,20 @@ function ChatRoom() {
     The key value is only temporary, it will be replaced with message id from server once sent message is successfully processed by the server.
   */
   const sentMsgSeq = useRef(0);
-  const sentMsgBufferRef = useRef([]);
-  const sentMsgBuffer = sentMsgBufferRef.current;
 
   let { chatId } = useParams();
   chatId = Number(chatId);
   const userData = useLoaderData();
 
   useEffect(() => {
-    function sendNextMsg(err, response) {
-      if (!sendingMsg) return;
-
-      if (!err) {
-        updateSentMsg(response, sentMsgBuffer[0].id);
-        sentMsgBuffer.shift();
-
-        if (sentMsgBuffer.length === 0) {
-          sendingMsg = false;
-          return;
-        }
-      }
-
-      sendMessage(sentMsgBuffer[0]);
+    function clearSocketSentData() {
+      window.socket.sendBuffer = [];
+      window.socket._clearAcks();
     }
-
-    function sendMessage(msg) {
-      window.socket.timeout(5000).emit("message", msg, sendNextMsg);
-    }
-
-    function updateSentMsg(response, id) {
-      setMessages((prevMessages) => {
-        const index = prevMessages.findIndex((msg) => msg.id === id);
-        const sentMessage = { ...prevMessages[index] };
-
-        sentMessage.id = response.id;
-        sentMessage.created = response.created;
-
-        const newMessages = [
-          ...prevMessages.slice(0, index),
-          sentMessage,
-          ...prevMessages.slice(index + 1),
-        ];
-
-        return sortMessages(newMessages);
-      });
-    }
-
-    let sendingMsg = false;
-
-    const interval = setInterval(() => {
-      if (sentMsgBuffer.length > 0 && !sendingMsg) {
-        sendingMsg = true;
-        sendNextMsg(true);
-      }
-    }, 200);
 
     return () => {
-      clearInterval(interval);
-      sendingMsg = false;
-
-      window.socket.sendBuffer = [];
-      sentMsgBuffer.splice(0);
+      clearSocketSentData();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
 
   useEffect(() => {
@@ -144,11 +95,33 @@ function ChatRoom() {
       },
     ]);
 
-    sentMsgBuffer.push({
-      id,
-      chatId,
-      message: text,
-    });
+    function updateSentMsg(response) {
+      setMessages((prevMessages) => {
+        const index = prevMessages.findIndex((msg) => msg.id === id);
+        const sentMessage = { ...prevMessages[index] };
+
+        sentMessage.id = response.id;
+        sentMessage.created = response.created;
+
+        const newMessages = [
+          ...prevMessages.slice(0, index),
+          sentMessage,
+          ...prevMessages.slice(index + 1),
+        ];
+
+        return sortMessages(newMessages);
+      });
+    }
+
+    window.socket.emit(
+      "message",
+      {
+        id,
+        chatId,
+        message: text,
+      },
+      updateSentMsg,
+    );
   }
 
   return (
