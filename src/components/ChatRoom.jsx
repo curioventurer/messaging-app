@@ -98,6 +98,8 @@ function ChatRoom() {
     function updateSentMsg(response) {
       setMessages((prevMessages) => {
         const index = prevMessages.findIndex((msg) => msg.id === id);
+        if (index === -1) return prevMessages;
+
         const sentMessage = { ...prevMessages[index] };
 
         sentMessage.id = response.id;
