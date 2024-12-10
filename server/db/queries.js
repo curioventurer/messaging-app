@@ -21,7 +21,20 @@ async function findUserById(id) {
 }
 
 async function getGroups() {
-  const { rows } = await pool.query("SELECT * FROM groups ORDER BY id");
+  const { rows } = await pool.query("SELECT * FROM groups ORDER BY name");
+  return rows;
+}
+
+async function getGroupsByUserId(userId) {
+  const SQL_GET_GROUPS = `
+    SELECT groups.id, name, groups.created, permission, memberships.created as joined
+    FROM groups
+    INNER JOIN memberships
+    ON groups.id = group_id
+    WHERE user_id = $1
+    ORDER BY groups.name
+  `;
+  const { rows } = await pool.query(SQL_GET_GROUPS, [userId]);
   return rows;
 }
 
@@ -63,7 +76,7 @@ async function getMembersByGroupId(groupId) {
     INNER JOIN users
     ON user_id = users.id
     WHERE group_id = $1
-    ORDER BY name
+    ORDER BY permission DESC, name
   `;
   const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
   return rows;
@@ -103,6 +116,7 @@ export default {
   findUser,
   findUserById,
   getGroups,
+  getGroupsByUserId,
   findGroupById,
   getMessagesByGroupId,
   getMembersByGroupId,

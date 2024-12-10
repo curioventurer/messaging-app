@@ -38,8 +38,9 @@ function routes(app) {
     }),
   );
 
-  app.get("/api/groups", async (_, res) => {
-    const groups = await queries.getGroups();
+  app.get("/api/groups", async (req, res) => {
+    const userInfo = await req.user();
+    const groups = await queries.getGroupsByUserId(userInfo.id);
     const promises = [];
 
     for (const group of groups) {
