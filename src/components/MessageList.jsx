@@ -1,10 +1,10 @@
 import { useEffect, useRef, useContext } from "react";
 import Message from "./Message";
-import { ChatContext } from "./ChatRoom.jsx";
+import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function MessageList() {
-  const { chatData, chatId } = useContext(ChatContext);
+  const { groupData, groupId } = useContext(GroupContext);
 
   const msgListRef = useRef(null);
 
@@ -12,7 +12,7 @@ function MessageList() {
   let previousSender;
   const itemsArray = [];
 
-  /*Scroll list to bottom when scrollbar appears for the first time, and when chatId changes.
+  /*Scroll list to bottom when scrollbar appears for the first time, and when groupId changes.
     setInterval checks for scrollbar at DELAY intervals.
     Ensures list starts at bottom, and anchors to css overflow-anchor element when list updates.
   */
@@ -30,9 +30,9 @@ function MessageList() {
     return () => {
       clearInterval(interval);
     };
-  }, [chatId]);
+  }, [groupId]);
 
-  for (const msg of chatData.messages) {
+  for (const msg of groupData.messages) {
     const timestamp = new Date(msg.created);
     const msgDate = timestamp.toLocaleDateString();
 

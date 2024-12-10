@@ -1,9 +1,9 @@
 import { useState, useRef, useContext } from "react";
-import { ChatContext } from "./ChatRoom.jsx";
+import { GroupContext } from "./Room.jsx";
 
 function MessagingForm() {
-  const { userData, chatId, appendMessage, updateSentMsg } =
-    useContext(ChatContext);
+  const { userData, groupId, appendMessage, updateSentMsg } =
+    useContext(GroupContext);
 
   let [message, setMessage] = useState("");
 
@@ -23,14 +23,14 @@ function MessagingForm() {
       text: message,
       created: new Date().toISOString(),
       user_id: userData.id,
-      username: userData.username,
+      name: userData.name,
     });
 
     window.socket.emit(
       "message",
       {
         clientId,
-        chatId,
+        groupId,
         message,
       },
       updateSentMsg,

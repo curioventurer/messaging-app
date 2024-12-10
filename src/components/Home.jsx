@@ -1,12 +1,12 @@
 import { Link, useLoaderData } from "react-router-dom";
-import ChatList from "./ChatList";
+import GroupList from "./GroupList";
 
 function Home() {
   const userData = useLoaderData();
 
   return (
     <>
-      <p>Welcome {userData.username}, to our messaging app!</p>
+      <p>Welcome {userData.name}, to our messaging app!</p>
       <nav>
         <ul>
           <li>
@@ -26,7 +26,7 @@ function Home() {
           </li>
         </ul>
       </nav>
-      <ChatList />
+      <GroupList />
     </>
   );
 }

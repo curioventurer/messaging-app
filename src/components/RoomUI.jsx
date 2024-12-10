@@ -1,15 +1,15 @@
-import ChatHeader from "./ChatHeader";
+import RoomHeader from "./RoomHeader";
 import MessageList from "./MessageList";
 import MessagingForm from "./MessagingForm";
 
-function ChatInterface() {
+function RoomUI() {
   return (
-    <div className="chat-interface">
-      <ChatHeader />
+    <div className="room-interface">
+      <RoomHeader />
       <MessageList />
       <MessagingForm />
     </div>
   );
 }
 
-export default ChatInterface;
+export default RoomUI;

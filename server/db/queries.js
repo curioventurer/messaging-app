@@ -1,15 +1,15 @@
 import pool from "./pool.js";
 
-async function registerUser(username, password) {
-  await pool.query(
-    "INSERT INTO users ( username, password ) VALUES ( $1, $2 )",
-    [username, password],
-  );
+async function registerUser(name, password) {
+  await pool.query("INSERT INTO users ( name, password ) VALUES ( $1, $2 )", [
+    name,
+    password,
+  ]);
 }
 
-async function findUser(username) {
-  const { rows } = await pool.query("SELECT * FROM users WHERE username = $1", [
-    username,
+async function findUser(name) {
+  const { rows } = await pool.query("SELECT * FROM users WHERE name = $1", [
+    name,
   ]);
   return rows[0];
 }
@@ -20,31 +20,31 @@ async function findUserById(id) {
   return rows[0];
 }
 
-async function getChatRooms() {
-  const { rows } = await pool.query("SELECT * FROM chat_rooms ORDER BY id");
+async function getGroups() {
+  const { rows } = await pool.query("SELECT * FROM groups ORDER BY id");
   return rows;
 }
 
-async function findChatRoomById(chatId) {
-  const { rows } = await pool.query("SELECT * FROM chat_rooms WHERE id = $1", [
-    chatId,
+async function findGroupById(groupId) {
+  const { rows } = await pool.query("SELECT * FROM groups WHERE id = $1", [
+    groupId,
   ]);
   return rows[0];
 }
 
-async function getMessagesByChatId(chatId, limit = -1) {
+async function getMessagesByGroupId(groupId, limit = -1) {
   const SQL_GET_MESSAGES = `
-    SELECT messages.id, text, messages.created, user_id, username
+    SELECT messages.id, text, messages.created, user_id, name
     FROM messages
     INNER JOIN users
     ON user_id = users.id
-    WHERE chat_room_id = $1
+    WHERE group_id = $1
     ORDER BY messages.created DESC, messages.id DESC
     LIMIT $2
   `;
 
   let text = SQL_GET_MESSAGES;
-  let values = [chatId, limit];
+  let values = [groupId, limit];
 
   //-1 indicates to replace limit parameter with string 'ALL' to select all messages
   if (limit === -1) {
@@ -56,41 +56,41 @@ async function getMessagesByChatId(chatId, limit = -1) {
   return rows.reverse();
 }
 
-async function getMembersByChatId(chatId) {
+async function getMembersByGroupId(groupId) {
   const SQL_GET_MEMBERS = `
-    SELECT memberships.id, user_id, username, permission, memberships.created
+    SELECT memberships.id, user_id, name, permission, memberships.created
     FROM memberships
     INNER JOIN users
     ON user_id = users.id
-    WHERE chat_room_id = $1
-    ORDER BY username
+    WHERE group_id = $1
+    ORDER BY name
   `;
-  const { rows } = await pool.query(SQL_GET_MEMBERS, [chatId]);
+  const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
   return rows;
 }
 
-async function postMessage(chatId, userId, message) {
+async function postMessage(groupId, userId, message) {
   await pool.query(
-    "INSERT INTO messages ( chat_room_id, user_id, text ) VALUES ( $1, $2, $3 )",
-    [chatId, userId, message],
+    "INSERT INTO messages ( group_id, user_id, text ) VALUES ( $1, $2, $3 )",
+    [groupId, userId, message],
   );
 
-  return await findPostedMessage(chatId, userId, message);
+  return await findPostedMessage(groupId, userId, message);
 }
 
-async function findPostedMessage(chatId, userId, message) {
+async function findPostedMessage(groupId, userId, message) {
   const SQL_FIND_MESSAGE = `
     SELECT *
     FROM messages
     WHERE user_id = $2
-    AND chat_room_id = $1
+    AND group_id = $1
     AND text = $3
     ORDER BY messages.created DESC, messages.id DESC
     LIMIT 1
   `;
 
   const { rows } = await pool.query(SQL_FIND_MESSAGE, [
-    chatId,
+    groupId,
     userId,
     message,
   ]);
@@ -102,10 +102,10 @@ export default {
   registerUser,
   findUser,
   findUserById,
-  getChatRooms,
-  findChatRoomById,
-  getMessagesByChatId,
-  getMembersByChatId,
+  getGroups,
+  findGroupById,
+  getMessagesByGroupId,
+  getMembersByGroupId,
   postMessage,
   findPostedMessage,
 };

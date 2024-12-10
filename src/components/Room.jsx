@@ -1,18 +1,18 @@
 import { useState, useEffect, createContext } from "react";
 import { useParams, useLoaderData } from "react-router-dom";
-import ChatList from "./ChatList";
-import ChatInfo from "./ChatInfo";
-import ChatInterface from "./ChatInterface";
+import GroupList from "./GroupList.jsx";
+import GroupInfo from "./GroupInfo.jsx";
+import RoomUI from "./RoomUI.jsx";
 import sortMessages from "../controllers/sortMessages.js";
 
-const CHAT_CONTEXT_DEFAULT = {
+const GROUP_CONTEXT_DEFAULT = {
   userData: {
     id: 0,
-    username: "default_username",
+    name: "default_name",
     created: "1970-01-01T00:00:00.000Z",
   },
-  chatData: {
-    room: {
+  groupData: {
+    group: {
       id: 0,
       name: "default_name",
       created: "1970-01-01T00:00:00.000Z",
@@ -20,33 +20,33 @@ const CHAT_CONTEXT_DEFAULT = {
     members: [],
     messages: [],
   },
-  chatId: 0,
+  groupId: 0,
   appendMessage: function () {},
   updateSentMsg: function () {},
-  toggleChatInfo: function () {},
+  toggleGroupInfo: function () {},
 };
 
-export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
+export const GroupContext = createContext(GROUP_CONTEXT_DEFAULT);
 
-function ChatRoom() {
-  let { chatId } = useParams();
-  chatId = Number(chatId);
+function Room() {
+  let { groupId } = useParams();
+  groupId = Number(groupId);
   const userData = useLoaderData();
 
-  let [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
-  let [isChatInfoShown, setIsChatInfoShown] = useState(false);
+  let [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
+  let [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const request = new Request("/api/chat/" + chatId, {
+    const request = new Request("/api/group/" + groupId, {
       signal: controller.signal,
     });
 
     fetch(request)
       .then((res) => res.json())
       .then((data) => {
-        setChatData(data);
+        setGroupData(data);
       })
       .catch(() => {});
 
@@ -57,11 +57,11 @@ function ChatRoom() {
         ),
       );
     };
-  }, [chatId]);
+  }, [groupId]);
 
   useEffect(() => {
     function addNewMessage(message) {
-      if (message.chat_room_id !== chatId) return;
+      if (message.group_id !== groupId) return;
       appendMessage(message);
     }
 
@@ -70,7 +70,7 @@ function ChatRoom() {
     return () => {
       window.socket.off("message", addNewMessage);
     };
-  }, [chatId]);
+  }, [groupId]);
 
   useEffect(() => {
     function clearSocketSentData() {
@@ -81,26 +81,26 @@ function ChatRoom() {
     return () => {
       clearSocketSentData();
     };
-  }, [chatId]);
+  }, [groupId]);
 
   function appendMessage(message) {
-    setChatData((prevChatData) => {
-      const newMessages = sortMessages([...prevChatData.messages, message]);
-      const newChatData = {
-        ...prevChatData,
+    setGroupData((prevGroupData) => {
+      const newMessages = sortMessages([...prevGroupData.messages, message]);
+      const newGroupData = {
+        ...prevGroupData,
         messages: newMessages,
       };
-      return newChatData;
+      return newGroupData;
     });
   }
 
   function updateSentMsg(res) {
-    setChatData((prevChatData) => {
-      const prevMessages = prevChatData.messages;
+    setGroupData((prevGroupData) => {
+      const prevMessages = prevGroupData.messages;
       const index = prevMessages.findIndex(
         (message) => message.id === res.clientId,
       );
-      if (index === -1) return prevChatData;
+      if (index === -1) return prevGroupData;
 
       const sentMessage = { ...prevMessages[index] };
       sentMessage.id = res.id;
@@ -112,35 +112,35 @@ function ChatRoom() {
         ...prevMessages.slice(index + 1),
       ]);
 
-      const newChatData = {
-        ...prevChatData,
+      const newGroupData = {
+        ...prevGroupData,
         messages: newMessages,
       };
-      return newChatData;
+      return newGroupData;
     });
   }
 
-  function toggleChatInfo() {
-    setIsChatInfoShown(!isChatInfoShown);
+  function toggleGroupInfo() {
+    setIsGroupInfoShown(!isGroupInfoShown);
   }
 
   return (
-    <div className="chat-room">
-      <ChatContext.Provider
+    <div className="room">
+      <GroupContext.Provider
         value={{
           userData,
-          chatData,
-          chatId,
+          groupData,
+          groupId,
           appendMessage,
           updateSentMsg,
-          toggleChatInfo,
+          toggleGroupInfo,
         }}
       >
-        {isChatInfoShown ? <ChatInfo /> : <ChatList />}
-        <ChatInterface />
-      </ChatContext.Provider>
+        {isGroupInfoShown ? <GroupInfo /> : <GroupList />}
+        <RoomUI />
+      </GroupContext.Provider>
     </div>
   );
 }
 
-export default ChatRoom;
+export default Room;

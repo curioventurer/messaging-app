@@ -6,7 +6,7 @@ import {
   redirect,
 } from "react-router-dom";
 import Home from "./components/Home";
-import ChatRoom from "./components/ChatRoom";
+import Room from "./components/Room";
 import SignUpForm from "./components/SignUpForm";
 import LogInForm from "./components/LogInForm";
 import "/node_modules/socket.io/client-dist/socket.io.js";
@@ -30,8 +30,8 @@ const router = createBrowserRouter([
     loader: ensureAuthenticated,
   },
   {
-    path: "/chat/:chatId",
-    element: <ChatRoom />,
+    path: "/group/:groupId",
+    element: <Room />,
     loader: ensureAuthenticated,
   },
   {

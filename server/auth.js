@@ -20,7 +20,7 @@ function auth(app) {
       try {
         const user = await queries.findUser(username);
 
-        if (!user) return done(null, false, { message: "Incorrect username" });
+        if (!user) return done(null, false, { message: "Incorrect name" });
         else if (user.password !== password)
           return done(null, false, { message: "Incorrect password" });
         else return done(null, user);
