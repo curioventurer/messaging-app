@@ -79,6 +79,10 @@ a.button-link {
   display: flex;
   column-gap: 4ch;
   justify-content: space-between;
+
+  &:first-child {
+    background: #0f05;
+  }
 }
 
 .group-list {

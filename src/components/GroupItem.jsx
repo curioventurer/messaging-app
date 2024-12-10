@@ -8,7 +8,7 @@ function GroupItem({ group }) {
   const { groupId } = useContext(GroupContext);
   const lastMessage = group.lastMessage;
 
-  const created = lastMessage ? lastMessage.created : group.created;
+  const created = lastMessage ? lastMessage.created : group.joined;
   const displayDate = DateFormat.timestamp(created);
 
   return (
@@ -25,7 +25,7 @@ function GroupItem({ group }) {
       <p className="group-item-message">
         {lastMessage
           ? `${lastMessage.name}: ${lastMessage.text}`
-          : "Group created"}
+          : "Joined group"}
       </p>
     </Link>
   );

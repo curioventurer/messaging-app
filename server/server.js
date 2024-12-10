@@ -32,18 +32,10 @@ function getTimestamp() {
 let requestCount = 0;
 app.use(function (req, _, next) {
   const timestamp = getTimestamp();
-  const url = req.protocol + "://" + req.get("host") + req.originalUrl;
+  const url = req.originalUrl;
 
   const requestLog =
-    timestamp +
-    " - " +
-    ++requestCount +
-    " - " +
-    req.method +
-    " - " +
-    url +
-    " - " +
-    req.ip;
+    timestamp + " - " + ++requestCount + " - " + req.method + " - " + url;
 
   fs.appendFile("./request.log", requestLog + "\n", () => {});
   console.log(requestLog);

@@ -4,6 +4,7 @@ import GroupList from "./GroupList.jsx";
 import GroupInfo from "./GroupInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import sortMessages from "../controllers/sortMessages.js";
+import sortMembers from "../controllers/sortMembers.js";
 
 const GROUP_CONTEXT_DEFAULT = {
   userData: {
@@ -46,7 +47,10 @@ function Room() {
     fetch(request)
       .then((res) => res.json())
       .then((data) => {
-        setGroupData(data);
+        setGroupData({
+          ...data,
+          members: sortMembers(data.members, userData.id),
+        });
       })
       .catch(() => {});
 
@@ -57,7 +61,7 @@ function Room() {
         ),
       );
     };
-  }, [groupId]);
+  }, [groupId, userData.id]);
 
   useEffect(() => {
     function addNewMessage(message) {
