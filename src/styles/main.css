@@ -11,11 +11,31 @@
   padding: var(--screen-padding);
 }
 
+button {
+  cursor: pointer;
+  border: none;
+}
+
+p {
+  margin: 0;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+nav ul {
+  display: flex;
+  gap: 20px;
+}
+
 a.button-link {
   text-decoration: none;
   display: block;
   padding: 5px;
   color: inherit;
+  cursor: pointer;
 
   &:hover {
     background: #fff2;
@@ -30,18 +50,35 @@ a.button-link {
   }
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-p {
-  margin: 0;
-}
-
-nav ul {
+.chat-info-header {
   display: flex;
-  gap: 20px;
+  justify-content: space-between;
+  align-items: center;
+
+  button {
+    background: transparent;
+    color: yellow;
+    font-weight: bold;
+    font-size: 1.5em;
+
+    padding: 0;
+    aspect-ratio: 1;
+    height: 1.3em;
+
+    &:hover {
+      background: #fff2;
+    }
+
+    &:active {
+      background: #fff3;
+    }
+  }
+}
+
+.member-list li {
+  display: flex;
+  column-gap: 4ch;
+  justify-content: space-between;
 }
 
 .chat-list {
@@ -89,14 +126,16 @@ nav ul {
 
   height: 100%;
 
+  .left-screen {
+    height: 100%;
+    overflow: auto;
+  }
+
   .chat-list {
     width: 30ch;
     flex: none;
 
-    height: 100%;
-    overflow: auto;
     margin: 0;
-
     border: none;
     border-right: 1px solid white;
   }
@@ -109,14 +148,26 @@ nav ul {
   height: 100%;
   flex: 1;
 
-  & > h1 {
-    margin: 0;
-    text-align: center;
-  }
+  button.chat-header {
+    background: transparent;
+    color: inherit;
 
-  & > p {
-    margin-top: 10px;
-    text-align: center;
+    &:hover {
+      background: #fff2;
+    }
+
+    &:active {
+      background: #fff3;
+    }
+
+    h1 {
+      margin: 0;
+      text-align: center;
+    }
+    p {
+      margin-top: 10px;
+      text-align: center;
+    }
   }
 }
 
@@ -262,7 +313,6 @@ nav ul {
   button {
     background: #0f0;
     font-weight: bold;
-    border: none;
 
     padding: 0.5em 1em;
     border-radius: 1em;

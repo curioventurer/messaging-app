@@ -54,6 +54,7 @@ function comm(server, sessionMiddleware) {
       callback({
         created: postedMessage.created,
         id: postedMessage.id,
+        clientId: data.clientId,
       });
     });
   });

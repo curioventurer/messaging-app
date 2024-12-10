@@ -24,7 +24,7 @@ function ChatList() {
   }, []);
 
   return (
-    <ul className="chat-list">
+    <ul className="chat-list left-screen">
       {rooms.map((room) => (
         <li key={room.id}>
           <ChatItem room={room} />

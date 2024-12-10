@@ -1,30 +1,62 @@
-import PropTypes from "prop-types";
+import { useState, useRef, useContext } from "react";
+import { ChatContext } from "./ChatRoom.jsx";
 
-function MessagingForm({ message, setMessage, submit }) {
-  function handleInput(event) {
+function MessagingForm() {
+  const { userData, chatId, appendMessage, updateSentMsg } =
+    useContext(ChatContext);
+
+  let [message, setMessage] = useState("");
+
+  /*Provide react key values for sent message.
+    Negative values are used to differentiate from normal message.
+    The key value is only temporary, it will be replaced with message id from server once sent message is successfully processed by the server.
+  */
+  const sentMsgSeq = useRef(0);
+
+  function sendMessage(event) {
+    event.preventDefault();
+
+    const clientId = --sentMsgSeq.current;
+
+    appendMessage({
+      id: clientId,
+      text: message,
+      created: new Date().toISOString(),
+      user_id: userData.id,
+      username: userData.username,
+    });
+
+    window.socket.emit(
+      "message",
+      {
+        clientId,
+        chatId,
+        message,
+      },
+      updateSentMsg,
+    );
+
+    setMessage("");
+  }
+
+  function updateInput(event) {
     setMessage(event.target.value);
   }
 
   return (
-    <form className="messaging-form" onSubmit={submit}>
+    <form className="messaging-form" onSubmit={sendMessage}>
       <input
         type="text"
         name="message"
         id="messageInput"
         placeholder="Message"
         value={message}
-        onChange={handleInput}
+        onChange={updateInput}
         autoFocus
       />
       <button>Send</button>
     </form>
   );
 }
-
-MessagingForm.propTypes = {
-  message: PropTypes.string.isRequired,
-  setMessage: PropTypes.func.isRequired,
-  submit: PropTypes.func.isRequired,
-};
 
 export default MessagingForm;
