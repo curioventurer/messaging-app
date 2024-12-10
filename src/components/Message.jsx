@@ -1,8 +1,12 @@
+import { useContext } from "react";
 import PropTypes from "prop-types";
+import { ChatContext } from "./ChatRoom.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
-function Message({ message, userId, isJoined = false }) {
-  const isUser = userId === message.user_id;
+function Message({ message, isJoined = false }) {
+  const { userData } = useContext(ChatContext);
+
+  const isUser = userData.id === message.user_id;
 
   let liClass = "message-box";
   if (isUser) liClass += " user-owned";
@@ -30,7 +34,6 @@ function Message({ message, userId, isJoined = false }) {
 
 Message.propTypes = {
   message: PropTypes.object.isRequired,
-  userId: PropTypes.number.isRequired,
   isJoined: PropTypes.bool,
 };
 

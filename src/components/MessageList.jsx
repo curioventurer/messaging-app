@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
-import PropTypes from "prop-types";
+import { useEffect, useRef, useContext } from "react";
 import Message from "./Message";
+import { ChatContext } from "./ChatRoom.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
-function MessageList({ messages, userId, chatId }) {
+function MessageList() {
+  const { chatData, chatId } = useContext(ChatContext);
+
   const msgListRef = useRef(null);
 
   let previousDate = "";
@@ -30,7 +32,7 @@ function MessageList({ messages, userId, chatId }) {
     };
   }, [chatId]);
 
-  for (const msg of messages) {
+  for (const msg of chatData.messages) {
     const timestamp = new Date(msg.created);
     const msgDate = timestamp.toLocaleDateString();
 
@@ -48,14 +50,7 @@ function MessageList({ messages, userId, chatId }) {
     if (previousSender === msg.user_id && previousDate === msgDate)
       isJoined = true;
 
-    itemsArray.push(
-      <Message
-        key={msg.id}
-        message={msg}
-        userId={userId}
-        isJoined={isJoined}
-      />,
-    );
+    itemsArray.push(<Message key={msg.id} message={msg} isJoined={isJoined} />);
 
     previousDate = msgDate;
     previousSender = msg.user_id;
@@ -69,11 +64,5 @@ function MessageList({ messages, userId, chatId }) {
     </ul>
   );
 }
-
-MessageList.propTypes = {
-  messages: PropTypes.array.isRequired,
-  userId: PropTypes.number.isRequired,
-  chatId: PropTypes.number.isRequired,
-};
 
 export default MessageList;

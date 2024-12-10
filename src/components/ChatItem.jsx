@@ -1,11 +1,11 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { ChatIdContext } from "./ChatRoom.jsx";
+import { ChatContext } from "./ChatRoom.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function ChatItem({ room }) {
-  const chatId = useContext(ChatIdContext);
+  const { chatId } = useContext(ChatContext);
   const lastMessage = room.lastMessage;
 
   const created = lastMessage ? lastMessage.created : room.created;

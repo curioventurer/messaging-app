@@ -43,7 +43,7 @@ function routes(app) {
 
     for (const room of chatRooms) {
       promises.push(
-        queries.getChatMessagesById(room.id, 1).then((messages) => {
+        queries.getMessagesByChatId(room.id, 1).then((messages) => {
           room.lastMessage = messages[0];
         }),
       );
@@ -55,11 +55,12 @@ function routes(app) {
 
   app.get("/api/chat/:chatId", async (req, res) => {
     const chatId = req.params.chatId;
-    const chatMessages = queries.getChatMessagesById(chatId);
     const chatRoom = queries.findChatRoomById(chatId);
-    const values = await Promise.all([chatRoom, chatMessages]);
+    const members = queries.getMembersByChatId(chatId);
+    const messages = queries.getMessagesByChatId(chatId);
+    const values = await Promise.all([chatRoom, members, messages]);
 
-    res.json({ room: values[0], messages: values[1] });
+    res.json({ room: values[0], members: values[1], messages: values[2] });
   });
 }
 

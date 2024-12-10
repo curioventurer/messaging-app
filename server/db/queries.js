@@ -32,8 +32,8 @@ async function findChatRoomById(chatId) {
   return rows[0];
 }
 
-async function getChatMessagesById(chatId, limit = -1) {
-  const SQL_MESSAGES = `
+async function getMessagesByChatId(chatId, limit = -1) {
+  const SQL_GET_MESSAGES = `
     SELECT messages.id, text, messages.created, user_id, username
     FROM messages
     INNER JOIN users
@@ -43,17 +43,30 @@ async function getChatMessagesById(chatId, limit = -1) {
     LIMIT $2
   `;
 
-  let text = SQL_MESSAGES;
+  let text = SQL_GET_MESSAGES;
   let values = [chatId, limit];
 
   //-1 indicates to replace limit parameter with string 'ALL' to select all messages
   if (limit === -1) {
-    text = SQL_MESSAGES.replace("$2", "ALL");
+    text = SQL_GET_MESSAGES.replace("$2", "ALL");
     values = values.slice(0, 1);
   }
 
   const { rows } = await pool.query(text, values);
   return rows.reverse();
+}
+
+async function getMembersByChatId(chatId) {
+  const SQL_GET_MEMBERS = `
+    SELECT memberships.id, user_id, username, permission, memberships.created
+    FROM memberships
+    INNER JOIN users
+    ON user_id = users.id
+    WHERE chat_room_id = $1
+    ORDER BY username
+  `;
+  const { rows } = await pool.query(SQL_GET_MEMBERS, [chatId]);
+  return rows;
 }
 
 async function postMessage(chatId, userId, message) {
@@ -66,7 +79,7 @@ async function postMessage(chatId, userId, message) {
 }
 
 async function findPostedMessage(chatId, userId, message) {
-  const SQL_FIND = `
+  const SQL_FIND_MESSAGE = `
     SELECT *
     FROM messages
     WHERE user_id = $2
@@ -76,7 +89,11 @@ async function findPostedMessage(chatId, userId, message) {
     LIMIT 1
   `;
 
-  const { rows } = await pool.query(SQL_FIND, [chatId, userId, message]);
+  const { rows } = await pool.query(SQL_FIND_MESSAGE, [
+    chatId,
+    userId,
+    message,
+  ]);
 
   return rows[0];
 }
@@ -87,7 +104,8 @@ export default {
   findUserById,
   getChatRooms,
   findChatRoomById,
-  getChatMessagesById,
+  getMessagesByChatId,
+  getMembersByChatId,
   postMessage,
   findPostedMessage,
 };

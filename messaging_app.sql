@@ -15,6 +15,16 @@ CREATE TABLE users (
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TYPE permission_type AS ENUM ('member', 'admin', 'owner');
+
+CREATE TABLE memberships (
+  id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  chat_room_id INT NOT NULL REFERENCES chat_rooms ( id ),
+  user_id INT NOT NULL REFERENCES users ( id ),
+  permission permission_type DEFAULT 'member',
+  created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 create table messages (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   text VARCHAR ( 255 ) NOT NULL,
@@ -34,6 +44,17 @@ INSERT INTO chat_rooms ( name, created ) VALUES
   ( 'Fruit Pavilion', '2020-10-01 14:07:35+07' ),
   ( 'bro', '2024-09-06 7:57:58+04' ),
   ( 'ender', '2024-10-02 8:00:00-01' );
+
+INSERT INTO memberships ( chat_room_id, user_id, permission, created ) VALUES
+  ( 1, 1, 'owner', '2020-08-31 13:07:30+06' ),
+  ( 1, 2, 'member', '2023-10-24 13:07:30+07' ),
+  ( 1, 3, 'admin', '2024-09-01 13:07:30+04' ),
+  ( 2, 2, 'owner', '2020-10-01 14:07:35+07' ),
+  ( 2, 1, 'member', '2024-10-25 13:45:20+06' ),
+  ( 3, 2, 'owner', '2024-09-06 7:57:58+04' ),
+  ( 3, 1, 'member', '2024-09-06 7:58:30+04' ),
+  ( 4, 1, 'owner', '2024-10-02 8:00:00-01' );
+  
 
 INSERT INTO messages ( text, chat_room_id, user_id, created ) VALUES
   ( 'A new comic is releasing soon.', 1, 1, '2020-10-25 13:57:58+06' ),
