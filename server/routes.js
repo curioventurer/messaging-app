@@ -40,19 +40,8 @@ function routes(app) {
 
   app.get("/api/groups", async (req, res) => {
     const userInfo = await req.user();
-    const groups = await queries.getGroupsByUserId(userInfo.id);
-    const promises = [];
-
-    for (const group of groups) {
-      promises.push(
-        queries.getMessagesByGroupId(group.id, 1).then((messages) => {
-          group.lastMessage = messages[0];
-        }),
-      );
-    }
-
-    await Promise.all(promises);
-    res.json(groups);
+    const groupsSummary = await queries.getGroupsSummaryByUserId(userInfo.id);
+    res.json(groupsSummary);
   });
 
   //get group messages, and other info

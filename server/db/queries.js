@@ -38,6 +38,39 @@ async function getGroupsByUserId(userId) {
   return rows;
 }
 
+async function getGroupsSummaryByUserId(userId) {
+  const groups = await getGroupsByUserId(userId);
+  const promises = [];
+
+  for (const group of groups) {
+    promises.push(
+      getMessagesByGroupId(group.id, 1).then((messages) => {
+        group.lastMessage = messages[0];
+      }),
+    );
+  }
+  await Promise.all(promises);
+
+  groups.sort((a, b) => {
+    //Use group itself for sorting if lastMessage is null, otherwise use lastMessage.
+    const itemA = a.lastMessage ?? a;
+    const itemB = b.lastMessage ?? b;
+
+    /*Sort by new item first, using time followed by id.
+      If joined time is defined, item is a group and should use joined time,
+      else it is lastMessage and should use created time.
+    */
+    const timeA = new Date(itemA.joined ?? itemA.created).getTime();
+    const timeB = new Date(itemA.joined ?? itemB.created).getTime();
+    const timeDiff = timeB - timeA;
+
+    if (timeDiff !== 0) return timeDiff;
+    else return itemB.id - itemA.id;
+  });
+
+  return groups;
+}
+
 async function findGroupById(groupId) {
   const { rows } = await pool.query("SELECT * FROM groups WHERE id = $1", [
     groupId,
@@ -117,6 +150,7 @@ export default {
   findUserById,
   getGroups,
   getGroupsByUserId,
+  getGroupsSummaryByUserId,
   findGroupById,
   getMessagesByGroupId,
   getMembersByGroupId,
