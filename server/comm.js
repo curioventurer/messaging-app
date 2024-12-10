@@ -49,13 +49,8 @@ function comm(server, sessionMiddleware) {
       );
       postedMessage.name = user.name;
 
-      socket.broadcast.emit("message", postedMessage);
-
-      callback({
-        created: postedMessage.created,
-        id: postedMessage.id,
-        clientId: data.clientId,
-      });
+      io.emit("message", postedMessage);
+      callback(data.clientId);
     });
   });
 }

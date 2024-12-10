@@ -22,7 +22,7 @@ const GROUP_CONTEXT_DEFAULT = {
   },
   groupId: 0,
   appendMessage: function () {},
-  updateSentMsg: function () {},
+  deleteSentMsg: function () {},
   toggleGroupInfo: function () {},
 };
 
@@ -94,23 +94,18 @@ function Room() {
     });
   }
 
-  function updateSentMsg(res) {
+  function deleteSentMsg(clientId) {
     setGroupData((prevGroupData) => {
       const prevMessages = prevGroupData.messages;
       const index = prevMessages.findIndex(
-        (message) => message.id === res.clientId,
+        (message) => message.id === clientId,
       );
       if (index === -1) return prevGroupData;
 
-      const sentMessage = { ...prevMessages[index] };
-      sentMessage.id = res.id;
-      sentMessage.created = res.created;
-
-      const newMessages = sortMessages([
+      const newMessages = [
         ...prevMessages.slice(0, index),
-        sentMessage,
         ...prevMessages.slice(index + 1),
-      ]);
+      ];
 
       const newGroupData = {
         ...prevGroupData,
@@ -132,7 +127,7 @@ function Room() {
           groupData,
           groupId,
           appendMessage,
-          updateSentMsg,
+          deleteSentMsg,
           toggleGroupInfo,
         }}
       >
