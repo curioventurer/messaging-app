@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import ChatItem from "./ChatItem";
+import GroupItem from "./GroupItem";
 
-function ChatList() {
-  let [rooms, setRooms] = useState([]);
+function GroupList() {
+  let [groups, setgroups] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const request = new Request("/api/chats", { signal: controller.signal });
+    const request = new Request("/api/groups", { signal: controller.signal });
 
     fetch(request)
       .then((res) => res.json())
-      .then((data) => setRooms(data))
+      .then((data) => setgroups(data))
       .catch(() => {});
 
     return () => {
@@ -24,14 +24,14 @@ function ChatList() {
   }, []);
 
   return (
-    <ul className="chat-list left-screen">
-      {rooms.map((room) => (
-        <li key={room.id}>
-          <ChatItem room={room} />
+    <ul className="group-list left-screen">
+      {groups.map((group) => (
+        <li key={group.id}>
+          <GroupItem group={group} />
         </li>
       ))}
     </ul>
   );
 }
 
-export default ChatList;
+export default GroupList;

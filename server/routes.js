@@ -2,6 +2,7 @@ import passport from "passport";
 import queries from "./db/queries.js";
 
 function routes(app) {
+  //get logged in status. return userInfo if logged in, false if logged out.
   app.get("/api/auth-status", async (req, res) => {
     if (req.isAuthenticated()) {
       const userInfo = await req.user();
@@ -25,7 +26,7 @@ function routes(app) {
   });
 
   app.post("/sign-up", async (req, res) => {
-    await queries.registerUser(req.body.username, req.body.password);
+    await queries.registerUser(req.body.name, req.body.password);
     res.redirect("/");
   });
 
@@ -37,30 +38,31 @@ function routes(app) {
     }),
   );
 
-  app.get("/api/chats", async (_, res) => {
-    const chatRooms = await queries.getChatRooms();
+  app.get("/api/groups", async (_, res) => {
+    const groups = await queries.getGroups();
     const promises = [];
 
-    for (const room of chatRooms) {
+    for (const group of groups) {
       promises.push(
-        queries.getMessagesByChatId(room.id, 1).then((messages) => {
-          room.lastMessage = messages[0];
+        queries.getMessagesByGroupId(group.id, 1).then((messages) => {
+          group.lastMessage = messages[0];
         }),
       );
     }
 
     await Promise.all(promises);
-    res.json(chatRooms);
+    res.json(groups);
   });
 
-  app.get("/api/chat/:chatId", async (req, res) => {
-    const chatId = req.params.chatId;
-    const chatRoom = queries.findChatRoomById(chatId);
-    const members = queries.getMembersByChatId(chatId);
-    const messages = queries.getMessagesByChatId(chatId);
-    const values = await Promise.all([chatRoom, members, messages]);
+  //get group messages, and other info
+  app.get("/api/group/:groupId", async (req, res) => {
+    const groupId = req.params.groupId;
+    const group = queries.findGroupById(groupId);
+    const members = queries.getMembersByGroupId(groupId);
+    const messages = queries.getMessagesByGroupId(groupId);
+    const values = await Promise.all([group, members, messages]);
 
-    res.json({ room: values[0], members: values[1], messages: values[2] });
+    res.json({ group: values[0], members: values[1], messages: values[2] });
   });
 }
 

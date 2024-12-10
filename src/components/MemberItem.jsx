@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 function MemberItem({ member }) {
   return (
     <>
-      <p>{member.username}</p>
+      <p>{member.name}</p>
       <p>{member.permission}</p>
     </>
   );

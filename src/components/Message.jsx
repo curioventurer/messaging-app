@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import PropTypes from "prop-types";
-import { ChatContext } from "./ChatRoom.jsx";
+import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function Message({ message, isJoined = false }) {
-  const { userData } = useContext(ChatContext);
+  const { userData } = useContext(GroupContext);
 
   const isUser = userData.id === message.user_id;
 
@@ -17,7 +17,7 @@ function Message({ message, isJoined = false }) {
   return (
     <li className={liClass}>
       {isJoined || isUser ? null : (
-        <p className="message-sender">{message.username}</p>
+        <p className="message-sender">{message.name}</p>
       )}
       <div>
         <p>{message.text}</p>

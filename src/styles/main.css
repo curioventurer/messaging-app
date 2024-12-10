@@ -50,7 +50,7 @@ a.button-link {
   }
 }
 
-.chat-info-header {
+.group-info-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -81,7 +81,7 @@ a.button-link {
   justify-content: space-between;
 }
 
-.chat-list {
+.group-list {
   color: #ccc;
   border: 1px solid white;
 
@@ -89,13 +89,13 @@ a.button-link {
     padding: 10px;
   }
 
-  .chat-item-message {
+  .group-item-message {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .chat-item-header {
+  .group-item-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -120,7 +120,7 @@ a.button-link {
   }
 }
 
-.chat-room {
+.room {
   display: flex;
   column-gap: 10px;
 
@@ -131,7 +131,7 @@ a.button-link {
     overflow: auto;
   }
 
-  .chat-list {
+  .group-list {
     width: 30ch;
     flex: none;
 
@@ -141,14 +141,14 @@ a.button-link {
   }
 }
 
-.chat-interface {
+.room-interface {
   display: flex;
   flex-direction: column;
 
   height: 100%;
   flex: 1;
 
-  button.chat-header {
+  button.room-header {
     background: transparent;
     color: inherit;
 

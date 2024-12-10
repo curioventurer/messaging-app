@@ -31,23 +31,23 @@ function comm(server, sessionMiddleware) {
 
   io.on("connection", (socket) => {
     socket.request.user().then((user) => {
-      console.log("*socket: " + user.username + " connected");
+      console.log("*socket: " + user.name + " connected");
     });
 
     socket.on("disconnect", () => {
       socket.request.user().then((user) => {
-        console.log("*socket: " + user.username + " disconnected");
+        console.log("*socket: " + user.name + " disconnected");
       });
     });
 
     socket.on("message", async (data, callback) => {
       const user = await socket.request.user();
       const postedMessage = await queries.postMessage(
-        data.chatId,
+        data.groupId,
         user.id,
         data.message,
       );
-      postedMessage.username = user.username;
+      postedMessage.name = user.name;
 
       socket.broadcast.emit("message", postedMessage);
 
