@@ -38,20 +38,10 @@ function routes(app) {
     }),
   );
 
-  app.get("/api/groups", async (_, res) => {
-    const groups = await queries.getGroups();
-    const promises = [];
-
-    for (const group of groups) {
-      promises.push(
-        queries.getMessagesByGroupId(group.id, 1).then((messages) => {
-          group.lastMessage = messages[0];
-        }),
-      );
-    }
-
-    await Promise.all(promises);
-    res.json(groups);
+  app.get("/api/groups", async (req, res) => {
+    const userInfo = await req.user();
+    const groupsSummary = await queries.getGroupsSummaryByUserId(userInfo.id);
+    res.json(groupsSummary);
   });
 
   //get group messages, and other info

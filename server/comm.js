@@ -30,7 +30,11 @@ function comm(server, sessionMiddleware) {
   );
 
   io.on("connection", (socket) => {
-    socket.request.user().then((user) => {
+    socket.request.user().then(async (user) => {
+      const groups = await queries.getGroupsByUserId(user.id);
+      const rooms = groups.map((group) => group.id);
+      socket.join(rooms);
+
       console.log("*socket: " + user.name + " connected");
     });
 
@@ -49,13 +53,8 @@ function comm(server, sessionMiddleware) {
       );
       postedMessage.name = user.name;
 
-      socket.broadcast.emit("message", postedMessage);
-
-      callback({
-        created: postedMessage.created,
-        id: postedMessage.id,
-        clientId: data.clientId,
-      });
+      io.to(data.groupId).emit("message", postedMessage);
+      callback(data.clientId);
     });
   });
 }
