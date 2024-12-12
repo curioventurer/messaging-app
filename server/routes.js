@@ -38,6 +38,12 @@ function routes(app) {
     }),
   );
 
+  app.get("/api/friends", async (req, res) => {
+    const userInfo = await req.user();
+    const friends = await queries.getFriendsByUserId(userInfo.id);
+    res.json(friends);
+  });
+
   app.get("/api/groups", async (req, res) => {
     const userInfo = await req.user();
     const groupsSummary = await queries.getGroupsSummaryByUserId(userInfo.id);

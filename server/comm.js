@@ -31,8 +31,9 @@ function comm(server, sessionMiddleware) {
 
   io.on("connection", (socket) => {
     socket.request.user().then(async (user) => {
+      socket.join("user:" + user.id);
       const groups = await queries.getGroupsByUserId(user.id);
-      const rooms = groups.map((group) => group.id);
+      const rooms = groups.map((group) => "group:" + group.id);
       socket.join(rooms);
 
       console.log("*socket: " + user.name + " connected");
@@ -44,6 +45,22 @@ function comm(server, sessionMiddleware) {
       });
     });
 
+    socket.on("friend request update", async (data) => {
+      const user = await socket.request.user();
+
+      const friend = await queries.updateFriendRequest(
+        data.id,
+        user.id,
+        data.state,
+      );
+
+      if (!friend) return;
+
+      io.to("user:" + friend.sender_id)
+        .to("user:" + friend.receiver_id)
+        .emit("friend request update", friend);
+    });
+
     socket.on("message", async (data, callback) => {
       const user = await socket.request.user();
       const postedMessage = await queries.postMessage(
@@ -53,7 +70,7 @@ function comm(server, sessionMiddleware) {
       );
       postedMessage.name = user.name;
 
-      io.to(data.groupId).emit("message", postedMessage);
+      io.to("group:" + data.groupId).emit("message", postedMessage);
       callback(data.clientId);
     });
   });

@@ -51,7 +51,7 @@ function GroupList() {
   }
 
   return (
-    <ul className="group-list left-screen">
+    <ul className="group-list room-left-screen">
       {groups.map((group) => (
         <li key={group.id}>
           <GroupItem group={group} />

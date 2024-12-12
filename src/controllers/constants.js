@@ -1,0 +1,11 @@
+export const FRIEND_REQUEST_TYPE = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  REJECTED: "rejected",
+};
+
+export const FRIEND_REQUEST_ORDER = {
+  [FRIEND_REQUEST_TYPE.PENDING]: 0,
+  [FRIEND_REQUEST_TYPE.ACCEPTED]: 1,
+  [FRIEND_REQUEST_TYPE.REJECTED]: 2,
+};

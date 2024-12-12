@@ -15,8 +15,10 @@ function sortMembers(members, userId) {
   const userIndex = sortedMembers.findIndex(
     (member) => member.user_id === userId,
   );
-  const user = sortedMembers.splice(userIndex, 1)[0];
-  sortedMembers.unshift(user);
+  if (userIndex !== -1) {
+    const user = sortedMembers.splice(userIndex, 1)[0];
+    sortedMembers.unshift(user);
+  }
 
   return sortedMembers;
 }

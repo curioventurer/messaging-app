@@ -5,8 +5,10 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
+import Layout from "./components/Layout";
 import Home from "./components/Home";
 import Room from "./components/Room";
+import FriendOverview from "./components/FriendOverview";
 import SignUpForm from "./components/SignUpForm";
 import LogInForm from "./components/LogInForm";
 import "/node_modules/socket.io/client-dist/socket.io.js";
@@ -25,14 +27,23 @@ async function ensureAuthenticated() {
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Home />,
+    element: <Layout />,
+    id: "layout",
     loader: ensureAuthenticated,
-  },
-  {
-    path: "/group/:groupId",
-    element: <Room />,
-    loader: ensureAuthenticated,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: "/group/:groupId",
+        element: <Room />,
+      },
+      {
+        path: "/friend",
+        element: <FriendOverview />,
+      },
+    ],
   },
   {
     path: "/sign-up",

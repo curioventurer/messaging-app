@@ -7,7 +7,7 @@
   height: 100vh;
   overflow: auto;
 
-  --screen-padding: 16px;
+  --screen-padding: 10px;
   padding: var(--screen-padding);
 }
 
@@ -23,6 +23,7 @@ p {
 ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 nav ul {
@@ -50,10 +51,90 @@ a.button-link {
   }
 }
 
+.clipped-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+
+  height: 100%;
+}
+
+.friend-overview {
+  text-align: center;
+
+  h1 {
+    font-size: 1.5em;
+  }
+
+  h2 {
+    font-size: 1.3em;
+    margin-block: 0 10px;
+  }
+
+  section {
+    border-top: 1px solid white;
+    margin-bottom: 30px;
+    padding: 10px;
+  }
+}
+
+ul.friend-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 5px;
+
+  > li {
+    width: 300px;
+    max-width: 100%;
+    background: #0f03;
+    padding: 5px;
+    text-align: start;
+
+    .clipped-text {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .details {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+}
+
+.button-bar {
+  display: flex;
+  align-items: center;
+
+  button {
+    &:hover {
+      filter: brightness(0.8);
+    }
+    &:active {
+      filter: brightness(0.7);
+    }
+  }
+}
+
 .group-info-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  border-bottom: 1px solid white;
+  margin-bottom: 10px;
+
+  p {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
 
   button {
     background: transparent;
@@ -75,6 +156,13 @@ a.button-link {
   }
 }
 
+.group-info section.member {
+  & > p {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+  }
+}
+
 .member-list li {
   display: flex;
   column-gap: 4ch;
@@ -91,12 +179,6 @@ a.button-link {
 
   a.button-link {
     padding: 10px;
-  }
-
-  .group-item-message {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .group-item-header {
@@ -128,9 +210,15 @@ a.button-link {
   display: flex;
   column-gap: 10px;
 
-  height: 100%;
+  flex: 1;
 
-  .left-screen {
+  /*Without this, it's height will overflow.
+    I don't know why this happens.
+    "flex: 1" should have been enough to set the height.
+  */
+  min-height: 0;
+
+  .room-left-screen {
     height: 100%;
     overflow: auto;
   }
@@ -155,6 +243,7 @@ a.button-link {
   button.room-header {
     background: transparent;
     color: inherit;
+    padding-bottom: 5px;
 
     &:hover {
       background: #fff2;
@@ -167,9 +256,10 @@ a.button-link {
     h1 {
       margin: 0;
       text-align: center;
+      font-size: 1.6em;
     }
     p {
-      margin-top: 10px;
+      margin-top: 5px;
       text-align: center;
     }
   }
@@ -292,7 +382,7 @@ a.button-link {
 .messaging-form {
   display: flex;
   gap: 10px;
-  padding: 10px;
+  margin-top: 5px;
 
   font-size: 1.2em;
 

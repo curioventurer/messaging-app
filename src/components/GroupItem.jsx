@@ -22,7 +22,7 @@ function GroupItem({ group }) {
         <p>{group.name}</p>
         <time dateTime={created}>{displayDate}</time>
       </div>
-      <p className="group-item-message">
+      <p className="clipped-text">
         {lastMessage
           ? `${lastMessage.name}: ${lastMessage.text}`
           : "Joined group"}

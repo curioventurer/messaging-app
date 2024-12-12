@@ -1,8 +1,9 @@
 import { useState, useEffect, createContext } from "react";
-import { useParams, useLoaderData } from "react-router-dom";
+import { useParams, useRouteLoaderData } from "react-router-dom";
 import GroupList from "./GroupList.jsx";
 import GroupInfo from "./GroupInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
+import clearSocket from "../controllers/clearSocket.js";
 import sortMessages from "../controllers/sortMessages.js";
 import sortMembers from "../controllers/sortMembers.js";
 
@@ -32,7 +33,7 @@ export const GroupContext = createContext(GROUP_CONTEXT_DEFAULT);
 function Room() {
   let { groupId } = useParams();
   groupId = Number(groupId);
-  const userData = useLoaderData();
+  const userData = useRouteLoaderData("layout");
 
   let [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
   let [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
@@ -77,13 +78,8 @@ function Room() {
   }, [groupId]);
 
   useEffect(() => {
-    function clearSocketSentData() {
-      window.socket.sendBuffer = [];
-      window.socket._clearAcks();
-    }
-
     return () => {
-      clearSocketSentData();
+      clearSocket();
     };
   }, [groupId]);
 
