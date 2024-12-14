@@ -71,7 +71,8 @@ INSERT INTO friendships ( sender_id, receiver_id, state, modified ) VALUES
   ( 1, 4, 'rejected', '2024-10-14 19:07:00+06' ),
   ( 1, 5, 'pending', '2024-10-15 07:07:00+06' ),
   ( 6, 1, 'rejected', '2024-10-16 19:07:00+06' ),
-  ( 7, 1, 'pending', '2024-10-17 07:07:00+06' );
+  ( 7, 1, 'pending', '2024-10-17 07:07:00+06' ),
+  ( 5, 7, 'accepted', '2024-10-18 07:07:00+06' );
 
 INSERT INTO groups ( name, created ) VALUES
   ( 'comics galore', '2020-08-31 13:07:30+06' ),

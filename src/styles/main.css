@@ -123,6 +123,30 @@ ul.friend-list {
   }
 }
 
+.user-list {
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 10px;
+
+    margin-block: 10px;
+  }
+
+  li:nth-child(2n + 1) {
+    background: #fff2;
+  }
+
+  button {
+    &:hover {
+      filter: brightness(0.8);
+    }
+    &:active {
+      filter: brightness(0.7);
+    }
+  }
+}
+
 .group-info-header {
   display: flex;
   justify-content: space-between;

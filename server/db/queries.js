@@ -21,6 +21,77 @@ async function findUserById(id) {
   return rows[0];
 }
 
+async function getUsers(user_id) {
+  const SQL_GET_USERS = `
+    SELECT id, name, created
+    FROM users
+    WHERE id != $1
+    ORDER BY name, id
+  `;
+
+  const usersPromise = pool.query(SQL_GET_USERS, [user_id]);
+
+  const SQL_GET_FRIENDSHIPS = `
+    SELECT id, state, modified, sender_id, receiver_id
+    FROM friendships
+    WHERE sender_id = $1 OR receiver_id = $1
+    ORDER BY state, modified DESC, friendships.id DESC
+  `;
+  const friendshipsPromise = pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
+
+  const values = await Promise.all([usersPromise, friendshipsPromise]);
+  const users = values[0].rows;
+  const friendshipArr = values[1].rows;
+
+  for (const friendship of friendshipArr) {
+    if (friendship.sender_id === user_id) {
+      friendship.user_id = friendship.receiver_id;
+      friendship.initiator = true;
+    } else {
+      friendship.user_id = friendship.sender_id;
+      friendship.initiator = false;
+    }
+
+    delete friendship.receiver_id;
+    delete friendship.sender_id;
+  }
+
+  for (const user of users) {
+    const friendship = friendshipArr.find(
+      (friendship) => friendship.user_id === user.id,
+    );
+    if (friendship) user.friendship = friendship;
+  }
+
+  return users;
+}
+
+async function addFriend(sender_id, receiver_id) {
+  //verify that the receiver exist
+  const receiver = await findUserById(receiver_id);
+  if (!receiver) return false;
+
+  //make sure there isn't a previous entry
+  const SQL_FIND_ENTRY = `
+    SELECT *
+    FROM friendships
+    WHERE sender_id = $1 AND receiver_id = $2
+    OR sender_id = $2 AND receiver_id = $1
+  `;
+  const entry = await pool.query(SQL_FIND_ENTRY, [sender_id, receiver_id]);
+  if (entry.rows[0]) return false;
+
+  const SQL_ADD_FRIEND = `
+    INSERT INTO friendships
+    ( sender_id, receiver_id )
+    VALUES ( $1, $2 )
+  `;
+  await pool.query(SQL_ADD_FRIEND, [sender_id, receiver_id]);
+
+  const { rows } = await pool.query(SQL_FIND_ENTRY, [sender_id, receiver_id]);
+  return rows[0];
+}
+
 async function getFriendsByUserId(userId) {
   const SQL_GET_FRIENDS = `
     SELECT friendships.id, state, modified, sender_id, sender.name AS sender, receiver_id, receiver.name AS receiver
@@ -52,20 +123,33 @@ async function getFriendsByUserId(userId) {
   return rows;
 }
 
-async function updateFriendRequest(id, user_id, state) {
-  //check validity of state, abort if invalid
-  if (!Object.values(FRIEND_REQUEST_TYPE).includes(state)) return false;
-  if (state === FRIEND_REQUEST_TYPE.PENDING) return false;
-
-  const SQL_FIND_FRIEND = `
+async function findFriendshipById(id) {
+  const SQL_FIND_FRIENDSHIP = `
     SELECT * 
     FROM friendships
     WHERE id = $1
   `;
 
+  const { rows } = await pool.query(SQL_FIND_FRIENDSHIP, [id]);
+  return rows[0];
+}
+
+async function setFriendshipStateById(id, state) {
+  const SQL_UPDATE_FRIENDSHIP = `
+    UPDATE friendships
+    SET state = $2
+    WHERE id = $1
+  `;
+  await pool.query(SQL_UPDATE_FRIENDSHIP, [id, state]);
+}
+
+async function updateFriendRequest(id, user_id, state) {
+  //check validity of state, abort if invalid
+  if (!Object.values(FRIEND_REQUEST_TYPE).includes(state)) return false;
+  if (state === FRIEND_REQUEST_TYPE.PENDING) return false;
+
   //search for id, abort if not found
-  const friendSearch = await pool.query(SQL_FIND_FRIEND, [id]);
-  const friend = friendSearch.rows[0];
+  const friend = await findFriendshipById(id);
   if (!friend) return false;
 
   //user allowed to modify if user is receiver, else abort
@@ -74,15 +158,42 @@ async function updateFriendRequest(id, user_id, state) {
   //if state is no longer pending, abort attempt
   if (friend.state !== FRIEND_REQUEST_TYPE.PENDING) return false;
 
-  const SQL_UPDATE_FRIEND = `
+  await setFriendshipStateById(id, state);
+
+  const updatedFriendship = await findFriendshipById(id);
+  return updatedFriendship;
+}
+
+async function reverseFriendRequest(id, user_id) {
+  //search for id, abort if not found
+  const friendship = await findFriendshipById(id);
+  if (!friendship) return new Error("friendship id not found");
+
+  //must be a request meant for user, which has been rejected by user. Else abort.
+  if (
+    !(
+      friendship.receiver_id === user_id &&
+      friendship.state === FRIEND_REQUEST_TYPE.REJECTED
+    )
+  )
+    return new Error("friendship conditions not valid");
+
+  const SQL_UPDATE_FRIENDSHIP = `
     UPDATE friendships
-    SET state = $2
+    SET sender_id = $2,
+    receiver_id = $3,
+    state = $4
     WHERE id = $1
   `;
-  await pool.query(SQL_UPDATE_FRIEND, [id, state]);
+  await pool.query(SQL_UPDATE_FRIENDSHIP, [
+    id,
+    user_id,
+    friendship.sender_id,
+    FRIEND_REQUEST_TYPE.PENDING,
+  ]);
 
-  const { rows } = await pool.query(SQL_FIND_FRIEND, [id]);
-  return rows[0];
+  const updatedFriendship = await findFriendshipById(id);
+  return updatedFriendship;
 }
 
 async function getGroups() {
@@ -196,8 +307,12 @@ export default {
   registerUser,
   findUser,
   findUserById,
+  getUsers,
   getFriendsByUserId,
+  addFriend,
+  findFriendshipById,
   updateFriendRequest,
+  reverseFriendRequest,
   getGroups,
   getGroupsByUserId,
   getGroupsSummaryByUserId,

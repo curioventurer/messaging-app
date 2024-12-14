@@ -1,32 +1,18 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import FriendItemButtonBar from "./FriendItemButtonBar";
-import getDuration from "../controllers/getDuration.js";
-
-function getDurationString(date) {
-  const duration = getDuration(date);
-  const string =
-    duration.value +
-    " " +
-    duration.type +
-    (duration.value !== 1 ? "s" : "") +
-    " ago";
-
-  return string;
-}
+import DurationFormat from "../controllers/DurationFormat.js";
 
 function FriendItem({ friend }) {
   let [duration, setDuration] = useState("");
 
   useEffect(() => {
     function updateDuration() {
-      setDuration(getDurationString(friend.modified));
+      setDuration(DurationFormat.getString(friend.modified));
     }
     updateDuration();
 
-    const interval = setInterval(() => {
-      updateDuration();
-    }, 5000);
+    const interval = setInterval(updateDuration, 5000);
 
     return () => {
       clearInterval(interval);

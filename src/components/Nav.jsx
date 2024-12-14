@@ -15,6 +15,11 @@ function Nav() {
           </Link>
         </li>
         <li>
+          <Link to="/users" className="button-link">
+            Users
+          </Link>
+        </li>
+        <li>
           <a href="/log-out" className="button-link">
             Log Out
           </a>

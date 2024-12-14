@@ -38,6 +38,20 @@ function routes(app) {
     }),
   );
 
+  app.get("/api/user/:user_id", async (req, res) => {
+    const user_id = req.params.user_id;
+    const user = await queries.findUserById(user_id);
+    if (user) delete user.password;
+
+    res.json(user);
+  });
+
+  app.get("/api/users", async (req, res) => {
+    const userInfo = await req.user();
+    const users = await queries.getUsers(userInfo.id);
+    res.json(users);
+  });
+
   app.get("/api/friends", async (req, res) => {
     const userInfo = await req.user();
     const friends = await queries.getFriendsByUserId(userInfo.id);

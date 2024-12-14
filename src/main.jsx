@@ -9,6 +9,7 @@ import Layout from "./components/Layout";
 import Home from "./components/Home";
 import Room from "./components/Room";
 import FriendOverview from "./components/FriendOverview";
+import UserList from "./components/UserList";
 import SignUpForm from "./components/SignUpForm";
 import LogInForm from "./components/LogInForm";
 import "/node_modules/socket.io/client-dist/socket.io.js";
@@ -42,6 +43,10 @@ const router = createBrowserRouter([
       {
         path: "/friend",
         element: <FriendOverview />,
+      },
+      {
+        path: "/users",
+        element: <UserList />,
       },
     ],
   },
