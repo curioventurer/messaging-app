@@ -5,7 +5,7 @@ function MessagingForm() {
   const { userData, groupId, appendMessage, deleteSentMsg } =
     useContext(GroupContext);
 
-  let [message, setMessage] = useState("");
+  const [message, setMessage] = useState("");
 
   /*Provide react key values for sent message.
     Negative values are used to differentiate from normal message.

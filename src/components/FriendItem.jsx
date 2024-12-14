@@ -4,7 +4,7 @@ import FriendItemButtonBar from "./FriendItemButtonBar";
 import DurationFormat from "../controllers/DurationFormat.js";
 
 function FriendItem({ friend }) {
-  let [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState("");
 
   useEffect(() => {
     function updateDuration() {

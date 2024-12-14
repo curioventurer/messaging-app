@@ -3,7 +3,7 @@ import GroupItem from "./GroupItem";
 import sortGroups from "../controllers/sortGroups.js";
 
 function GroupList() {
-  let [groups, setGroups] = useState([]);
+  const [groups, setGroups] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();

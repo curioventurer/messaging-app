@@ -5,7 +5,7 @@ import { FRIEND_REQUEST_TYPE } from "../controllers/constants";
 import DurationFormat from "../controllers/DurationFormat";
 
 function UserItem({ user }) {
-  let [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState("");
 
   const modified = user.friendship?.modified;
   useEffect(() => {

@@ -3,7 +3,7 @@ import UserItem from "./UserItem";
 import clearSocket from "../controllers/clearSocket.js";
 
 function UserList() {
-  let [users, setUsers] = useState([]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();

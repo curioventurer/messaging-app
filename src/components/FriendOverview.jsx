@@ -5,7 +5,7 @@ import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
 
 function FriendOverview() {
-  let [friends, setFriends] = useState([]);
+  const [friends, setFriends] = useState([]);
   const controllerRef = useRef(new AbortController());
 
   useEffect(() => {

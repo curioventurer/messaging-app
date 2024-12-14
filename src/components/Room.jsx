@@ -35,8 +35,8 @@ function Room() {
   groupId = Number(groupId);
   const userData = useRouteLoaderData("layout");
 
-  let [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
-  let [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
+  const [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
+  const [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
