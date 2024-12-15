@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import UserItem from "./UserItem";
 import clearSocket from "../controllers/clearSocket.js";
+import sortUsers from "../controllers/sortUsers.js";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -26,9 +27,11 @@ function UserList() {
 
   useEffect(() => {
     window.socket.on("update friendship", updateFriendship);
+    window.socket.on("add user", addUser);
 
     return () => {
       window.socket.off("update friendship", updateFriendship);
+      window.socket.off("add user", addUser);
     };
   }, []);
 
@@ -55,6 +58,17 @@ function UserList() {
         updatedUser,
         ...prevUsers.slice(index + 1),
       ];
+
+      return newUsers;
+    });
+  }
+
+  function addUser(newUser) {
+    setUsers((prevUsers) => {
+      const index = prevUsers.findIndex((user) => user.id === newUser.id);
+      if (index !== -1) return prevUsers;
+
+      const newUsers = sortUsers([...prevUsers, newUser]);
 
       return newUsers;
     });

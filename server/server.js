@@ -19,7 +19,7 @@ const sessionMiddleware = session({
   saveUninitialised: false,
 });
 app.use(sessionMiddleware);
-comm(server, sessionMiddleware);
+const ioHandlers = comm(server, sessionMiddleware);
 auth(app);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -43,7 +43,7 @@ app.use(function (req, _, next) {
   next();
 });
 
-routes(app);
+routes(app, ioHandlers);
 
 const PORT = 3000;
 server.listen(PORT, function () {

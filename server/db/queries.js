@@ -26,7 +26,7 @@ async function getUsers(user_id) {
     SELECT id, name, created
     FROM users
     WHERE id != $1
-    ORDER BY name, id
+    ORDER BY name
   `;
 
   const usersPromise = pool.query(SQL_GET_USERS, [user_id]);

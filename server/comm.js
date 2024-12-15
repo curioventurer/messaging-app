@@ -119,6 +119,16 @@ function comm(server, sessionMiddleware) {
       io.to("group:" + data.groupId).emit("message", postedMessage);
     });
   });
+
+  async function addUser(name) {
+    const userInfo = await queries.findUser(name);
+    if (!userInfo) return;
+
+    delete userInfo.password;
+    io.emit("add user", userInfo);
+  }
+
+  return { addUser };
 }
 
 export default comm;

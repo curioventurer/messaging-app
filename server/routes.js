@@ -1,7 +1,7 @@
 import passport from "passport";
 import queries from "./db/queries.js";
 
-function routes(app) {
+function routes(app, ioHandlers) {
   //get logged in status. return userInfo if logged in, false if logged out.
   app.get("/api/auth-status", async (req, res) => {
     if (req.isAuthenticated()) {
@@ -28,6 +28,9 @@ function routes(app) {
   app.post("/sign-up", async (req, res) => {
     await queries.registerUser(req.body.name, req.body.password);
     res.redirect("/");
+
+    //update online users on successful registration of new users
+    ioHandlers.addUser(req.body.name);
   });
 
   app.post(
