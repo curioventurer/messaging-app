@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext } from "react";
 import { useParams, useRouteLoaderData } from "react-router-dom";
-import GroupList from "./GroupList.jsx";
+import ChatList from "./ChatList.jsx";
 import GroupInfo from "./GroupInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import clearSocket from "../controllers/clearSocket.js";
@@ -131,7 +131,7 @@ function Room() {
           toggleGroupInfo,
         }}
       >
-        {isGroupInfoShown ? <GroupInfo /> : <GroupList />}
+        {isGroupInfoShown ? <GroupInfo /> : <ChatList />}
         <RoomUI />
       </GroupContext.Provider>
     </div>

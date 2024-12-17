@@ -9,7 +9,7 @@ function sortGroups(groups) {
       else it is lastMessage and should use created time.
     */
     const timeA = new Date(itemA.joined ?? itemA.created).getTime();
-    const timeB = new Date(itemA.joined ?? itemB.created).getTime();
+    const timeB = new Date(itemB.joined ?? itemB.created).getTime();
     const timeDiff = timeB - timeA;
 
     if (timeDiff !== 0) return timeDiff;

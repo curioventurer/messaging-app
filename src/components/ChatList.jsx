@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import GroupItem from "./GroupItem";
+import ChatItem from "./ChatItem.jsx";
 import sortGroups from "../controllers/sortGroups.js";
 
-function GroupList() {
+function ChatList() {
   const [groups, setGroups] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const request = new Request("/api/groups", { signal: controller.signal });
+    const request = new Request("/api/chats", { signal: controller.signal });
 
     fetch(request)
       .then((res) => res.json())
@@ -54,11 +54,11 @@ function GroupList() {
     <ul className="group-list room-left-screen">
       {groups.map((group) => (
         <li key={group.id}>
-          <GroupItem group={group} />
+          <ChatItem group={group} />
         </li>
       ))}
     </ul>
   );
 }
 
-export default GroupList;
+export default ChatList;

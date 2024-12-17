@@ -1,5 +1,5 @@
 import { useRouteLoaderData } from "react-router-dom";
-import GroupList from "./GroupList";
+import ChatList from "./ChatList";
 
 function Home() {
   const userData = useRouteLoaderData("layout");
@@ -7,7 +7,7 @@ function Home() {
   return (
     <>
       <p>Welcome {userData.name}, to our messaging app!</p>
-      <GroupList />
+      <ChatList />
     </>
   );
 }

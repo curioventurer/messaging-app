@@ -11,7 +11,7 @@ function FriendItemButtonBar({ friend }) {
 
   return (
     <>
-      {friend.state === FRIEND_REQUEST_TYPE.PENDING && !friend.initiator ? (
+      {friend.state === FRIEND_REQUEST_TYPE.PENDING && friend.is_initiator ? (
         <ul className="button-bar">
           <li>
             <button

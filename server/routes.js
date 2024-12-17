@@ -26,11 +26,11 @@ function routes(app, ioHandlers) {
   });
 
   app.post("/sign-up", async (req, res) => {
-    await queries.registerUser(req.body.name, req.body.password);
+    const user = await queries.registerUser(req.body.name, req.body.password);
     res.redirect("/");
 
     //update online users on successful registration of new users
-    ioHandlers.addUser(req.body.name);
+    if (user) ioHandlers.addUser(user);
   });
 
   app.post(
@@ -57,14 +57,14 @@ function routes(app, ioHandlers) {
 
   app.get("/api/friends", async (req, res) => {
     const userInfo = await req.user();
-    const friends = await queries.getFriendsByUserId(userInfo.id);
+    const friends = await queries.getFriendships(userInfo.id);
     res.json(friends);
   });
 
-  app.get("/api/groups", async (req, res) => {
+  app.get("/api/chats", async (req, res) => {
     const userInfo = await req.user();
-    const groupsSummary = await queries.getGroupsSummaryByUserId(userInfo.id);
-    res.json(groupsSummary);
+    const chatList = await queries.getChatList(userInfo.id);
+    res.json(chatList);
   });
 
   //get group messages, and other info

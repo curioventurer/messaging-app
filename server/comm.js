@@ -11,26 +11,25 @@ async function initializeConnection(socket) {
   socket.join(rooms);
 }
 
-function formatUpdateFriendship(friendship, sender = true) {
+function formatUpdateFriendship(
+  friendship,
+  { sender_id, receiver_id },
+  isForSender = true,
+) {
   const data = {
-    id: friendship.id,
-    state: friendship.state,
-    modified: friendship.modified,
-    user_id: sender ? friendship.receiver_id : friendship.sender_id,
-    initiator: sender,
+    ...friendship,
+    user_id: isForSender ? receiver_id : sender_id,
+    is_initiator: !isForSender,
   };
   return data;
 }
 
-function emitUpdateFriendship(io, friendship) {
-  const senderData = formatUpdateFriendship(friendship, true);
-  io.to("user:" + friendship.sender_id).emit("update friendship", senderData);
+function emitUpdateFriendship(io, friendship, user_ids) {
+  const senderData = formatUpdateFriendship(friendship, user_ids, true);
+  io.to("user:" + user_ids.sender_id).emit("update friendship", senderData);
 
-  const receiverData = formatUpdateFriendship(friendship, false);
-  io.to("user:" + friendship.receiver_id).emit(
-    "update friendship",
-    receiverData,
-  );
+  const receiverData = formatUpdateFriendship(friendship, user_ids, false);
+  io.to("user:" + user_ids.receiver_id).emit("update friendship", receiverData);
 }
 
 function onlyForHandshake(middleware) {
@@ -72,31 +71,45 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("add friend", async (data) => {
-      const friendship = await queries.addFriend(socket.user.id, data.id);
+      const user_ids = {
+        sender_id: socket.user.id,
+        receiver_id: data.id,
+      };
+      const friendship = await queries.addFriend(user_ids);
 
       if (!friendship) return;
-      emitUpdateFriendship(io, friendship);
+      emitUpdateFriendship(io, friendship, user_ids);
     });
 
     socket.on("friend request update", async (data) => {
-      const friendship = await queries.updateFriendRequest(
+      const response = await queries.updateFriendRequest(
         data.id,
         socket.user.id,
         data.state,
       );
 
-      if (!friendship) return;
-      emitUpdateFriendship(io, friendship);
+      if (!response) return;
+
+      const user_ids = {
+        sender_id: response.sender_id,
+        receiver_id: socket.user.id,
+      };
+      emitUpdateFriendship(io, response.update, user_ids);
     });
 
     socket.on("reverse friend request", async (data) => {
-      const friendship = await queries.reverseFriendRequest(
+      const response = await queries.reverseFriendRequest(
         data.id,
         socket.user.id,
       );
 
-      if (!friendship || friendship instanceof Error) return;
-      emitUpdateFriendship(io, friendship);
+      if (!response || response instanceof Error) return;
+
+      const user_ids = {
+        sender_id: socket.user.id,
+        receiver_id: response.receiver_id,
+      };
+      emitUpdateFriendship(io, response.update, user_ids);
     });
 
     socket.on("message", async (data, callback) => {
@@ -120,12 +133,8 @@ function comm(server, sessionMiddleware) {
     });
   });
 
-  async function addUser(name) {
-    const userInfo = await queries.findUser(name);
-    if (!userInfo) return;
-
-    delete userInfo.password;
-    io.emit("add user", userInfo);
+  async function addUser(user) {
+    io.emit("add user", user);
   }
 
   return { addUser };

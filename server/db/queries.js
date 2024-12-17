@@ -2,10 +2,12 @@ import pool from "./pool.js";
 import { FRIEND_REQUEST_TYPE } from "../../src/controllers/constants.js";
 
 async function registerUser(name, password) {
-  await pool.query("INSERT INTO users ( name, password ) VALUES ( $1, $2 )", [
-    name,
-    password,
-  ]);
+  const { rows } = await pool.query(
+    "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
+    [name, password],
+  );
+
+  return rows[0];
 }
 
 async function findUser(name) {
@@ -28,33 +30,13 @@ async function getUsers(user_id) {
     WHERE id != $1
     ORDER BY name
   `;
-
   const usersPromise = pool.query(SQL_GET_USERS, [user_id]);
 
-  const SQL_GET_FRIENDSHIPS = `
-    SELECT id, state, modified, sender_id, receiver_id
-    FROM friendships
-    WHERE sender_id = $1 OR receiver_id = $1
-    ORDER BY state, modified DESC, friendships.id DESC
-  `;
-  const friendshipsPromise = pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
+  const friendshipsPromise = getFriendships(user_id);
 
   const values = await Promise.all([usersPromise, friendshipsPromise]);
   const users = values[0].rows;
-  const friendshipArr = values[1].rows;
-
-  for (const friendship of friendshipArr) {
-    if (friendship.sender_id === user_id) {
-      friendship.user_id = friendship.receiver_id;
-      friendship.initiator = true;
-    } else {
-      friendship.user_id = friendship.sender_id;
-      friendship.initiator = false;
-    }
-
-    delete friendship.receiver_id;
-    delete friendship.sender_id;
-  }
+  const friendshipArr = values[1];
 
   for (const user of users) {
     const friendship = friendshipArr.find(
@@ -66,68 +48,70 @@ async function getUsers(user_id) {
   return users;
 }
 
-async function addFriend(sender_id, receiver_id) {
+async function addFriend({ sender_id, receiver_id }) {
   //verify that the receiver exist
   const receiver = await findUserById(receiver_id);
   if (!receiver) return false;
 
   //make sure there isn't a previous entry
   const SQL_FIND_ENTRY = `
-    SELECT *
-    FROM friendships
-    WHERE sender_id = $1 AND receiver_id = $2
-    OR sender_id = $2 AND receiver_id = $1
+    SELECT TRUE
+    FROM friendship_agents as agent1
+    INNER JOIN friendship_agents as agent2 ON agent1.friendships_id = agent2.friendships_id
+    WHERE agent1.user_id = $1
+    AND agent2.user_id = $2
   `;
   const entry = await pool.query(SQL_FIND_ENTRY, [sender_id, receiver_id]);
   if (entry.rows[0]) return false;
 
-  const SQL_ADD_FRIEND = `
+  const SQL_ADD_FRIENDSHIP = `
     INSERT INTO friendships
-    ( sender_id, receiver_id )
-    VALUES ( $1, $2 )
+    VALUES ( DEFAULT )
+    RETURNING *
   `;
-  await pool.query(SQL_ADD_FRIEND, [sender_id, receiver_id]);
+  const friendship = (await pool.query(SQL_ADD_FRIENDSHIP)).rows[0];
+  if (!friendship) return false; //insert failure
 
-  const { rows } = await pool.query(SQL_FIND_ENTRY, [sender_id, receiver_id]);
-  return rows[0];
+  const SQL_ADD_FRIENDSHIP_AGENT = `
+    INSERT INTO friendship_agents
+    ( friendships_id, user_id, is_initiator )
+    VALUES ( $1, $2, TRUE ),
+    ( $1, $3, FALSE )
+  `;
+  await pool.query(SQL_ADD_FRIENDSHIP_AGENT, [
+    friendship.id,
+    sender_id,
+    receiver_id,
+  ]);
+
+  return friendship;
 }
 
-async function getFriendsByUserId(userId) {
-  const SQL_GET_FRIENDS = `
-    SELECT friendships.id, state, modified, sender_id, sender.name AS sender, receiver_id, receiver.name AS receiver
+async function getFriendships(user_id) {
+  const SQL_GET_FRIENDSHIPS = `
+    SELECT friendships.id, friendships.state, friendships.modified, agent2.user_id, agent2.is_initiator, users.name
     FROM friendships
-    INNER JOIN users AS sender ON sender_id = sender.id
-    INNER JOIN users AS receiver ON receiver_id = receiver.id
-    WHERE sender_id = $1 OR receiver_id = $1
-    ORDER BY state, modified DESC, friendships.id DESC
+    INNER JOIN friendship_agents as agent1 ON friendships.id = agent1.friendships_id
+    INNER JOIN friendship_agents as agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN users ON agent2.user_id = users.id
+    WHERE agent1.user_id = $1
+    AND agent2.user_id != $1
+    ORDER BY friendships.state, friendships.modified DESC, friendships.id DESC
   `;
-  const { rows } = await pool.query(SQL_GET_FRIENDS, [userId]);
-
-  for (const friendship of rows) {
-    if (friendship.sender_id === userId) {
-      friendship.user_id = friendship.receiver_id;
-      friendship.name = friendship.receiver;
-      friendship.initiator = true;
-    } else {
-      friendship.user_id = friendship.sender_id;
-      friendship.name = friendship.sender;
-      friendship.initiator = false;
-    }
-
-    delete friendship.receiver_id;
-    delete friendship.receiver;
-    delete friendship.sender_id;
-    delete friendship.sender;
-  }
+  const { rows } = await pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
 
   return rows;
 }
 
 async function findFriendshipById(id) {
   const SQL_FIND_FRIENDSHIP = `
-    SELECT * 
+    SELECT friendships.id, friendships.state, friendships.modified, agent1.user_id as sender_id, agent2.user_id as receiver_id
     FROM friendships
-    WHERE id = $1
+    INNER JOIN friendship_agents as agent1 ON friendships.id = agent1.friendships_id
+    INNER JOIN friendship_agents as agent2 ON friendships.id = agent2.friendships_id
+    WHERE friendships.id = $1
+    AND agent1.is_initiator = TRUE
+    AND agent2.is_initiator = FALSE
   `;
 
   const { rows } = await pool.query(SQL_FIND_FRIENDSHIP, [id]);
@@ -139,8 +123,10 @@ async function setFriendshipStateById(id, state) {
     UPDATE friendships
     SET state = $2
     WHERE id = $1
+    RETURNING *
   `;
-  await pool.query(SQL_UPDATE_FRIENDSHIP, [id, state]);
+  const { rows } = await pool.query(SQL_UPDATE_FRIENDSHIP, [id, state]);
+  return rows[0];
 }
 
 async function updateFriendRequest(id, user_id, state) {
@@ -149,19 +135,18 @@ async function updateFriendRequest(id, user_id, state) {
   if (state === FRIEND_REQUEST_TYPE.PENDING) return false;
 
   //search for id, abort if not found
-  const friend = await findFriendshipById(id);
-  if (!friend) return false;
+  const friendship = await findFriendshipById(id);
+  if (!friendship) return false;
 
   //user allowed to modify if user is receiver, else abort
-  if (friend.receiver_id !== user_id) return false;
+  if (friendship.receiver_id !== user_id) return false;
 
   //if state is no longer pending, abort attempt
-  if (friend.state !== FRIEND_REQUEST_TYPE.PENDING) return false;
+  if (friendship.state !== FRIEND_REQUEST_TYPE.PENDING) return false;
 
-  await setFriendshipStateById(id, state);
+  const update = await setFriendshipStateById(id, state);
 
-  const updatedFriendship = await findFriendshipById(id);
-  return updatedFriendship;
+  return { update, sender_id: friendship.sender_id };
 }
 
 async function reverseFriendRequest(id, user_id) {
@@ -178,22 +163,21 @@ async function reverseFriendRequest(id, user_id) {
   )
     return new Error("friendship conditions not valid");
 
-  const SQL_UPDATE_FRIENDSHIP = `
-    UPDATE friendships
-    SET sender_id = $2,
-    receiver_id = $3,
-    state = $4
-    WHERE id = $1
-  `;
-  await pool.query(SQL_UPDATE_FRIENDSHIP, [
+  const setStatePromise = setFriendshipStateById(
     id,
-    user_id,
-    friendship.sender_id,
     FRIEND_REQUEST_TYPE.PENDING,
-  ]);
+  );
 
-  const updatedFriendship = await findFriendshipById(id);
-  return updatedFriendship;
+  const SQL_INVERT_INITIATOR = `
+    UPDATE friendship_agents
+    SET is_initiator = NOT is_initiator
+    WHERE friendships_id = $1
+  `;
+  const invertPromise = pool.query(SQL_INVERT_INITIATOR, [id]);
+
+  const values = await Promise.all([setStatePromise, invertPromise]);
+  const update = values[0];
+  return { update, receiver_id: friendship.sender_id };
 }
 
 async function getGroups() {
@@ -203,18 +187,18 @@ async function getGroups() {
 
 async function getGroupsByUserId(userId) {
   const SQL_GET_GROUPS = `
-    SELECT groups.id, name, groups.created, permission, memberships.created as joined
+    SELECT groups.id, groups.name, memberships.created as joined
     FROM groups
     INNER JOIN memberships
-    ON groups.id = group_id
-    WHERE user_id = $1
+    ON groups.id = memberships.group_id
+    WHERE memberships.user_id = $1
     ORDER BY groups.name
   `;
   const { rows } = await pool.query(SQL_GET_GROUPS, [userId]);
   return rows;
 }
 
-async function getGroupsSummaryByUserId(userId) {
+async function getChatList(userId) {
   const groups = await getGroupsByUserId(userId);
   const promises = [];
 
@@ -228,6 +212,15 @@ async function getGroupsSummaryByUserId(userId) {
   await Promise.all(promises);
 
   return groups;
+  /*
+  const SQL_GET_PRIVATE_CHATS = `
+    SELECT *
+    FROM friendships
+    
+    WHERE sender_id = $1 AND sender_chat = TRUE OR receiver_id = $1 AND receiver_chat = TRUE
+  `;
+  const privateChats = await pool.query(SQL_GET_PRIVATE_CHATS, [userId]);
+*/
 }
 
 async function findGroupById(groupId) {
@@ -239,53 +232,32 @@ async function findGroupById(groupId) {
 
 async function getMembersByGroupId(groupId) {
   const SQL_GET_MEMBERS = `
-    SELECT memberships.id, user_id, name, permission, memberships.created
+    SELECT memberships.id, users.id as user_id, users.name, memberships.permission, memberships.created
     FROM memberships
     INNER JOIN users
-    ON user_id = users.id
-    WHERE group_id = $1
-    ORDER BY permission DESC, name
+    ON memberships.user_id = users.id
+    WHERE memberships.group_id = $1
+    ORDER BY memberships.permission DESC, users.name
   `;
   const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
   return rows;
 }
 
 async function postMessage(groupId, userId, message) {
-  await pool.query(
-    "INSERT INTO messages ( group_id, user_id, text ) VALUES ( $1, $2, $3 )",
+  const { rows } = await pool.query(
+    "INSERT INTO messages ( group_id, user_id, text ) VALUES ( $1, $2, $3 )  RETURNING *",
     [groupId, userId, message],
   );
-
-  return await findPostedMessage(groupId, userId, message);
-}
-
-async function findPostedMessage(groupId, userId, message) {
-  const SQL_FIND_MESSAGE = `
-    SELECT *
-    FROM messages
-    WHERE user_id = $2
-    AND group_id = $1
-    AND text = $3
-    ORDER BY messages.created DESC, messages.id DESC
-    LIMIT 1
-  `;
-
-  const { rows } = await pool.query(SQL_FIND_MESSAGE, [
-    groupId,
-    userId,
-    message,
-  ]);
-
   return rows[0];
 }
 
 async function getMessagesByGroupId(groupId, limit = -1) {
   const SQL_GET_MESSAGES = `
-    SELECT messages.id, text, messages.created, user_id, name
+    SELECT messages.id, messages.text, messages.created, users.id as user_id, users.name
     FROM messages
     INNER JOIN users
-    ON user_id = users.id
-    WHERE group_id = $1
+    ON messages.user_id = users.id
+    WHERE messages.group_id = $1
     ORDER BY messages.created DESC, messages.id DESC
     LIMIT $2
   `;
@@ -308,17 +280,16 @@ export default {
   findUser,
   findUserById,
   getUsers,
-  getFriendsByUserId,
+  getFriendships,
   addFriend,
   findFriendshipById,
   updateFriendRequest,
   reverseFriendRequest,
   getGroups,
   getGroupsByUserId,
-  getGroupsSummaryByUserId,
+  getChatList,
   findGroupById,
   getMembersByGroupId,
   postMessage,
-  findPostedMessage,
   getMessagesByGroupId,
 };

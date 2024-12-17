@@ -42,7 +42,7 @@ function UserItem({ user }) {
     friendshipPanel = <p>friends</p>;
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.PENDING &&
-    user.friendship.initiator
+    !user.friendship.is_initiator
   )
     friendshipPanel = (
       <p>
@@ -52,12 +52,12 @@ function UserItem({ user }) {
     );
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.PENDING &&
-    !user.friendship.initiator
+    user.friendship.is_initiator
   )
     friendshipPanel = <FriendItemButtonBar friend={user.friendship} />;
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED &&
-    user.friendship.initiator
+    !user.friendship.is_initiator
   )
     friendshipPanel = (
       <p>
@@ -67,7 +67,7 @@ function UserItem({ user }) {
     );
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED &&
-    !user.friendship.initiator
+    user.friendship.is_initiator
   )
     friendshipPanel = (
       <p>

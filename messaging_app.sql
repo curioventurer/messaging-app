@@ -13,8 +13,6 @@ CREATE TYPE friend_request_type AS ENUM ('pending', 'accepted', 'rejected');
 
 CREATE TABLE friendships (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  sender_id INT NOT NULL REFERENCES users ( id ),
-  receiver_id INT NOT NULL REFERENCES users ( id ),
   state friend_request_type DEFAULT 'pending',
   modified TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -50,9 +48,19 @@ CREATE TABLE memberships (
 create table messages (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   text VARCHAR ( 255 ) NOT NULL,
-  group_id INT NOT NULL REFERENCES groups ( id ),
+  group_id INT REFERENCES groups ( id ),
+  receiver_id INT REFERENCES users ( id ),
   user_id INT NOT NULL REFERENCES users ( id ),
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+create table friendship_agents (
+  id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  friendships_id INT NOT NULL REFERENCES friendships ( id ),
+  user_id INT NOT NULL REFERENCES users ( id ),
+  is_initiator BOOLEAN DEFAULT TRUE,
+  is_chat_shown BOOLEAN DEFAULT FALSE,
+  last_read_message_id INT REFERENCES messages ( id )
 );
 
 INSERT INTO users ( name, password, created ) VALUES
@@ -65,14 +73,34 @@ INSERT INTO users ( name, password, created ) VALUES
   ( 'john lock door', 'pin', '2024-10-16 10:07:00+08' ),
   ( 'bob train', 'keg', '2024-10-17 10:07:00+08' );
 
-INSERT INTO friendships ( sender_id, receiver_id, state, modified ) VALUES
-  ( 2, 1, 'accepted', '2023-10-13 09:07:00+07' ),
-  ( 1, 3, 'accepted', '2024-09-02 02:07:00+06' ),
-  ( 1, 4, 'rejected', '2024-10-14 19:07:00+06' ),
-  ( 1, 5, 'pending', '2024-10-15 07:07:00+06' ),
-  ( 6, 1, 'rejected', '2024-10-16 19:07:00+06' ),
-  ( 7, 1, 'pending', '2024-10-17 07:07:00+06' ),
-  ( 5, 7, 'accepted', '2024-10-18 07:07:00+06' );
+INSERT INTO friendships ( state, modified ) VALUES
+  ( 'accepted', '2023-10-13 09:07:00+07' ),
+  ( 'accepted', '2024-09-02 02:07:00+06' ),
+  ( 'rejected', '2024-10-14 19:07:00+06' ),
+  ( 'pending', '2024-10-15 07:07:00+06' ),
+  ( 'rejected', '2024-10-16 19:07:00+06' ),
+  ( 'pending', '2024-10-17 07:07:00+06' ),
+  ( 'accepted', '2024-10-18 07:07:00+06' );
+
+INSERT INTO friendship_agents ( friendships_id, user_id, is_initiator ) VALUES
+  ( 1, 2, TRUE ),
+  ( 1, 1, FALSE ),
+  ( 2, 1, TRUE ),
+  ( 2, 3, FALSE ),
+  ( 3, 1, TRUE ),
+  ( 3, 4, FALSE ),
+  ( 4, 1, TRUE ),
+  ( 4, 5, FALSE ),
+  ( 5, 6, TRUE ),
+  ( 5, 1, FALSE ),
+  ( 6, 7, TRUE ),
+  ( 6, 1, FALSE ),
+  ( 7, 5, TRUE ),
+  ( 7, 7, FALSE );
+
+UPDATE friendship_agents SET is_chat_shown = TRUE WHERE id = 3;
+UPDATE friendship_agents SET is_chat_shown = TRUE WHERE id = 4;
+UPDATE friendship_agents SET is_chat_shown = TRUE WHERE id = 2;
 
 INSERT INTO groups ( name, created ) VALUES
   ( 'comics galore', '2020-08-31 13:07:30+06' ),
@@ -109,3 +137,11 @@ INSERT INTO messages ( text, group_id, user_id, created ) VALUES
   ( 'Why are you here', 1, 2, '2024-10-28 08:32:56+07' ),
   ( 'this place is supposed provide news on stuffs', 1, 1, '2024-10-29 10:32:56+06' ),
   ( 'abandoned though', 1, 2, '2024-10-30 11:32:56+07' );
+
+INSERT INTO messages ( text, receiver_id, user_id, created ) VALUES
+  ( 'How are you', 3, 1, '2024-10-31 13:57:58+06' ),
+  ( 'When are you free', 2, 1, '2024-11-01 13:59:58+07' ),
+  ( 'Hi', 1, 4, '2024-11-01 13:59:58-01' ),
+  ( 'you still there', 3, 1, '2024-11-02 13:58:58+06' ),
+  ( 'I am fine', 1, 3, '2024-11-03 13:59:58+04' ),
+  ( 'great', 3, 1, '2024-11-04 13:57:58+06' );

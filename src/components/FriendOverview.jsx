@@ -96,15 +96,15 @@ function FriendOverview() {
   );
   const sendRequest = friends.filter(
     (friend) =>
-      friend.state === FRIEND_REQUEST_TYPE.PENDING && friend.initiator,
+      friend.state === FRIEND_REQUEST_TYPE.PENDING && !friend.is_initiator,
   );
   const receivedRequest = friends.filter(
     (friend) =>
-      friend.state === FRIEND_REQUEST_TYPE.PENDING && !friend.initiator,
+      friend.state === FRIEND_REQUEST_TYPE.PENDING && friend.is_initiator,
   );
   const rejectedRequest = friends.filter(
     (friend) =>
-      friend.state === FRIEND_REQUEST_TYPE.REJECTED && friend.initiator,
+      friend.state === FRIEND_REQUEST_TYPE.REJECTED && !friend.is_initiator,
   );
 
   return (

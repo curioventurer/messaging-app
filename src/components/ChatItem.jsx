@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
-function GroupItem({ group }) {
+function ChatItem({ group }) {
   const { groupId } = useContext(GroupContext);
   const lastMessage = group.lastMessage;
 
@@ -31,8 +31,8 @@ function GroupItem({ group }) {
   );
 }
 
-GroupItem.propTypes = {
+ChatItem.propTypes = {
   group: PropTypes.object.isRequired,
 };
 
-export default GroupItem;
+export default ChatItem;
