@@ -60,6 +60,7 @@ create table friendship_agents (
   user_id INT NOT NULL REFERENCES users ( id ),
   is_initiator BOOLEAN DEFAULT TRUE,
   is_chat_shown BOOLEAN DEFAULT FALSE,
+  chat_joined TIMESTAMPTZ,
   last_read_message_id INT REFERENCES messages ( id )
 );
 
@@ -71,7 +72,9 @@ INSERT INTO users ( name, password, created ) VALUES
   ( 'hue', 'loop', '2024-10-14 10:07:00-03' ),
   ( 'alex', 'rain', '2024-10-15 10:07:00+08' ),
   ( 'john lock door', 'pin', '2024-10-16 10:07:00+08' ),
-  ( 'bob train', 'keg', '2024-10-17 10:07:00+08' );
+  ( 'bob train', 'keg', '2024-10-17 10:07:00+08' ),
+  ( 'lock', 'bun', '2024-10-18 10:07:00+08' ),
+  ( 'orange', 'sweet', '2024-10-19 10:07:00+08' );
 
 INSERT INTO friendships ( state, modified ) VALUES
   ( 'accepted', '2023-10-13 09:07:00+07' ),
@@ -80,7 +83,9 @@ INSERT INTO friendships ( state, modified ) VALUES
   ( 'pending', '2024-10-15 07:07:00+06' ),
   ( 'rejected', '2024-10-16 19:07:00+06' ),
   ( 'pending', '2024-10-17 07:07:00+06' ),
-  ( 'accepted', '2024-10-18 07:07:00+06' );
+  ( 'accepted', '2024-10-18 07:07:00+06' ),
+  ( 'accepted', '2024-10-18 07:08:00+06' ),
+  ( 'accepted', '2024-10-18 07:09:00+06' );
 
 INSERT INTO friendship_agents ( friendships_id, user_id, is_initiator ) VALUES
   ( 1, 2, TRUE ),
@@ -96,11 +101,16 @@ INSERT INTO friendship_agents ( friendships_id, user_id, is_initiator ) VALUES
   ( 6, 7, TRUE ),
   ( 6, 1, FALSE ),
   ( 7, 5, TRUE ),
-  ( 7, 7, FALSE );
+  ( 7, 7, FALSE ),
+  ( 8, 8, TRUE ),
+  ( 8, 1, FALSE ),
+  ( 9, 9, TRUE ),
+  ( 9, 1, FALSE );
 
-UPDATE friendship_agents SET is_chat_shown = TRUE WHERE id = 3;
-UPDATE friendship_agents SET is_chat_shown = TRUE WHERE id = 4;
-UPDATE friendship_agents SET is_chat_shown = TRUE WHERE id = 2;
+UPDATE friendship_agents SET is_chat_shown = TRUE, chat_joined = CURRENT_TIMESTAMP WHERE id = 3;
+UPDATE friendship_agents SET is_chat_shown = TRUE, chat_joined = CURRENT_TIMESTAMP WHERE id = 4;
+UPDATE friendship_agents SET is_chat_shown = TRUE, chat_joined = CURRENT_TIMESTAMP WHERE id = 2;
+UPDATE friendship_agents SET is_chat_shown = TRUE, chat_joined = CURRENT_TIMESTAMP WHERE id = 16;
 
 INSERT INTO groups ( name, created ) VALUES
   ( 'comics galore', '2020-08-31 13:07:30+06' ),
@@ -141,7 +151,8 @@ INSERT INTO messages ( text, group_id, user_id, created ) VALUES
 INSERT INTO messages ( text, receiver_id, user_id, created ) VALUES
   ( 'How are you', 3, 1, '2024-10-31 13:57:58+06' ),
   ( 'When are you free', 2, 1, '2024-11-01 13:59:58+07' ),
-  ( 'Hi', 1, 4, '2024-11-01 13:59:58-01' ),
+  ( 'Hi', 1, 8, '2024-11-01 13:59:58-01' ),
+  ( 'can you see this', 1, 9, '2024-11-01 14:59:58-01' ),
   ( 'you still there', 3, 1, '2024-11-02 13:58:58+06' ),
   ( 'I am fine', 1, 3, '2024-11-03 13:59:58+04' ),
   ( 'great', 3, 1, '2024-11-04 13:57:58+06' );

@@ -1,5 +1,6 @@
 import { useState, useEffect, createContext } from "react";
 import { useParams, useRouteLoaderData } from "react-router-dom";
+import PropTypes from "prop-types";
 import ChatList from "./ChatList.jsx";
 import GroupInfo from "./GroupInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
@@ -22,7 +23,9 @@ const GROUP_CONTEXT_DEFAULT = {
     members: [],
     messages: [],
   },
-  groupId: 0,
+  chatData: [],
+  isGroupChat: true,
+  chat_id: 0,
   appendMessage: function () {},
   deleteSentMsg: function () {},
   toggleGroupInfo: function () {},
@@ -30,29 +33,42 @@ const GROUP_CONTEXT_DEFAULT = {
 
 export const GroupContext = createContext(GROUP_CONTEXT_DEFAULT);
 
-function Room() {
-  let { groupId } = useParams();
-  groupId = Number(groupId);
+function Room({ isGroupChat = true }) {
+  let { chat_id } = useParams();
+  chat_id = Number(chat_id);
   const userData = useRouteLoaderData("layout");
 
   const [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
+  const [chatData, setChatData] = useState(GROUP_CONTEXT_DEFAULT.chatData);
   const [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
-    const request = new Request("/api/group/" + groupId, {
-      signal: controller.signal,
-    });
+    const request = new Request(
+      (isGroupChat ? "/api/group/" : "/api/chat/") + chat_id,
+      {
+        signal: controller.signal,
+      },
+    );
 
-    fetch(request)
-      .then((res) => res.json())
-      .then((data) => {
+    let fetchHandler;
+    if (isGroupChat) {
+      fetchHandler = (data) => {
         setGroupData({
           ...data,
           members: sortMembers(data.members, userData.id),
         });
-      })
+      };
+    } else {
+      fetchHandler = (data) => {
+        setChatData(data);
+      };
+    }
+
+    fetch(request)
+      .then((res) => res.json())
+      .then(fetchHandler)
       .catch(() => {});
 
     return () => {
@@ -62,11 +78,11 @@ function Room() {
         ),
       );
     };
-  }, [groupId, userData.id]);
+  }, [isGroupChat, chat_id, userData.id]);
 
   useEffect(() => {
     function addNewMessage(message) {
-      if (message.group_id !== groupId) return;
+      if (message.group_id !== chat_id) return;
       appendMessage(message);
     }
 
@@ -75,13 +91,13 @@ function Room() {
     return () => {
       window.socket.off("message", addNewMessage);
     };
-  }, [groupId]);
+  }, [isGroupChat, chat_id]);
 
   useEffect(() => {
     return () => {
       clearSocket();
     };
-  }, [groupId]);
+  }, [isGroupChat, chat_id]);
 
   function appendMessage(message) {
     setGroupData((prevGroupData) => {
@@ -125,7 +141,9 @@ function Room() {
         value={{
           userData,
           groupData,
-          groupId,
+          chatData,
+          isGroupChat,
+          chat_id,
           appendMessage,
           deleteSentMsg,
           toggleGroupInfo,
@@ -137,5 +155,9 @@ function Room() {
     </div>
   );
 }
+
+Room.propTypes = {
+  isGroupChat: PropTypes.bool,
+};
 
 export default Room;

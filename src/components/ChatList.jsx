@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import ChatItem from "./ChatItem.jsx";
-import sortGroups from "../controllers/sortGroups.js";
+import sortChats from "../controllers/sortChats.js";
+
+function isGroupChat(chat) {
+  return Boolean(chat.id);
+}
 
 function ChatList() {
-  const [groups, setGroups] = useState([]);
+  const [chats, setChats] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -12,7 +16,7 @@ function ChatList() {
 
     fetch(request)
       .then((res) => res.json())
-      .then((data) => setGroups(sortGroups(data)))
+      .then((data) => setChats(sortChats(data)))
       .catch(() => {});
 
     return () => {
@@ -33,28 +37,29 @@ function ChatList() {
   }, []);
 
   function updateLastMsg(message) {
-    setGroups((prevGroups) => {
-      const index = prevGroups.findIndex(
-        (group) => group.id === message.group_id,
-      );
-      if (index === -1) return prevGroups;
+    setChats((prevChats) => {
+      const index = prevChats.findIndex((chat) => {
+        if (isGroupChat(chat)) return chat.id === message.group_id;
+        else return chat.user_id === message._id;
+      });
+      if (index === -1) return prevChats;
 
-      const updatedGroup = { ...prevGroups[index], lastMessage: message };
-      const newGroups = sortGroups([
-        updatedGroup,
-        ...prevGroups.slice(0, index),
-        ...prevGroups.slice(index + 1),
+      const updatedChat = { ...prevChats[index], lastMessage: message };
+      const newChats = sortChats([
+        updatedChat,
+        ...prevChats.slice(0, index),
+        ...prevChats.slice(index + 1),
       ]);
 
-      return newGroups;
+      return newChats;
     });
   }
 
   return (
-    <ul className="group-list room-left-screen">
-      {groups.map((group) => (
-        <li key={group.id}>
-          <ChatItem group={group} />
+    <ul className="chat-list room-left-screen">
+      {chats.map((chat) => (
+        <li key={isGroupChat(chat) ? "g" + chat.id : "p" + chat.user_id}>
+          <ChatItem chat={chat} isGroupChat={isGroupChat(chat)} />
         </li>
       ))}
     </ul>

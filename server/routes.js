@@ -77,6 +77,15 @@ function routes(app, ioHandlers) {
 
     res.json({ group: values[0], members: values[1], messages: values[2] });
   });
+
+  //get private chat messages
+  app.get("/api/chat/:chat_id", async (req, res) => {
+    const userInfo = await req.user();
+    const chat_id = req.params.chat_id;
+    const messages = await queries.getPrivateMessages(userInfo.id, chat_id);
+
+    res.json(messages);
+  });
 }
 
 export default routes;

@@ -2,7 +2,7 @@ import { useState, useRef, useContext } from "react";
 import { GroupContext } from "./Room.jsx";
 
 function MessagingForm() {
-  const { userData, groupId, appendMessage, deleteSentMsg } =
+  const { userData, chat_id, appendMessage, deleteSentMsg } =
     useContext(GroupContext);
 
   const [message, setMessage] = useState("");
@@ -30,7 +30,7 @@ function MessagingForm() {
       "message",
       {
         clientId,
-        groupId,
+        chat_id,
         message,
       },
       deleteSentMsg,

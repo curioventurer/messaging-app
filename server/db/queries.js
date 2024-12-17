@@ -56,8 +56,8 @@ async function addFriend({ sender_id, receiver_id }) {
   //make sure there isn't a previous entry
   const SQL_FIND_ENTRY = `
     SELECT TRUE
-    FROM friendship_agents as agent1
-    INNER JOIN friendship_agents as agent2 ON agent1.friendships_id = agent2.friendships_id
+    FROM friendship_agents AS agent1
+    INNER JOIN friendship_agents AS agent2 ON agent1.friendships_id = agent2.friendships_id
     WHERE agent1.user_id = $1
     AND agent2.user_id = $2
   `;
@@ -91,8 +91,8 @@ async function getFriendships(user_id) {
   const SQL_GET_FRIENDSHIPS = `
     SELECT friendships.id, friendships.state, friendships.modified, agent2.user_id, agent2.is_initiator, users.name
     FROM friendships
-    INNER JOIN friendship_agents as agent1 ON friendships.id = agent1.friendships_id
-    INNER JOIN friendship_agents as agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendships_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendships_id
     INNER JOIN users ON agent2.user_id = users.id
     WHERE agent1.user_id = $1
     AND agent2.user_id != $1
@@ -105,10 +105,10 @@ async function getFriendships(user_id) {
 
 async function findFriendshipById(id) {
   const SQL_FIND_FRIENDSHIP = `
-    SELECT friendships.id, friendships.state, friendships.modified, agent1.user_id as sender_id, agent2.user_id as receiver_id
+    SELECT friendships.id, friendships.state, friendships.modified, agent1.user_id AS sender_id, agent2.user_id AS receiver_id
     FROM friendships
-    INNER JOIN friendship_agents as agent1 ON friendships.id = agent1.friendships_id
-    INNER JOIN friendship_agents as agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendships_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendships_id
     WHERE friendships.id = $1
     AND agent1.is_initiator = TRUE
     AND agent2.is_initiator = FALSE
@@ -187,7 +187,7 @@ async function getGroups() {
 
 async function getGroupsByUserId(userId) {
   const SQL_GET_GROUPS = `
-    SELECT groups.id, groups.name, memberships.created as joined
+    SELECT groups.id, groups.name, memberships.created AS joined
     FROM groups
     INNER JOIN memberships
     ON groups.id = memberships.group_id
@@ -198,10 +198,13 @@ async function getGroupsByUserId(userId) {
   return rows;
 }
 
-async function getChatList(userId) {
-  const groups = await getGroupsByUserId(userId);
-  const promises = [];
+/*I call it summaries to distinguish it from other group queries,
+  as it generates list of user's groups with last message
+*/
+async function getGroupSummaries(user_id) {
+  const groups = await getGroupsByUserId(user_id);
 
+  const promises = [];
   for (const group of groups) {
     promises.push(
       getMessagesByGroupId(group.id, 1).then((messages) => {
@@ -212,15 +215,45 @@ async function getChatList(userId) {
   await Promise.all(promises);
 
   return groups;
-  /*
+}
+
+async function getPrivateChats(user_id) {
   const SQL_GET_PRIVATE_CHATS = `
-    SELECT *
-    FROM friendships
-    
-    WHERE sender_id = $1 AND sender_chat = TRUE OR receiver_id = $1 AND receiver_chat = TRUE
+    SELECT agent2.user_id, users.name, agent1.chat_joined AS joined
+    FROM friendship_agents AS agent1
+    INNER JOIN friendship_agents AS agent2 ON agent1.friendships_id = agent2.friendships_id
+    INNER JOIN users ON agent2.user_id = users.id
+    WHERE agent1.user_id = $1
+    AND agent1.is_chat_shown = TRUE
+    AND agent2.user_id != $1
+    ORDER BY users.name
   `;
-  const privateChats = await pool.query(SQL_GET_PRIVATE_CHATS, [userId]);
-*/
+  const { rows } = await pool.query(SQL_GET_PRIVATE_CHATS, [user_id]);
+  return rows;
+}
+
+async function getPrivateChatSummaries(user_id) {
+  const privateChats = await getPrivateChats(user_id);
+
+  const promises = [];
+  for (const chat of privateChats) {
+    promises.push(
+      getPrivateMessages(user_id, chat.user_id, 1).then((messages) => {
+        chat.lastMessage = messages[0];
+      }),
+    );
+  }
+  await Promise.all(promises);
+
+  return privateChats;
+}
+
+async function getChatList(user_id) {
+  const values = await Promise.all([
+    getGroupSummaries(user_id),
+    getPrivateChatSummaries(user_id),
+  ]);
+  return [...values[0], ...values[1]];
 }
 
 async function findGroupById(groupId) {
@@ -232,7 +265,7 @@ async function findGroupById(groupId) {
 
 async function getMembersByGroupId(groupId) {
   const SQL_GET_MEMBERS = `
-    SELECT memberships.id, users.id as user_id, users.name, memberships.permission, memberships.created
+    SELECT memberships.id, users.id AS user_id, users.name, memberships.permission, memberships.created
     FROM memberships
     INNER JOIN users
     ON memberships.user_id = users.id
@@ -253,7 +286,7 @@ async function postMessage(groupId, userId, message) {
 
 async function getMessagesByGroupId(groupId, limit = -1) {
   const SQL_GET_MESSAGES = `
-    SELECT messages.id, messages.text, messages.created, users.id as user_id, users.name
+    SELECT messages.id, messages.text, messages.created, users.id AS user_id, users.name
     FROM messages
     INNER JOIN users
     ON messages.user_id = users.id
@@ -275,6 +308,29 @@ async function getMessagesByGroupId(groupId, limit = -1) {
   return rows.reverse();
 }
 
+async function getPrivateMessages(user_id1, user_id2, limit = -1) {
+  const SQL_GET_MESSAGES = `
+    SELECT messages.id, messages.text, messages.created, messages.user_id
+    FROM messages
+    WHERE messages.user_id = $1 AND messages.receiver_id = $2
+    OR messages.user_id = $2 AND messages.receiver_id = $1
+    ORDER BY messages.created DESC, messages.id DESC
+    LIMIT $3
+  `;
+
+  let text = SQL_GET_MESSAGES;
+  let values = [user_id1, user_id2, limit];
+
+  //-1 indicates to replace limit parameter with string 'ALL' to select all messages
+  if (limit === -1) {
+    text = SQL_GET_MESSAGES.replace("$3", "ALL");
+    values = values.slice(0, 2);
+  }
+
+  const { rows } = await pool.query(text, values);
+  return rows.reverse();
+}
+
 export default {
   registerUser,
   findUser,
@@ -282,14 +338,13 @@ export default {
   getUsers,
   getFriendships,
   addFriend,
-  findFriendshipById,
   updateFriendRequest,
   reverseFriendRequest,
-  getGroups,
   getGroupsByUserId,
   getChatList,
   findGroupById,
   getMembersByGroupId,
   postMessage,
   getMessagesByGroupId,
+  getPrivateMessages,
 };

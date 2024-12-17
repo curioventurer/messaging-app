@@ -197,7 +197,7 @@ ul.friend-list {
   }
 }
 
-.group-list {
+.chat-list {
   color: #ccc;
   border: 1px solid white;
 
@@ -205,7 +205,7 @@ ul.friend-list {
     padding: 10px;
   }
 
-  .group-item-header {
+  .chat-item-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -247,7 +247,7 @@ ul.friend-list {
     overflow: auto;
   }
 
-  .group-list {
+  .chat-list {
     width: 30ch;
     flex: none;
 

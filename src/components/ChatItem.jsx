@@ -4,35 +4,44 @@ import PropTypes from "prop-types";
 import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
-function ChatItem({ group }) {
+function ChatItem({ chat, isGroupChat }) {
   const { groupId } = useContext(GroupContext);
-  const lastMessage = group.lastMessage;
+  const lastMessage = chat.lastMessage;
 
-  const created = lastMessage ? lastMessage.created : group.joined;
+  const created = lastMessage ? lastMessage.created : chat.joined;
   const displayDate = DateFormat.timestamp(created);
+
+  let shownMessage;
+  if (lastMessage)
+    shownMessage = isGroupChat
+      ? `${lastMessage.name}: ${lastMessage.text}`
+      : lastMessage.text;
+  else shownMessage = isGroupChat ? "Joined group" : "Chat created";
+
+  let isActive = false;
+  if (
+    (isGroupChat && groupId === chat.id) ||
+    (!isGroupChat && "test" === chat.user_id)
+  )
+    isActive = true;
 
   return (
     <Link
-      to={"/group/" + group.id}
-      className={
-        "button-link" + (groupId === group.id ? " button-highlight" : "")
-      }
+      to={isGroupChat ? "/group/" + chat.id : "/chat/" + chat.user_id}
+      className={"button-link" + (isActive ? " button-highlight" : "")}
     >
-      <div className="group-item-header">
-        <p>{group.name}</p>
+      <div className="chat-item-header">
+        <p>{chat.name}</p>
         <time dateTime={created}>{displayDate}</time>
       </div>
-      <p className="clipped-text">
-        {lastMessage
-          ? `${lastMessage.name}: ${lastMessage.text}`
-          : "Joined group"}
-      </p>
+      <p className="clipped-text">{shownMessage}</p>
     </Link>
   );
 }
 
 ChatItem.propTypes = {
-  group: PropTypes.object.isRequired,
+  chat: PropTypes.object.isRequired,
+  isGroupChat: PropTypes.bool.isRequired,
 };
 
 export default ChatItem;

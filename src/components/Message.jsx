@@ -3,8 +3,10 @@ import PropTypes from "prop-types";
 import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
+const SENT_STATUS_TEXT = "sending";
+
 function Message({ message, isJoined = false }) {
-  const { userData } = useContext(GroupContext);
+  const { userData, isGroupChat } = useContext(GroupContext);
 
   const isUser = userData.id === message.user_id;
 
@@ -12,20 +14,20 @@ function Message({ message, isJoined = false }) {
   if (isUser) liClass += " user-owned";
   if (isJoined) liClass += " joined-message";
 
-  let sentStatus = "sending";
+  let isNameShown;
+  if (isJoined || isUser || !isGroupChat) isNameShown = false;
+  else isNameShown = true;
 
   return (
     <li className={liClass}>
-      {isJoined || isUser ? null : (
-        <p className="message-sender">{message.name}</p>
-      )}
+      {isNameShown ? <p className="message-sender">{message.name}</p> : null}
       <div>
         <p>{message.text}</p>
         <p className="message-footer">
           <time dateTime={message.created}>
             {DateFormat.time(message.created)}
           </time>
-          {message.id > 0 ? null : " - " + sentStatus}
+          {message.id > 0 ? null : " - " + SENT_STATUS_TEXT}
         </p>
       </div>
     </li>
