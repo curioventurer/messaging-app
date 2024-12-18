@@ -4,13 +4,8 @@ import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function MessageList() {
-  const { groupData, chatData, isGroupChat, chat_id } =
-    useContext(GroupContext);
+  const { groupData, isGroupChat, chat_id } = useContext(GroupContext);
   const msgListRef = useRef(null);
-
-  let messages;
-  if (isGroupChat) messages = groupData.messages;
-  else messages = chatData;
 
   let previousDate = "";
   let previousSender;
@@ -36,7 +31,7 @@ function MessageList() {
     };
   }, [isGroupChat, chat_id]);
 
-  for (const msg of messages) {
+  for (const msg of groupData.messages) {
     const timestamp = new Date(msg.created);
     const msgDate = timestamp.toLocaleDateString();
 

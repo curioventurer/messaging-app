@@ -5,6 +5,13 @@ import ChatList from "./ChatList.jsx";
 import GroupInfo from "./GroupInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import clearSocket from "../controllers/clearSocket.js";
+import {
+  ChatData,
+  Message,
+  Group,
+  Direct,
+  Member,
+} from "../controllers/chat-data.js";
 import sortMessages from "../controllers/sortMessages.js";
 import sortMembers from "../controllers/sortMembers.js";
 
@@ -14,16 +21,7 @@ const GROUP_CONTEXT_DEFAULT = {
     name: "default_name",
     created: "1970-01-01T00:00:00.000Z",
   },
-  groupData: {
-    group: {
-      id: 0,
-      name: "default_name",
-      created: "1970-01-01T00:00:00.000Z",
-    },
-    members: [],
-    messages: [],
-  },
-  chatData: [],
+  groupData: new ChatData({}),
   isGroupChat: true,
   chat_id: 0,
   appendMessage: function () {},
@@ -39,7 +37,6 @@ function Room({ isGroupChat = true }) {
   const userData = useRouteLoaderData("layout");
 
   const [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
-  const [chatData, setChatData] = useState(GROUP_CONTEXT_DEFAULT.chatData);
   const [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
 
   useEffect(() => {
@@ -52,23 +49,22 @@ function Room({ isGroupChat = true }) {
       },
     );
 
-    let fetchHandler;
-    if (isGroupChat) {
-      fetchHandler = (data) => {
-        setGroupData({
-          ...data,
-          members: sortMembers(data.members, userData.id),
-        });
-      };
-    } else {
-      fetchHandler = (data) => {
-        setChatData(data);
-      };
-    }
-
     fetch(request)
       .then((res) => res.json())
-      .then(fetchHandler)
+      .then((data) => {
+        setGroupData(
+          new ChatData({
+            isGroup: data.isGroup,
+            messages: data.messages.map((msg) => new Message(msg)),
+            group: new Group(data.group),
+            direct: new Direct(data.direct),
+            members: sortMembers(
+              data.members.map((member) => new Member(member)),
+              userData.id,
+            ),
+          }),
+        );
+      })
       .catch(() => {});
 
     return () => {
@@ -101,7 +97,10 @@ function Room({ isGroupChat = true }) {
 
   function appendMessage(message) {
     setGroupData((prevGroupData) => {
-      const newMessages = sortMessages([...prevGroupData.messages, message]);
+      const newMessages = sortMessages([
+        ...prevGroupData.messages,
+        new Message(message),
+      ]);
       const newGroupData = {
         ...prevGroupData,
         messages: newMessages,
@@ -141,7 +140,6 @@ function Room({ isGroupChat = true }) {
         value={{
           userData,
           groupData,
-          chatData,
           isGroupChat,
           chat_id,
           appendMessage,

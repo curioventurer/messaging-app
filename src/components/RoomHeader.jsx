@@ -3,16 +3,19 @@ import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function RoomHeader() {
-  const { groupData, toggleGroupInfo } = useContext(GroupContext);
-  const group = groupData.group;
+  const { groupData, isGroupChat, toggleGroupInfo } = useContext(GroupContext);
+  const chat = groupData.isGroup ? groupData.group : groupData.direct;
 
   return (
-    <button className="room-header" onClick={toggleGroupInfo}>
-      <h1>{group.name}</h1>
+    <button
+      className="room-header"
+      onClick={isGroupChat ? toggleGroupInfo : null}
+    >
+      <h1>{chat.name}</h1>
       <p>
         Created on{" "}
-        <time dateTime={group.created}>
-          {DateFormat.timestamp(group.created)}
+        <time dateTime={chat.created}>
+          {DateFormat.timestamp(chat.created)}
         </time>
       </p>
     </button>

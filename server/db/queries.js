@@ -1,4 +1,10 @@
 import pool from "./pool.js";
+import {
+  Message,
+  Group,
+  Direct,
+  Member,
+} from "../../src/controllers/chat-data.js";
 import { FRIEND_REQUEST_TYPE } from "../../src/controllers/constants.js";
 
 async function registerUser(name, password) {
@@ -180,11 +186,6 @@ async function reverseFriendRequest(id, user_id) {
   return { update, receiver_id: friendship.sender_id };
 }
 
-async function getGroups() {
-  const { rows } = await pool.query("SELECT * FROM groups ORDER BY name");
-  return rows;
-}
-
 async function getGroupsByUserId(userId) {
   const SQL_GET_GROUPS = `
     SELECT groups.id, groups.name, memberships.created AS joined
@@ -260,7 +261,7 @@ async function findGroupById(groupId) {
   const { rows } = await pool.query("SELECT * FROM groups WHERE id = $1", [
     groupId,
   ]);
-  return rows[0];
+  return new Group(rows[0]);
 }
 
 async function getMembersByGroupId(groupId) {
@@ -273,7 +274,8 @@ async function getMembersByGroupId(groupId) {
     ORDER BY memberships.permission DESC, users.name
   `;
   const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
-  return rows;
+  const members = rows.map((row) => new Member(row));
+  return members;
 }
 
 async function postMessage(groupId, userId, message) {
@@ -305,13 +307,16 @@ async function getMessagesByGroupId(groupId, limit = -1) {
   }
 
   const { rows } = await pool.query(text, values);
-  return rows.reverse();
+  const messages = rows.map((row) => new Message(row)).reverse();
+  return messages;
 }
 
 async function getPrivateMessages(user_id1, user_id2, limit = -1) {
   const SQL_GET_MESSAGES = `
-    SELECT messages.id, messages.text, messages.created, messages.user_id
+    SELECT messages.id, messages.text, messages.created, messages.user_id, users.name
     FROM messages
+    INNER JOIN users
+    ON messages.user_id = users.id
     WHERE messages.user_id = $1 AND messages.receiver_id = $2
     OR messages.user_id = $2 AND messages.receiver_id = $1
     ORDER BY messages.created DESC, messages.id DESC
@@ -328,7 +333,22 @@ async function getPrivateMessages(user_id1, user_id2, limit = -1) {
   }
 
   const { rows } = await pool.query(text, values);
-  return rows.reverse();
+  const messages = rows.map((row) => new Message(row)).reverse();
+  return messages;
+}
+
+async function findPrivateChat(user_id1, user_id2) {
+  const SQL_FIND_PRIVATE = `
+    SELECT agent2.user_id AS id, users.name, agent1.chat_joined AS created
+    FROM friendship_agents AS agent1
+    INNER JOIN friendship_agents AS agent2 ON agent1.friendships_id = agent2.friendships_id
+    INNER JOIN users ON agent2.user_id = users.id
+    WHERE agent1.user_id = $1
+    AND agent2.user_id = $2
+  `;
+
+  const { rows } = await pool.query(SQL_FIND_PRIVATE, [user_id1, user_id2]);
+  return new Direct(rows[0]);
 }
 
 export default {
@@ -347,4 +367,5 @@ export default {
   postMessage,
   getMessagesByGroupId,
   getPrivateMessages,
+  findPrivateChat,
 };

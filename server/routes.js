@@ -1,5 +1,6 @@
 import passport from "passport";
 import queries from "./db/queries.js";
+import { ChatData } from "../src/controllers/chat-data.js";
 
 function routes(app, ioHandlers) {
   //get logged in status. return userInfo if logged in, false if logged out.
@@ -75,16 +76,28 @@ function routes(app, ioHandlers) {
     const messages = queries.getMessagesByGroupId(groupId);
     const values = await Promise.all([group, members, messages]);
 
-    res.json({ group: values[0], members: values[1], messages: values[2] });
+    const chatData = new ChatData({
+      group: values[0],
+      members: values[1],
+      messages: values[2],
+    });
+    res.json(chatData);
   });
 
   //get private chat messages
   app.get("/api/chat/:chat_id", async (req, res) => {
     const userInfo = await req.user();
     const chat_id = req.params.chat_id;
-    const messages = await queries.getPrivateMessages(userInfo.id, chat_id);
+    const messages = queries.getPrivateMessages(userInfo.id, chat_id);
+    const chat = queries.findPrivateChat(userInfo.id, chat_id);
+    const values = await Promise.all([messages, chat]);
 
-    res.json(messages);
+    const chatData = new ChatData({
+      isGroup: false,
+      messages: values[0],
+      direct: values[1],
+    });
+    res.json(chatData);
   });
 }
 
