@@ -1,6 +1,8 @@
+import { Member } from "./chat-data";
+
 const PERMISSION_TYPE = ["member", "admin", "owner"];
 
-function sortMembers(members, userId) {
+function sortMembers(members = [new Member({})], user_id = 0) {
   const sortedMembers = members.toSorted((a, b) => {
     const powerA = PERMISSION_TYPE.indexOf(a.permission);
     const powerB = PERMISSION_TYPE.indexOf(b.permission);
@@ -13,7 +15,7 @@ function sortMembers(members, userId) {
   });
 
   const userIndex = sortedMembers.findIndex(
-    (member) => member.user_id === userId,
+    (member) => member.user_id === user_id,
   );
   if (userIndex !== -1) {
     const user = sortedMembers.splice(userIndex, 1)[0];

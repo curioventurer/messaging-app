@@ -1,14 +1,27 @@
 import { Server } from "socket.io";
 import passport from "passport";
 import queries from "./db/queries.js";
+import { PostMessage, NewMessage } from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
   socket.user = await socket.request.user();
   socket.join("user:" + socket.user.id);
 
-  const groups = await queries.getGroupsByUserId(socket.user.id);
-  const rooms = groups.map((group) => "group:" + group.id);
-  socket.join(rooms);
+  async function joinGroupRooms(socket, user_id) {
+    const groups = await queries.getGroupsByUserId(user_id);
+    const group_ids = groups.map((group) => "group:" + group.id);
+    socket.join(group_ids);
+  }
+  const groupsPromise = joinGroupRooms(socket, socket.user.id);
+
+  async function joinFriendRooms(socket, user_id) {
+    const friends = await queries.getFriendsByUserId(user_id);
+    const friend_ids = friends.map((friend) => "friend:" + friend.user_id);
+    socket.join(friend_ids);
+  }
+  const friendsPromise = joinFriendRooms(socket, socket.user.id);
+
+  await Promise.all([groupsPromise, friendsPromise]);
 }
 
 function formatUpdateFriendship(
@@ -113,23 +126,40 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("message", async (data, callback) => {
-      const isValid = io
-        .of("/")
-        .adapter.sids.get(socket.id)
-        .has("group:" + data.groupId);
+      const postMessage = new PostMessage(data);
+      let isValid;
 
-      if (!isValid) return callback(data.clientId);
-      const postedMessage = await queries.postMessage(
-        data.groupId,
-        socket.user.id,
-        data.message,
-      );
+      if (postMessage.isGroupChat)
+        isValid = io
+          .of("/")
+          .adapter.sids.get(socket.id)
+          .has("group:" + postMessage.chat_id);
+      else
+        isValid = io
+          .of("/")
+          .adapter.sids.get(socket.id)
+          .has("friend:" + postMessage.chat_id);
 
-      callback(data.clientId);
-      if (!postedMessage) return;
+      if (!isValid) return callback(postMessage.client_id);
+      //edit postmessage to include private
+      const newMessage = await queries.postMessage(socket.user.id, postMessage);
 
-      postedMessage.name = socket.user.name;
-      io.to("group:" + data.groupId).emit("message", postedMessage);
+      callback(postMessage.client_id);
+      if (!newMessage) return;
+
+      newMessage.message.name = socket.user.name;
+      if (newMessage.isGroupChat)
+        io.to("group:" + newMessage.chat_id).emit("message", newMessage);
+      else {
+        socket.emit("message", newMessage);
+        io.to("user:" + newMessage.chat_id).emit(
+          "message",
+          new NewMessage({
+            ...newMessage,
+            chat_id: socket.user.id,
+          }),
+        );
+      }
     });
   });
 

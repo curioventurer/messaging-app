@@ -1,6 +1,8 @@
 import pool from "./pool.js";
 import {
   Message,
+  PostMessage,
+  NewMessage,
   Group,
   Direct,
   Member,
@@ -105,6 +107,23 @@ async function getFriendships(user_id) {
     ORDER BY friendships.state, friendships.modified DESC, friendships.id DESC
   `;
   const { rows } = await pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
+
+  return rows;
+}
+
+async function getFriendsByUserId(user_id) {
+  const SQL_GET_FRIENDS = `
+    SELECT friendships.id, agent2.user_id, users.name
+    FROM friendships
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendships_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN users ON agent2.user_id = users.id
+    WHERE agent1.user_id = $1
+    AND agent2.user_id != $1
+    AND friendships.state = 'accepted'
+    ORDER BY users.name
+  `;
+  const { rows } = await pool.query(SQL_GET_FRIENDS, [user_id]);
 
   return rows;
 }
@@ -278,12 +297,33 @@ async function getMembersByGroupId(groupId) {
   return members;
 }
 
-async function postMessage(groupId, userId, message) {
-  const { rows } = await pool.query(
-    "INSERT INTO messages ( group_id, user_id, text ) VALUES ( $1, $2, $3 )  RETURNING *",
-    [groupId, userId, message],
-  );
-  return rows[0];
+async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
+  const SQL_POST_GROUP = `
+    INSERT INTO messages
+    ( group_id, user_id, text )
+     VALUES ( $1, $2, $3 )
+     RETURNING *
+  `;
+  const SQL_POST_DIRECT = `
+    INSERT INTO messages
+    ( receiver_id, user_id, text )
+    VALUES ( $1, $2, $3 )
+    RETURNING *
+  `;
+
+  const sql = postMessage.isGroupChat ? SQL_POST_GROUP : SQL_POST_DIRECT;
+  const { rows } = await pool.query(sql, [
+    postMessage.chat_id,
+    user_id,
+    postMessage.message,
+  ]);
+  if (rows[0])
+    return new NewMessage({
+      chat_id: postMessage.chat_id,
+      isGroupChat: postMessage.isGroupChat,
+      message: new Message(rows[0]),
+    });
+  else return false;
 }
 
 async function getMessagesByGroupId(groupId, limit = -1) {
@@ -357,6 +397,7 @@ export default {
   findUserById,
   getUsers,
   getFriendships,
+  getFriendsByUserId,
   addFriend,
   updateFriendRequest,
   reverseFriendRequest,

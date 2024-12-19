@@ -1,8 +1,9 @@
 import { useState, useRef, useContext } from "react";
 import { GroupContext } from "./Room.jsx";
+import { Message, PostMessage } from "../controllers/chat-data.js";
 
 function MessagingForm() {
-  const { userData, chat_id, appendMessage, deleteSentMsg } =
+  const { userData, isGroupChat, chat_id, appendMessage, deleteSentMsg } =
     useContext(GroupContext);
 
   const [message, setMessage] = useState("");
@@ -16,25 +17,26 @@ function MessagingForm() {
   function sendMessage(event) {
     event.preventDefault();
 
-    const clientId = --sentMsgSeq.current;
+    const client_id = --sentMsgSeq.current;
 
-    appendMessage({
-      id: clientId,
-      text: message,
-      created: new Date().toISOString(),
-      user_id: userData.id,
-      name: userData.name,
+    appendMessage(
+      new Message({
+        id: client_id,
+        text: message,
+        created: new Date().toISOString(),
+        user_id: userData.id,
+        name: userData.name,
+      }),
+    );
+
+    const sentMessage = new PostMessage({
+      client_id,
+      chat_id,
+      isGroupChat,
+      message,
     });
 
-    window.socket.emit(
-      "message",
-      {
-        clientId,
-        chat_id,
-        message,
-      },
-      deleteSentMsg,
-    );
+    window.socket.emit("message", sentMessage, deleteSentMsg);
 
     setMessage("");
   }

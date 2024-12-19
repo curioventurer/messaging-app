@@ -4,8 +4,8 @@ import PropTypes from "prop-types";
 import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
-function ChatItem({ chat, isGroupChat }) {
-  const { groupId } = useContext(GroupContext);
+function ChatItem({ chat, isGroup }) {
+  const { isGroupChat, chat_id } = useContext(GroupContext);
   const lastMessage = chat.lastMessage;
 
   const created = lastMessage ? lastMessage.created : chat.joined;
@@ -13,21 +13,21 @@ function ChatItem({ chat, isGroupChat }) {
 
   let shownMessage;
   if (lastMessage)
-    shownMessage = isGroupChat
+    shownMessage = isGroup
       ? `${lastMessage.name}: ${lastMessage.text}`
       : lastMessage.text;
-  else shownMessage = isGroupChat ? "Joined group" : "Chat created";
+  else shownMessage = isGroup ? "Joined group" : "Chat created";
 
   let isActive = false;
   if (
-    (isGroupChat && groupId === chat.id) ||
-    (!isGroupChat && "test" === chat.user_id)
+    (isGroup && chat_id === chat.id && isGroupChat) ||
+    (!isGroup && chat_id === chat.user_id && !isGroupChat)
   )
     isActive = true;
 
   return (
     <Link
-      to={isGroupChat ? "/group/" + chat.id : "/chat/" + chat.user_id}
+      to={isGroup ? "/group/" + chat.id : "/chat/" + chat.user_id}
       className={"button-link" + (isActive ? " button-highlight" : "")}
     >
       <div className="chat-item-header">
@@ -41,7 +41,7 @@ function ChatItem({ chat, isGroupChat }) {
 
 ChatItem.propTypes = {
   chat: PropTypes.object.isRequired,
-  isGroupChat: PropTypes.bool.isRequired,
+  isGroup: PropTypes.bool.isRequired,
 };
 
 export default ChatItem;

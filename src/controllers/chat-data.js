@@ -71,3 +71,25 @@ export class Message {
     this.name = name;
   }
 }
+
+export class PostMessage {
+  constructor({
+    client_id = 0,
+    chat_id = 0,
+    isGroupChat = true,
+    message = "default_message",
+  }) {
+    this.client_id = client_id;
+    this.chat_id = chat_id;
+    this.isGroupChat = isGroupChat;
+    this.message = message;
+  }
+}
+
+export class NewMessage {
+  constructor({ chat_id = 0, isGroupChat = true, message = new Message({}) }) {
+    this.chat_id = chat_id;
+    this.isGroupChat = isGroupChat;
+    this.message = message;
+  }
+}

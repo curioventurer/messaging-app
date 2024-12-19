@@ -8,6 +8,7 @@ import clearSocket from "../controllers/clearSocket.js";
 import {
   ChatData,
   Message,
+  NewMessage,
   Group,
   Direct,
   Member,
@@ -77,9 +78,17 @@ function Room({ isGroupChat = true }) {
   }, [isGroupChat, chat_id, userData.id]);
 
   useEffect(() => {
-    function addNewMessage(message) {
-      if (message.group_id !== chat_id) return;
-      appendMessage(message);
+    function addNewMessage(messageData) {
+      const newMessage = new NewMessage({
+        ...messageData,
+        message: new Message(messageData.message),
+      });
+
+      if (
+        newMessage.isGroupChat === isGroupChat &&
+        newMessage.chat_id === chat_id
+      )
+        appendMessage(newMessage.message);
     }
 
     window.socket.on("message", addNewMessage);
@@ -95,12 +104,9 @@ function Room({ isGroupChat = true }) {
     };
   }, [isGroupChat, chat_id]);
 
-  function appendMessage(message) {
+  function appendMessage(message = new Message({})) {
     setGroupData((prevGroupData) => {
-      const newMessages = sortMessages([
-        ...prevGroupData.messages,
-        new Message(message),
-      ]);
+      const newMessages = sortMessages([...prevGroupData.messages, message]);
       const newGroupData = {
         ...prevGroupData,
         messages: newMessages,
