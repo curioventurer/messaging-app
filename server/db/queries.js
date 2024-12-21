@@ -1,5 +1,6 @@
 import pool from "./pool.js";
 import {
+  ChatId,
   Message,
   PostMessage,
   NewMessage,
@@ -65,7 +66,7 @@ async function addFriend({ sender_id, receiver_id }) {
   const SQL_FIND_ENTRY = `
     SELECT TRUE
     FROM friendship_agents AS agent1
-    INNER JOIN friendship_agents AS agent2 ON agent1.friendships_id = agent2.friendships_id
+    INNER JOIN friendship_agents AS agent2 ON agent1.friendship_id = agent2.friendship_id
     WHERE agent1.user_id = $1
     AND agent2.user_id = $2
   `;
@@ -82,7 +83,7 @@ async function addFriend({ sender_id, receiver_id }) {
 
   const SQL_ADD_FRIENDSHIP_AGENT = `
     INSERT INTO friendship_agents
-    ( friendships_id, user_id, is_initiator )
+    ( friendship_id, user_id, is_initiator )
     VALUES ( $1, $2, TRUE ),
     ( $1, $3, FALSE )
   `;
@@ -99,8 +100,8 @@ async function getFriendships(user_id) {
   const SQL_GET_FRIENDSHIPS = `
     SELECT friendships.id, friendships.state, friendships.modified, agent2.user_id, agent2.is_initiator, users.name
     FROM friendships
-    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendships_id
-    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
     INNER JOIN users ON agent2.user_id = users.id
     WHERE agent1.user_id = $1
     AND agent2.user_id != $1
@@ -115,8 +116,8 @@ async function getFriendsByUserId(user_id) {
   const SQL_GET_FRIENDS = `
     SELECT friendships.id, agent2.user_id, users.name
     FROM friendships
-    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendships_id
-    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
     INNER JOIN users ON agent2.user_id = users.id
     WHERE agent1.user_id = $1
     AND agent2.user_id != $1
@@ -132,8 +133,8 @@ async function findFriendshipById(id) {
   const SQL_FIND_FRIENDSHIP = `
     SELECT friendships.id, friendships.state, friendships.modified, agent1.user_id AS sender_id, agent2.user_id AS receiver_id
     FROM friendships
-    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendships_id
-    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendships_id
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
     WHERE friendships.id = $1
     AND agent1.is_initiator = TRUE
     AND agent2.is_initiator = FALSE
@@ -196,7 +197,7 @@ async function reverseFriendRequest(id, user_id) {
   const SQL_INVERT_INITIATOR = `
     UPDATE friendship_agents
     SET is_initiator = NOT is_initiator
-    WHERE friendships_id = $1
+    WHERE friendship_id = $1
   `;
   const invertPromise = pool.query(SQL_INVERT_INITIATOR, [id]);
 
@@ -226,9 +227,12 @@ async function getGroupSummaries(user_id) {
 
   const promises = [];
   for (const group of groups) {
+    group.isGroup = true;
+    const chatId = new ChatId({ id: group.id });
+
     promises.push(
-      getMessagesByGroupId(group.id, 1).then((messages) => {
-        group.lastMessage = messages[0];
+      getMessagesByChatId(chatId, 1).then((messages) => {
+        if (messages[0]) group.lastMessage = new Message(messages[0]);
       }),
     );
   }
@@ -237,41 +241,48 @@ async function getGroupSummaries(user_id) {
   return groups;
 }
 
-async function getPrivateChats(user_id) {
-  const SQL_GET_PRIVATE_CHATS = `
-    SELECT agent2.user_id, users.name, agent1.chat_joined AS joined
-    FROM friendship_agents AS agent1
-    INNER JOIN friendship_agents AS agent2 ON agent1.friendships_id = agent2.friendships_id
+async function getDirectChats(user_id) {
+  const SQL_GET_DIRECT_CHATS = `
+    SELECT agent1.direct_chat_id AS id, users.name, users.id AS user_id, agent1.time_shown
+    FROM direct_chat_agents AS agent1
+    INNER JOIN direct_chat_agents AS agent2 ON agent1.direct_chat_id = agent2.direct_chat_id
     INNER JOIN users ON agent2.user_id = users.id
     WHERE agent1.user_id = $1
-    AND agent1.is_chat_shown = TRUE
+    AND agent1.is_shown = TRUE
     AND agent2.user_id != $1
-    ORDER BY users.name
   `;
-  const { rows } = await pool.query(SQL_GET_PRIVATE_CHATS, [user_id]);
+
+  const { rows } = await pool.query(SQL_GET_DIRECT_CHATS, [user_id]);
   return rows;
 }
 
-async function getPrivateChatSummaries(user_id) {
-  const privateChats = await getPrivateChats(user_id);
+async function getDirectChatSummaries(user_id) {
+  const directChats = await getDirectChats(user_id);
 
   const promises = [];
-  for (const chat of privateChats) {
+  for (const directChat of directChats) {
+    directChat.isGroup = false;
+
+    const chatId = new ChatId({
+      id: directChat.id,
+      isGroup: false,
+    });
+
     promises.push(
-      getPrivateMessages(user_id, chat.user_id, 1).then((messages) => {
-        chat.lastMessage = messages[0];
+      getMessagesByChatId(chatId, 1).then((messages) => {
+        if (messages[0]) directChat.lastMessage = new Message(messages[0]);
       }),
     );
   }
   await Promise.all(promises);
 
-  return privateChats;
+  return directChats;
 }
 
 async function getChatList(user_id) {
   const values = await Promise.all([
     getGroupSummaries(user_id),
-    getPrivateChatSummaries(user_id),
+    getDirectChatSummaries(user_id),
   ]);
   return [...values[0], ...values[1]];
 }
@@ -298,35 +309,31 @@ async function getMembersByGroupId(groupId) {
 }
 
 async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
-  const SQL_POST_GROUP = `
+  const SQL_POST_MESSAGE = `
     INSERT INTO messages
     ( group_id, user_id, text )
-     VALUES ( $1, $2, $3 )
-     RETURNING *
-  `;
-  const SQL_POST_DIRECT = `
-    INSERT INTO messages
-    ( receiver_id, user_id, text )
     VALUES ( $1, $2, $3 )
     RETURNING *
   `;
 
-  const sql = postMessage.isGroupChat ? SQL_POST_GROUP : SQL_POST_DIRECT;
+  let sql = SQL_POST_MESSAGE;
+  if (!postMessage.chatId.isGroup)
+    sql = sql.replace("group_id", "direct_chat_id");
+
   const { rows } = await pool.query(sql, [
-    postMessage.chat_id,
+    postMessage.chatId.id,
     user_id,
     postMessage.message,
   ]);
   if (rows[0])
     return new NewMessage({
-      chat_id: postMessage.chat_id,
-      isGroupChat: postMessage.isGroupChat,
+      chatId: postMessage.chatId,
       message: new Message(rows[0]),
     });
   else return false;
 }
 
-async function getMessagesByGroupId(groupId, limit = -1) {
+async function getMessagesByChatId(chatId = new ChatId({}), limit = -1) {
   const SQL_GET_MESSAGES = `
     SELECT messages.id, messages.text, messages.created, users.id AS user_id, users.name
     FROM messages
@@ -337,57 +344,34 @@ async function getMessagesByGroupId(groupId, limit = -1) {
     LIMIT $2
   `;
 
-  let text = SQL_GET_MESSAGES;
-  let values = [groupId, limit];
+  let sql = SQL_GET_MESSAGES;
+  let values = [chatId.id, limit];
+
+  if (!chatId.isGroup) sql = sql.replace("group_id", "direct_chat_id");
 
   //-1 indicates to replace limit parameter with string 'ALL' to select all messages
   if (limit === -1) {
-    text = SQL_GET_MESSAGES.replace("$2", "ALL");
+    sql = sql.replace("$2", "ALL");
     values = values.slice(0, 1);
   }
 
-  const { rows } = await pool.query(text, values);
+  const { rows } = await pool.query(sql, values);
   const messages = rows.map((row) => new Message(row)).reverse();
   return messages;
 }
 
-async function getPrivateMessages(user_id1, user_id2, limit = -1) {
-  const SQL_GET_MESSAGES = `
-    SELECT messages.id, messages.text, messages.created, messages.user_id, users.name
-    FROM messages
-    INNER JOIN users
-    ON messages.user_id = users.id
-    WHERE messages.user_id = $1 AND messages.receiver_id = $2
-    OR messages.user_id = $2 AND messages.receiver_id = $1
-    ORDER BY messages.created DESC, messages.id DESC
-    LIMIT $3
-  `;
-
-  let text = SQL_GET_MESSAGES;
-  let values = [user_id1, user_id2, limit];
-
-  //-1 indicates to replace limit parameter with string 'ALL' to select all messages
-  if (limit === -1) {
-    text = SQL_GET_MESSAGES.replace("$3", "ALL");
-    values = values.slice(0, 2);
-  }
-
-  const { rows } = await pool.query(text, values);
-  const messages = rows.map((row) => new Message(row)).reverse();
-  return messages;
-}
-
-async function findPrivateChat(user_id1, user_id2) {
-  const SQL_FIND_PRIVATE = `
-    SELECT agent2.user_id AS id, users.name, agent1.chat_joined AS created
-    FROM friendship_agents AS agent1
-    INNER JOIN friendship_agents AS agent2 ON agent1.friendships_id = agent2.friendships_id
+async function findDirectChat(chatId = new ChatId({}), user_id) {
+  const SQL_FIND_DIRECT_CHAT = `
+    SELECT agent1.direct_chat_id AS id, users.name, users.id AS user_id, agent1.time_shown
+    FROM direct_chat_agents AS agent1
+    INNER JOIN direct_chat_agents AS agent2 ON agent1.direct_chat_id = agent2.direct_chat_id
     INNER JOIN users ON agent2.user_id = users.id
-    WHERE agent1.user_id = $1
-    AND agent2.user_id = $2
+    WHERE agent1.direct_chat_id = $1
+    AND agent1.user_id = $2
+    AND agent2.user_id != $2
   `;
 
-  const { rows } = await pool.query(SQL_FIND_PRIVATE, [user_id1, user_id2]);
+  const { rows } = await pool.query(SQL_FIND_DIRECT_CHAT, [chatId.id, user_id]);
   return new Direct(rows[0]);
 }
 
@@ -406,7 +390,6 @@ export default {
   findGroupById,
   getMembersByGroupId,
   postMessage,
-  getMessagesByGroupId,
-  getPrivateMessages,
-  findPrivateChat,
+  getMessagesByChatId,
+  findDirectChat,
 };

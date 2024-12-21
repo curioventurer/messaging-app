@@ -42,7 +42,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/chat/:chat_id",
-        element: <Room isGroupChat={false} />,
+        element: <Room isGroup={false} />,
       },
       {
         path: "/friend",

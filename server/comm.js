@@ -1,7 +1,7 @@
 import { Server } from "socket.io";
 import passport from "passport";
 import queries from "./db/queries.js";
-import { PostMessage, NewMessage } from "../src/controllers/chat-data.js";
+import { ChatId, PostMessage } from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
   socket.user = await socket.request.user();
@@ -126,39 +126,38 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("message", async (data, callback) => {
-      const postMessage = new PostMessage(data);
-      let isValid;
-
-      if (postMessage.isGroupChat)
+      console.log(data);
+      const postMessage = new PostMessage({
+        ...data,
+        chatId: new ChatId(data.chatId),
+      });
+      let isValid, directChat;
+      console.log(postMessage);
+      if (postMessage.chatId.isGroup)
         isValid = io
           .of("/")
           .adapter.sids.get(socket.id)
-          .has("group:" + postMessage.chat_id);
-      else
-        isValid = io
-          .of("/")
-          .adapter.sids.get(socket.id)
-          .has("friend:" + postMessage.chat_id);
+          .has("group:" + postMessage.chatId.id);
+      else {
+        directChat = await queries.findDirectChat(
+          postMessage.chatId,
+          socket.user.id,
+        );
+        if (directChat) isValid = true;
+      }
 
       if (!isValid) return callback(postMessage.client_id);
-      //edit postmessage to include private
       const newMessage = await queries.postMessage(socket.user.id, postMessage);
 
       callback(postMessage.client_id);
       if (!newMessage) return;
 
       newMessage.message.name = socket.user.name;
-      if (newMessage.isGroupChat)
-        io.to("group:" + newMessage.chat_id).emit("message", newMessage);
+      if (newMessage.chatId.isGroup)
+        io.to("group:" + newMessage.chatId.id).emit("message", newMessage);
       else {
         socket.emit("message", newMessage);
-        io.to("user:" + newMessage.chat_id).emit(
-          "message",
-          new NewMessage({
-            ...newMessage,
-            chat_id: socket.user.id,
-          }),
-        );
+        io.to("user:" + directChat.user_id).emit("message", newMessage);
       }
     });
   });

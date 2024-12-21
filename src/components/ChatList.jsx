@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import ChatItem from "./ChatItem.jsx";
 import sortChats from "../controllers/sortChats.js";
-import { Message, NewMessage } from "../controllers/chat-data.js";
-
-function isGroupChat(chat) {
-  return Boolean(chat.id);
-}
+import { ChatId, Message, NewMessage } from "../controllers/chat-data.js";
 
 function ChatList() {
   const [chats, setChats] = useState([]);
@@ -17,7 +13,17 @@ function ChatList() {
 
     fetch(request)
       .then((res) => res.json())
-      .then((data) => setChats(sortChats(data)))
+      .then((data) => {
+        data = data.map((item) => {
+          return {
+            ...item,
+            lastMessage: item.lastMessage
+              ? new Message(item.lastMessage)
+              : null,
+          };
+        });
+        setChats(sortChats(data));
+      })
       .catch(() => {});
 
     return () => {
@@ -39,16 +45,20 @@ function ChatList() {
 
   function updateLastMsg(messageData = new NewMessage({})) {
     const newMessage = new NewMessage({
-      ...messageData,
+      chatId: new ChatId(messageData.chatId),
       message: new Message(messageData.message),
     });
 
     setChats((prevChats) => {
       const index = prevChats.findIndex((chat) => {
-        if (isGroupChat(chat) === newMessage.isGroupChat) {
-          if (isGroupChat(chat)) return chat.id === newMessage.chat_id;
-          else return chat.user_id === newMessage.chat_id;
-        }
+        const chatId = new ChatId({
+          id: chat.id,
+          isGroup: chat.isGroup,
+        });
+        return (
+          chatId.id === newMessage.chatId.id &&
+          chatId.isGroup === newMessage.chatId.isGroup
+        );
       });
       if (index === -1) return prevChats;
 
@@ -69,8 +79,8 @@ function ChatList() {
   return (
     <ul className="chat-list room-left-screen">
       {chats.map((chat) => (
-        <li key={isGroupChat(chat) ? "g" + chat.id : "p" + chat.user_id}>
-          <ChatItem chat={chat} isGroup={isGroupChat(chat)} />
+        <li key={(chat.isGroup ? "g" : "d") + chat.id}>
+          <ChatItem chat={chat} />
         </li>
       ))}
     </ul>

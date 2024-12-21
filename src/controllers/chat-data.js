@@ -1,5 +1,12 @@
 export const PERMISSION_TYPE = ["member", "admin", "owner"];
 
+export class ChatId {
+  constructor({ id = 0, isGroup = true }) {
+    this.id = id;
+    this.isGroup = isGroup;
+  }
+}
+
 export class ChatData {
   constructor({
     isGroup = true,
@@ -32,11 +39,13 @@ export class Direct {
   constructor({
     id = 0,
     name = "default_name",
-    created = "1970-01-01T00:00:00.000Z",
+    user_id = 0,
+    time_shown = "1970-01-01T00:00:00.000Z",
   }) {
     this.id = id;
     this.name = name;
-    this.created = created;
+    this.user_id = user_id;
+    this.time_shown = time_shown;
   }
 }
 
@@ -75,21 +84,18 @@ export class Message {
 export class PostMessage {
   constructor({
     client_id = 0,
-    chat_id = 0,
-    isGroupChat = true,
+    chatId = new ChatId({}),
     message = "default_message",
   }) {
     this.client_id = client_id;
-    this.chat_id = chat_id;
-    this.isGroupChat = isGroupChat;
+    this.chatId = chatId;
     this.message = message;
   }
 }
 
 export class NewMessage {
-  constructor({ chat_id = 0, isGroupChat = true, message = new Message({}) }) {
-    this.chat_id = chat_id;
-    this.isGroupChat = isGroupChat;
+  constructor({ chatId = new ChatId({}), message = new Message({}) }) {
+    this.chatId = chatId;
     this.message = message;
   }
 }

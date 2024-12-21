@@ -6,7 +6,7 @@ import DateFormat from "../controllers/DateFormat.js";
 const SENT_STATUS_TEXT = "sending";
 
 function Message({ message, isJoined = false }) {
-  const { userData, isGroupChat } = useContext(GroupContext);
+  const { userData, chatId } = useContext(GroupContext);
 
   const isUser = userData.id === message.user_id;
 
@@ -15,7 +15,7 @@ function Message({ message, isJoined = false }) {
   if (isJoined) liClass += " joined-message";
 
   let isNameShown;
-  if (isJoined || isUser || !isGroupChat) isNameShown = false;
+  if (isJoined || isUser || !chatId.isGroup) isNameShown = false;
   else isNameShown = true;
 
   return (

@@ -1,6 +1,6 @@
 import passport from "passport";
 import queries from "./db/queries.js";
-import { ChatData } from "../src/controllers/chat-data.js";
+import { ChatId, ChatData } from "../src/controllers/chat-data.js";
 
 function routes(app, ioHandlers) {
   //get logged in status. return userInfo if logged in, false if logged out.
@@ -73,7 +73,7 @@ function routes(app, ioHandlers) {
     const groupId = req.params.groupId;
     const group = queries.findGroupById(groupId);
     const members = queries.getMembersByGroupId(groupId);
-    const messages = queries.getMessagesByGroupId(groupId);
+    const messages = queries.getMessagesByChatId(new ChatId({ id: groupId }));
     const values = await Promise.all([group, members, messages]);
 
     const chatData = new ChatData({
@@ -84,13 +84,17 @@ function routes(app, ioHandlers) {
     res.json(chatData);
   });
 
-  //get private chat messages
-  app.get("/api/chat/:chat_id", async (req, res) => {
+  //get direct chat messages
+  app.get("/api/chat/:direct_chat_id", async (req, res) => {
     const userInfo = await req.user();
-    const chat_id = req.params.chat_id;
-    const messages = queries.getPrivateMessages(userInfo.id, chat_id);
-    const chat = queries.findPrivateChat(userInfo.id, chat_id);
-    const values = await Promise.all([messages, chat]);
+    const chatId = new ChatId({
+      id: req.params.direct_chat_id,
+      isGroup: false,
+    });
+
+    const messages = queries.getMessagesByChatId(chatId);
+    const directChat = queries.findDirectChat(chatId, userInfo.id);
+    const values = await Promise.all([messages, directChat]);
 
     const chatData = new ChatData({
       isGroup: false,

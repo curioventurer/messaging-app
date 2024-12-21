@@ -3,7 +3,7 @@ import { GroupContext } from "./Room.jsx";
 import { Message, PostMessage } from "../controllers/chat-data.js";
 
 function MessagingForm() {
-  const { userData, isGroupChat, chat_id, appendMessage, deleteSentMsg } =
+  const { userData, chatId, appendMessage, deleteSentMsg } =
     useContext(GroupContext);
 
   const [message, setMessage] = useState("");
@@ -31,8 +31,7 @@ function MessagingForm() {
 
     const sentMessage = new PostMessage({
       client_id,
-      chat_id,
-      isGroupChat,
+      chatId,
       message,
     });
 

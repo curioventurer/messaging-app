@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext } from "react";
+import { useState, useEffect, useMemo, createContext } from "react";
 import { useParams, useRouteLoaderData } from "react-router-dom";
 import PropTypes from "prop-types";
 import ChatList from "./ChatList.jsx";
@@ -6,6 +6,7 @@ import GroupInfo from "./GroupInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import clearSocket from "../controllers/clearSocket.js";
 import {
+  ChatId,
   ChatData,
   Message,
   NewMessage,
@@ -23,8 +24,7 @@ const GROUP_CONTEXT_DEFAULT = {
     created: "1970-01-01T00:00:00.000Z",
   },
   groupData: new ChatData({}),
-  isGroupChat: true,
-  chat_id: 0,
+  chatId: new ChatId({}),
   appendMessage: function () {},
   deleteSentMsg: function () {},
   toggleGroupInfo: function () {},
@@ -32,9 +32,17 @@ const GROUP_CONTEXT_DEFAULT = {
 
 export const GroupContext = createContext(GROUP_CONTEXT_DEFAULT);
 
-function Room({ isGroupChat = true }) {
-  let { chat_id } = useParams();
-  chat_id = Number(chat_id);
+function Room({ isGroup = true }) {
+  const { chat_id } = useParams();
+  const chatId = useMemo(
+    () =>
+      new ChatId({
+        id: Number(chat_id),
+        isGroup: isGroup,
+      }),
+    [chat_id, isGroup],
+  );
+
   const userData = useRouteLoaderData("layout");
 
   const [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
@@ -44,7 +52,7 @@ function Room({ isGroupChat = true }) {
     const controller = new AbortController();
 
     const request = new Request(
-      (isGroupChat ? "/api/group/" : "/api/chat/") + chat_id,
+      (chatId.isGroup ? "/api/group/" : "/api/chat/") + chatId.id,
       {
         signal: controller.signal,
       },
@@ -75,18 +83,18 @@ function Room({ isGroupChat = true }) {
         ),
       );
     };
-  }, [isGroupChat, chat_id, userData.id]);
+  }, [chatId, userData.id]);
 
   useEffect(() => {
     function addNewMessage(messageData) {
       const newMessage = new NewMessage({
-        ...messageData,
+        chatId: new ChatId(messageData.chatId),
         message: new Message(messageData.message),
       });
 
       if (
-        newMessage.isGroupChat === isGroupChat &&
-        newMessage.chat_id === chat_id
+        newMessage.chatId.isGroup === chatId.isGroup &&
+        newMessage.chatId.id === chatId.id
       )
         appendMessage(newMessage.message);
     }
@@ -96,13 +104,13 @@ function Room({ isGroupChat = true }) {
     return () => {
       window.socket.off("message", addNewMessage);
     };
-  }, [isGroupChat, chat_id]);
+  }, [chatId]);
 
   useEffect(() => {
     return () => {
       clearSocket();
     };
-  }, [isGroupChat, chat_id]);
+  }, [chatId]);
 
   function appendMessage(message = new Message({})) {
     setGroupData((prevGroupData) => {
@@ -146,8 +154,7 @@ function Room({ isGroupChat = true }) {
         value={{
           userData,
           groupData,
-          isGroupChat,
-          chat_id,
+          chatId,
           appendMessage,
           deleteSentMsg,
           toggleGroupInfo,
@@ -161,7 +168,7 @@ function Room({ isGroupChat = true }) {
 }
 
 Room.propTypes = {
-  isGroupChat: PropTypes.bool,
+  isGroup: PropTypes.bool,
 };
 
 export default Room;
