@@ -4,7 +4,9 @@ import queries from "./db/queries.js";
 import { ChatId, PostMessage } from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
-  socket.user = await socket.request.user();
+  socket.user = await (socket.request.user ? socket.request.user() : null);
+  if (!socket.user) return false;
+
   socket.join("user:" + socket.user.id);
 
   async function joinGroupRooms(socket, user_id) {
@@ -22,6 +24,7 @@ async function initializeConnection(socket) {
   const friendsPromise = joinFriendRooms(socket, socket.user.id);
 
   await Promise.all([groupsPromise, friendsPromise]);
+  return true;
 }
 
 function formatUpdateFriendship(
@@ -76,7 +79,9 @@ function comm(server, sessionMiddleware) {
   setupSocketIOPassport(io, sessionMiddleware);
 
   io.on("connection", async (socket) => {
-    await initializeConnection(socket);
+    const initializeStatus = await initializeConnection(socket);
+    if (!initializeStatus) return socket.disconnect(true);
+
     console.log("*socket: " + socket.user.name + " connected");
 
     socket.on("disconnect", () => {
@@ -126,13 +131,12 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("message", async (data, callback) => {
-      console.log(data);
       const postMessage = new PostMessage({
         ...data,
         chatId: new ChatId(data.chatId),
       });
       let isValid, directChat;
-      console.log(postMessage);
+
       if (postMessage.chatId.isGroup)
         isValid = io
           .of("/")

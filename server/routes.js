@@ -2,13 +2,19 @@ import passport from "passport";
 import queries from "./db/queries.js";
 import { ChatId, ChatData } from "../src/controllers/chat-data.js";
 
+async function getUserInfo(req) {
+  const userInfo = await (req.user ? req.user() : null);
+  return userInfo;
+}
+
 function routes(app, ioHandlers) {
   //get logged in status. return userInfo if logged in, false if logged out.
   app.get("/api/auth-status", async (req, res) => {
     if (req.isAuthenticated()) {
-      const userInfo = await req.user();
-      delete userInfo.password;
+      const userInfo = await getUserInfo(req);
+      if (!userInfo) return res.json(false);
 
+      delete userInfo.password;
       res.json(userInfo);
     } else res.json(false);
   });
@@ -51,19 +57,25 @@ function routes(app, ioHandlers) {
   });
 
   app.get("/api/users", async (req, res) => {
-    const userInfo = await req.user();
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) return res.json(false);
+
     const users = await queries.getUsers(userInfo.id);
     res.json(users);
   });
 
   app.get("/api/friends", async (req, res) => {
-    const userInfo = await req.user();
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) return res.json(false);
+
     const friends = await queries.getFriendships(userInfo.id);
     res.json(friends);
   });
 
   app.get("/api/chats", async (req, res) => {
-    const userInfo = await req.user();
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) return res.json(false);
+
     const chatList = await queries.getChatList(userInfo.id);
     res.json(chatList);
   });
@@ -71,35 +83,55 @@ function routes(app, ioHandlers) {
   //get group messages, and other info
   app.get("/api/group/:groupId", async (req, res) => {
     const groupId = req.params.groupId;
+
+    if (!req.user) return res.json(false);
+
+    const userInfoPromise = req.user();
+    const groupMembersPromise = queries.getMembersByGroupId(groupId);
+    const [userInfo, groupMembers] = await Promise.all([
+      userInfoPromise,
+      groupMembersPromise,
+    ]);
+
+    if (!userInfo) return res.json(false);
+
+    const membership = groupMembers.find(
+      (member) => member.user_id === userInfo.id,
+    );
+    if (!membership) return res.json(false);
+
     const group = queries.findGroupById(groupId);
     const members = queries.getMembersByGroupId(groupId);
     const messages = queries.getMessagesByChatId(new ChatId({ id: groupId }));
-    const values = await Promise.all([group, members, messages]);
+    const results = await Promise.all([group, members, messages]);
 
     const chatData = new ChatData({
-      group: values[0],
-      members: values[1],
-      messages: values[2],
+      group: results[0],
+      members: results[1],
+      messages: results[2],
     });
     res.json(chatData);
   });
 
   //get direct chat messages
   app.get("/api/chat/:direct_chat_id", async (req, res) => {
-    const userInfo = await req.user();
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) return res.json(false);
+
     const chatId = new ChatId({
       id: req.params.direct_chat_id,
       isGroup: false,
     });
 
-    const messages = queries.getMessagesByChatId(chatId);
-    const directChat = queries.findDirectChat(chatId, userInfo.id);
-    const values = await Promise.all([messages, directChat]);
+    const direct = await queries.findDirectChat(chatId, userInfo.id);
+    if (!direct) return res.json(false);
+
+    const messages = await queries.getMessagesByChatId(chatId);
 
     const chatData = new ChatData({
       isGroup: false,
-      messages: values[0],
-      direct: values[1],
+      messages,
+      direct,
     });
     res.json(chatData);
   });

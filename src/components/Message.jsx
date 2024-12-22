@@ -27,7 +27,7 @@ function Message({ message, isJoined = false }) {
           <time dateTime={message.created}>
             {DateFormat.time(message.created)}
           </time>
-          {message.id > 0 ? null : " - " + SENT_STATUS_TEXT}
+          {message.id >= 0 ? null : " - " + SENT_STATUS_TEXT}
         </p>
       </div>
     </li>

@@ -63,7 +63,7 @@ function FriendOverview() {
         .then((res) => res.json())
         .then((data) => {
           setFriends((prevFriends) => {
-            friendship.name = data.name;
+            friendship.name = data ? data.name : "default_name";
             return sortFriends([friendship, ...prevFriends]);
           });
         })

@@ -372,7 +372,8 @@ async function findDirectChat(chatId = new ChatId({}), user_id) {
   `;
 
   const { rows } = await pool.query(SQL_FIND_DIRECT_CHAT, [chatId.id, user_id]);
-  return new Direct(rows[0]);
+  if (rows[0]) return new Direct(rows[0]);
+  else return false;
 }
 
 export default {
