@@ -7,6 +7,7 @@ import {
   Group,
   Direct,
   Member,
+  ChatItemData,
 } from "../../src/controllers/chat-data.js";
 import { FRIEND_REQUEST_TYPE } from "../../src/controllers/constants.js";
 
@@ -306,16 +307,21 @@ async function getGroupsByUserId(userId) {
   as it generates list of user's groups with last message
 */
 async function getGroupSummaries(user_id) {
-  const groups = await getGroupsByUserId(user_id);
+  const groupsData = await getGroupsByUserId(user_id);
+  const groups = groupsData.map((group) =>
+    ChatItemData.createGroup({
+      ...group,
+      chatId: new ChatId({
+        id: group.id,
+      }),
+    }),
+  );
 
   const promises = [];
   for (const group of groups) {
-    group.isGroup = true;
-    const chatId = new ChatId({ id: group.id });
-
     promises.push(
-      getMessagesByChatId(chatId, 1).then((messages) => {
-        if (messages[0]) group.lastMessage = new Message(messages[0]);
+      getMessagesByChatId(group.chatId, 1).then((messages) => {
+        if (messages[0]) group.lastMessage = messages[0];
       }),
     );
   }
@@ -340,20 +346,22 @@ async function getDirectChats(user_id) {
 }
 
 async function getDirectChatSummaries(user_id) {
-  const directChats = await getDirectChats(user_id);
+  const directChatsData = await getDirectChats(user_id);
+  const directChats = directChatsData.map((direct) =>
+    ChatItemData.createDirect({
+      ...direct,
+      chatId: new ChatId({
+        id: direct.id,
+        isGroup: false,
+      }),
+    }),
+  );
 
   const promises = [];
-  for (const directChat of directChats) {
-    directChat.isGroup = false;
-
-    const chatId = new ChatId({
-      id: directChat.id,
-      isGroup: false,
-    });
-
+  for (const direct of directChats) {
     promises.push(
-      getMessagesByChatId(chatId, 1).then((messages) => {
-        if (messages[0]) directChat.lastMessage = new Message(messages[0]);
+      getMessagesByChatId(direct.chatId, 1).then((messages) => {
+        if (messages[0]) direct.lastMessage = messages[0];
       }),
     );
   }

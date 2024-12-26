@@ -8,7 +8,7 @@ function ChatList() {
   return (
     <ul className="chat-list room-left-screen">
       {chats.map((chat) => (
-        <li key={(chat.isGroup ? "g" : "d") + chat.id}>
+        <li key={(chat.chatId.isGroup ? "g" : "d") + chat.chatId.id}>
           <ChatItem chat={chat} />
         </li>
       ))}

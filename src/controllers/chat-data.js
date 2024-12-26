@@ -99,3 +99,99 @@ export class NewMessage {
     this.message = message;
   }
 }
+
+export class ChatItemData {
+  #chatId;
+  #lastMessage;
+
+  constructor({
+    chatId = new ChatId({}),
+    name = "default_name",
+    user_id = 0,
+    joined = "1970-01-01T00:00:00.000Z",
+    time_shown = "1970-01-01T00:00:00.000Z",
+    lastMessage = new Message({}),
+  }) {
+    this.chatId = chatId;
+    this.name = name;
+    this.user_id = user_id;
+    this.joined = joined;
+    this.time_shown = time_shown;
+    this.lastMessage = lastMessage;
+  }
+
+  //more specialized constructor specifying only properties needed for group chat item
+  static createGroup({
+    chatId = new ChatId({}),
+    name = "default_name",
+    joined = "1970-01-01T00:00:00.000Z",
+    lastMessage = new Message({}),
+  }) {
+    return new this({ chatId, name, joined, lastMessage });
+  }
+
+  //more specialized constructor specifying only properties needed for direct chat item
+  static createDirect({
+    chatId = new ChatId({}),
+    name = "default_name",
+    user_id = 0,
+    time_shown = "1970-01-01T00:00:00.000Z",
+    lastMessage = new Message({}),
+  }) {
+    return new this({ chatId, name, user_id, time_shown, lastMessage });
+  }
+
+  set lastMessage(lastMessage) {
+    this.#lastMessage =
+      lastMessage instanceof Message ? lastMessage : new Message(lastMessage);
+  }
+  get lastMessage() {
+    return this.#lastMessage;
+  }
+
+  set chatId(chatId) {
+    this.#chatId = chatId instanceof ChatId ? chatId : new ChatId(chatId);
+  }
+  get chatId() {
+    return this.#chatId;
+  }
+
+  /*Select time representing chat item,
+    based on whether last message is defined,
+    and if this is a group chat or direct chat.
+  */
+  selectTime() {
+    //if last message is not default, use last message time
+    if (this.lastMessage.id !== 0) return this.lastMessage.created;
+
+    if (this.chatId.isGroup) return this.joined;
+    else return this.time_shown;
+  }
+
+  //get epoch for selectTime()
+  getEpoch() {
+    const epoch = new Date(this.selectTime()).getTime();
+    return epoch;
+  }
+
+  toJSON() {
+    return {
+      ...this,
+      chatId: this.chatId,
+      lastMessage: this.lastMessage,
+    };
+  }
+
+  static sortChats(chats = [new this({})]) {
+    const sortedChats = chats.toSorted((a, b) => {
+      //Sort by new item first, using time.
+      const timeA = a.getEpoch();
+      const timeB = b.getEpoch();
+      const timeDiff = timeB - timeA;
+
+      return timeDiff;
+    });
+
+    return sortedChats;
+  }
+}

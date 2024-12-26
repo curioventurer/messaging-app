@@ -4,38 +4,39 @@ import PropTypes from "prop-types";
 import { LayoutContext } from "./Layout.jsx";
 import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
+import { ChatItemData } from "../controllers/chat-data.js";
 
-function ChatItem({ chat }) {
+function ChatItem({ chat = new ChatItemData({}) }) {
   const { openMenu } = useContext(LayoutContext);
   const { chatId } = useContext(GroupContext);
-  const lastMessage = chat.lastMessage;
 
-  const date = lastMessage
-    ? lastMessage.created
-    : (chat.joined ?? chat.time_shown);
+  const hasLastMessage = chat.lastMessage.id !== 0;
+
+  const date = chat.selectTime();
   const displayDate = DateFormat.timestamp(date);
 
   let shownMessage;
-  if (lastMessage)
-    shownMessage = chat.isGroup
-      ? `${lastMessage.name}: ${lastMessage.text}`
-      : lastMessage.text;
-  else shownMessage = chat.isGroup ? "Joined group" : "Chat created";
+  if (hasLastMessage)
+    shownMessage = chat.chatId.isGroup
+      ? `${chat.lastMessage.name}: ${chat.lastMessage.text}`
+      : chat.lastMessage.text;
+  else shownMessage = chat.chatId.isGroup ? "Joined group" : "Chat created";
 
   let isActive = false;
-  if (chat.id === chatId.id && chat.isGroup === chatId.isGroup) isActive = true;
+  if (chat.chatId.id === chatId.id && chat.chatId.isGroup === chatId.isGroup)
+    isActive = true;
 
   return (
     <>
       <Link
-        to={(chat.isGroup ? "/group/" : "/chat/") + chat.id}
+        to={(chat.chatId.isGroup ? "/group/" : "/chat/") + chat.chatId.id}
         className={"button-link" + (isActive ? " button-highlight" : "")}
       >
         <div className="chat-item-header">
           <p>{chat.name}</p>
           <div className="right-side">
             <time dateTime={date}>{displayDate}</time>
-            <button onClick={openMenu} data-chat={JSON.stringify(chat)}>
+            <button onClick={openMenu} data-chat={JSON.stringify(chat.chatId)}>
               ⋮
             </button>
           </div>
@@ -47,7 +48,7 @@ function ChatItem({ chat }) {
 }
 
 ChatItem.propTypes = {
-  chat: PropTypes.object.isRequired,
+  chat: PropTypes.instanceOf(ChatItemData).isRequired,
 };
 
 export default ChatItem;

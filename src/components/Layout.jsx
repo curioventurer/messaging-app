@@ -2,8 +2,12 @@ import { useEffect, useState, useRef, createContext } from "react";
 import { Outlet } from "react-router-dom";
 import Nav from "./Nav";
 import ChatItemMenu from "./ChatItemMenu";
-import { ChatId, Message, NewMessage } from "../controllers/chat-data.js";
-import sortChats from "../controllers/sortChats.js";
+import {
+  ChatItemData,
+  ChatId,
+  Message,
+  NewMessage,
+} from "../controllers/chat-data.js";
 
 const LAYOUT_CONTEXT_DEFAULT = {
   removeChat: function () {},
@@ -11,16 +15,16 @@ const LAYOUT_CONTEXT_DEFAULT = {
 };
 
 const CHAT_CONTEXT_DEFAULT = {
-  chats: [],
+  chats: [new ChatItemData({})],
 };
 
 export const LayoutContext = createContext(LAYOUT_CONTEXT_DEFAULT);
 export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 
 function Layout() {
-  const [chats, setChats] = useState([]);
+  const [chats, setChats] = useState(CHAT_CONTEXT_DEFAULT.chats);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [menuChatData, setMenuChatData] = useState({});
+  const [menuChatData, setMenuChatData] = useState(new ChatId({}));
 
   const chatItemButton = useRef(null);
   const menuRef = useRef(null);
@@ -32,15 +36,8 @@ function Layout() {
     fetch(request)
       .then((res) => res.json())
       .then((data) => {
-        data = data.map((item) => {
-          return {
-            ...item,
-            lastMessage: item.lastMessage
-              ? new Message(item.lastMessage)
-              : null,
-          };
-        });
-        setChats(sortChats(data));
+        data = data.map((item) => new ChatItemData(item));
+        setChats(ChatItemData.sortChats(data));
       })
       .catch(() => {});
 
@@ -68,23 +65,18 @@ function Layout() {
     });
 
     setChats((prevChats) => {
-      const index = prevChats.findIndex((chat) => {
-        const chatId = new ChatId({
-          id: chat.id,
-          isGroup: chat.isGroup,
-        });
-        return (
-          chatId.id === newMessage.chatId.id &&
-          chatId.isGroup === newMessage.chatId.isGroup
-        );
-      });
+      const index = prevChats.findIndex(
+        (chat) =>
+          chat.chatId.id === newMessage.chatId.id &&
+          chat.chatId.isGroup === newMessage.chatId.isGroup,
+      );
       if (index === -1) return prevChats;
 
-      const updatedChat = {
-        ...prevChats[index],
+      const updatedChat = new ChatItemData({
+        ...prevChats[index].toJSON(),
         lastMessage: newMessage.message,
-      };
-      const newChats = sortChats([
+      });
+      const newChats = ChatItemData.sortChats([
         updatedChat,
         ...prevChats.slice(0, index),
         ...prevChats.slice(index + 1),
@@ -96,13 +88,11 @@ function Layout() {
 
   function removeChat(chatId = new ChatId({})) {
     setChats((prevChats) => {
-      const index = prevChats.findIndex((chat) => {
-        const itemId = new ChatId({
-          id: chat.id,
-          isGroup: chat.isGroup,
-        });
-        return itemId.id === chatId.id && itemId.isGroup === chatId.isGroup;
-      });
+      const index = prevChats.findIndex(
+        (chat) =>
+          chat.chatId.id === chatId.id &&
+          chat.chatId.isGroup === chatId.isGroup,
+      );
       if (index === -1) return prevChats;
 
       const newChats = [
@@ -123,7 +113,7 @@ function Layout() {
       return setIsMenuVisible(false);
 
     setIsMenuVisible(true);
-    setMenuChatData(JSON.parse(event.target.dataset.chat));
+    setMenuChatData(new ChatId(JSON.parse(event.target.dataset.chat)));
     chatItemButton.current = event.target;
 
     const targetRect = event.target.getBoundingClientRect();

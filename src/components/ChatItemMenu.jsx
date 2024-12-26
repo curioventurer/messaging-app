@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { LayoutContext } from "./Layout.jsx";
 import { ChatId } from "../controllers/chat-data.js";
 
-function ChatItemMenu({ menuRef, isVisible = false, chat }) {
+function ChatItemMenu({ menuRef, isVisible = false, chat = new ChatId({}) }) {
   const { removeChat } = useContext(LayoutContext);
 
   function hideChat() {
@@ -41,7 +41,7 @@ function ChatItemMenu({ menuRef, isVisible = false, chat }) {
 ChatItemMenu.propTypes = {
   menuRef: PropTypes.object.isRequired,
   isVisible: PropTypes.bool.isRequired,
-  chat: PropTypes.object.isRequired,
+  chat: PropTypes.instanceOf(ChatId).isRequired,
 };
 
 export default ChatItemMenu;
