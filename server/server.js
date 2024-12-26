@@ -25,7 +25,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 function getTimestamp() {
-  return new Date().toISOString();
+  const time = new Date();
+  return (
+    time.getMinutes().toString().padStart(2, " ") +
+    ":" +
+    time.getSeconds().toString().padStart(2, "0") +
+    "." +
+    time.getMilliseconds().toString().padStart(3, "0")
+  );
 }
 
 //Log server request
@@ -34,8 +41,15 @@ app.use(function (req, _, next) {
   const timestamp = getTimestamp();
   const url = req.originalUrl;
 
+  requestCount++;
   const requestLog =
-    timestamp + " - " + ++requestCount + " - " + req.method + " - " + url;
+    timestamp +
+    "  " +
+    requestCount.toString().padStart(4, " ") +
+    "  " +
+    req.method.padEnd(6, " ") +
+    " " +
+    url;
 
   fs.appendFile("./request.log", requestLog + "\n", () => {});
   console.log(requestLog);

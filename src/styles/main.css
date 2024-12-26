@@ -29,21 +29,21 @@ ul {
 nav ul {
   display: flex;
   gap: 20px;
+
+  .button-link {
+    cursor: pointer;
+  }
 }
 
-a.button-link {
+.button-link {
   text-decoration: none;
   display: block;
   padding: 5px;
   color: inherit;
-  cursor: pointer;
+  cursor: default;
 
   &:hover {
     background: #fff2;
-  }
-
-  &:active {
-    background: #fff3;
   }
 
   &.button-highlight {
@@ -213,7 +213,7 @@ ul.friend-list {
 
     margin-bottom: 5px;
 
-    p {
+    & > p {
       font-size: 1.4em;
       color: white;
       font-weight: bold;
@@ -222,10 +222,48 @@ ul.friend-list {
       overflow: hidden;
       text-overflow: ellipsis;
     }
+  }
+}
 
-    time {
-      width: max-content;
-      flex: none;
+.chat-item-header .right-side {
+  width: max-content;
+  flex: none;
+
+  display: flex;
+  align-items: center;
+  column-gap: 5px;
+
+  button {
+    background-color: transparent;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0;
+
+    &:hover {
+      scale: 1.2;
+    }
+  }
+}
+
+.chat-item-menu {
+  position: absolute;
+  background-color: #222;
+  padding-block: 5px;
+
+  &.hidden {
+    visibility: hidden;
+  }
+
+  button {
+    background-color: inherit;
+    color: white;
+    padding: 5px 10px;
+    width: 100%;
+    text-align: start;
+
+    &:hover {
+      background-color: #333;
     }
   }
 }
@@ -248,7 +286,7 @@ ul.friend-list {
   }
 
   .chat-list {
-    width: 30ch;
+    width: 40ch;
     flex: none;
 
     margin: 0;

@@ -1,10 +1,12 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
+import { LayoutContext } from "./Layout.jsx";
 import { GroupContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function ChatItem({ chat }) {
+  const { openMenu } = useContext(LayoutContext);
   const { chatId } = useContext(GroupContext);
   const lastMessage = chat.lastMessage;
 
@@ -24,16 +26,23 @@ function ChatItem({ chat }) {
   if (chat.id === chatId.id && chat.isGroup === chatId.isGroup) isActive = true;
 
   return (
-    <Link
-      to={(chat.isGroup ? "/group/" : "/chat/") + chat.id}
-      className={"button-link" + (isActive ? " button-highlight" : "")}
-    >
-      <div className="chat-item-header">
-        <p>{chat.name}</p>
-        <time dateTime={date}>{displayDate}</time>
-      </div>
-      <p className="clipped-text">{shownMessage}</p>
-    </Link>
+    <>
+      <Link
+        to={(chat.isGroup ? "/group/" : "/chat/") + chat.id}
+        className={"button-link" + (isActive ? " button-highlight" : "")}
+      >
+        <div className="chat-item-header">
+          <p>{chat.name}</p>
+          <div className="right-side">
+            <time dateTime={date}>{displayDate}</time>
+            <button onClick={openMenu} data-chat={JSON.stringify(chat)}>
+              ⋮
+            </button>
+          </div>
+        </div>
+        <p className="clipped-text">{shownMessage}</p>
+      </Link>
+    </>
   );
 }
 

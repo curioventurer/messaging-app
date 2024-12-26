@@ -135,6 +135,29 @@ function routes(app, ioHandlers) {
     });
     res.json(chatData);
   });
+
+  app.post("/api/open_chat/:user_id", async (req, res) => {
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) return res.json(false);
+
+    const direct_chat_id = await queries.openDirectChat(
+      userInfo.id,
+      req.params.user_id,
+    );
+    res.json(direct_chat_id);
+  });
+
+  app.put("/api/chat/:direct_chat_id/hide", async (req, res) => {
+    const userInfo = await getUserInfo(req);
+    if (!userInfo) return res.json(false);
+
+    const chatId = new ChatId({
+      id: req.params.direct_chat_id,
+      isGroup: false,
+    });
+    await queries.hideDirectChat(chatId, userInfo.id);
+    res.json(true);
+  });
 }
 
 export default routes;

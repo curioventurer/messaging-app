@@ -27,7 +27,6 @@ async function findUser(name) {
 }
 
 async function findUserById(id) {
-  console.log("*query - find by id");
   const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
   return rows[0];
 }
@@ -58,6 +57,8 @@ async function getUsers(user_id) {
 }
 
 async function addFriend({ sender_id, receiver_id }) {
+  if (sender_id === receiver_id) return false; //Must not reference yourself
+
   //verify that the receiver exist
   const receiver = await findUserById(receiver_id);
   if (!receiver) return false;
@@ -204,6 +205,88 @@ async function reverseFriendRequest(id, user_id) {
   const values = await Promise.all([setStatePromise, invertPromise]);
   const update = values[0];
   return { update, receiver_id: friendship.sender_id };
+}
+
+async function openDirectChat(sender_id, receiver_id) {
+  if (sender_id === receiver_id) return false; //Must not reference yourself
+
+  //search for preexisting direct chat, and show it if found.
+  const SQL_FIND_DIRECT = `
+    SELECT agent1.direct_chat_id AS id, agent1.is_shown
+    FROM direct_chat_agents AS agent1
+    INNER JOIN direct_chat_agents AS agent2 ON agent1.direct_chat_id = agent2.direct_chat_id
+    WHERE agent1.user_id = $1
+    AND agent2.user_id = $2
+  `;
+  const direct = (await pool.query(SQL_FIND_DIRECT, [sender_id, receiver_id]))
+    .rows[0];
+  if (direct) {
+    if (direct.is_shown === false)
+      await showDirectChat(
+        new ChatId({ id: direct.id, isGroup: false }),
+        sender_id,
+      );
+
+    return direct.id;
+  }
+
+  //direct chat not found, create a new one.
+  const SQL_FIND_FRIENDSHIP = `
+    SELECT friendships.state
+    FROM friendships
+    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
+    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
+    WHERE agent1.user_id = $1
+    AND agent2.user_id = $2
+  `;
+  const friendship = (
+    await pool.query(SQL_FIND_FRIENDSHIP, [sender_id, receiver_id])
+  ).rows[0];
+
+  //Friendship not found, or not friends. Abort
+  if (friendship?.state !== FRIEND_REQUEST_TYPE.ACCEPTED) return false;
+
+  const direct_chat_id = await createDirectChat(sender_id, receiver_id);
+  return direct_chat_id;
+}
+
+async function createDirectChat(sender_id, receiver_id) {
+  const newDirect = (
+    await pool.query("INSERT INTO direct_chats VALUES ( DEFAULT ) returning id")
+  ).rows[0];
+  if (!newDirect) return false; //Database insert failure
+
+  const SQL_CREATE_DIRECT = `
+    INSERT INTO direct_chat_agents
+    ( direct_chat_id, user_id, is_shown, time_shown )
+    VALUES
+    ( $1, $2, TRUE, CURRENT_TIMESTAMP),
+    ( $1, $3, DEFAULT, DEFAULT)
+  `;
+  await pool.query(SQL_CREATE_DIRECT, [newDirect.id, sender_id, receiver_id]);
+
+  return newDirect.id;
+}
+
+async function showDirectChat(chatId = new ChatId({}), user_id) {
+  const SQL_SHOW_DIRECT = `
+    UPDATE direct_chat_agents
+    SET is_shown = TRUE,
+    time_shown = CURRENT_TIMESTAMP
+    WHERE direct_chat_id = $1
+    AND user_id = $2
+  `;
+  await pool.query(SQL_SHOW_DIRECT, [chatId.id, user_id]);
+}
+
+async function hideDirectChat(chatId = new ChatId({}), user_id) {
+  const SQL_HIDE_DIRECT = `
+    UPDATE direct_chat_agents
+    SET is_shown = FALSE
+    WHERE direct_chat_id = $1
+    AND user_id = $2
+  `;
+  await pool.query(SQL_HIDE_DIRECT, [chatId.id, user_id]);
 }
 
 async function getGroupsByUserId(userId) {
@@ -386,6 +469,8 @@ export default {
   addFriend,
   updateFriendRequest,
   reverseFriendRequest,
+  openDirectChat,
+  hideDirectChat,
   getGroupsByUserId,
   getChatList,
   findGroupById,

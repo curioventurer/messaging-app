@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { Member } from "../controllers/chat-data";
 
 function MemberItem({ member }) {
   return (
@@ -10,7 +11,7 @@ function MemberItem({ member }) {
 }
 
 MemberItem.propTypes = {
-  member: PropTypes.object.isRequired,
+  member: PropTypes.instanceOf(Member).isRequired,
 };
 
 export default MemberItem;
