@@ -1,3 +1,5 @@
+/* global process */
+
 import "dotenv/config";
 import express from "express";
 import http from "http";
@@ -14,9 +16,9 @@ const server = http.createServer(app);
 ViteExpress.bind(app, server);
 
 const sessionMiddleware = session({
-  secret: "cats",
+  secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialised: false,
+  saveUninitialized: false,
 });
 app.use(sessionMiddleware);
 const ioHandlers = comm(server, sessionMiddleware);
