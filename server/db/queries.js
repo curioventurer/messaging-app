@@ -28,8 +28,14 @@ async function findUser(name) {
 }
 
 async function findUserById(id) {
-  const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-  return rows[0];
+  try {
+    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
+      id,
+    ]);
+    return rows[0];
+  } catch {
+    return false;
+  }
 }
 
 async function getUsers(user_id) {
@@ -142,8 +148,12 @@ async function findFriendshipById(id) {
     AND agent2.is_initiator = FALSE
   `;
 
-  const { rows } = await pool.query(SQL_FIND_FRIENDSHIP, [id]);
-  return rows[0];
+  try {
+    const { rows } = await pool.query(SQL_FIND_FRIENDSHIP, [id]);
+    return rows[0];
+  } catch {
+    return false;
+  }
 }
 
 async function setFriendshipStateById(id, state) {
@@ -219,16 +229,20 @@ async function openDirectChat(sender_id, receiver_id) {
     WHERE agent1.user_id = $1
     AND agent2.user_id = $2
   `;
-  const direct = (await pool.query(SQL_FIND_DIRECT, [sender_id, receiver_id]))
-    .rows[0];
-  if (direct) {
-    if (direct.is_shown === false)
-      await showDirectChat(
-        new ChatId({ id: direct.id, isGroup: false }),
-        sender_id,
-      );
+  try {
+    const direct = (await pool.query(SQL_FIND_DIRECT, [sender_id, receiver_id]))
+      .rows[0];
+    if (direct) {
+      if (direct.is_shown === false)
+        await showDirectChat(
+          new ChatId({ id: direct.id, isGroup: false }),
+          sender_id,
+        );
 
-    return direct.id;
+      return direct.id;
+    }
+  } catch {
+    return false;
   }
 
   //direct chat not found, create a new one.
@@ -287,7 +301,11 @@ async function hideDirectChat(chatId = new ChatId({}), user_id) {
     WHERE direct_chat_id = $1
     AND user_id = $2
   `;
-  await pool.query(SQL_HIDE_DIRECT, [chatId.id, user_id]);
+  try {
+    await pool.query(SQL_HIDE_DIRECT, [chatId.id, user_id]);
+  } catch {
+    return false;
+  }
 }
 
 async function getGroupsByUserId(userId) {
@@ -382,7 +400,7 @@ async function findGroupById(groupId) {
   const { rows } = await pool.query("SELECT * FROM groups WHERE id = $1", [
     groupId,
   ]);
-  return new Group(rows[0]);
+  return rows[0] ? new Group(rows[0]) : false;
 }
 
 async function getMembersByGroupId(groupId) {
@@ -394,9 +412,13 @@ async function getMembersByGroupId(groupId) {
     WHERE memberships.group_id = $1
     ORDER BY memberships.permission DESC, users.name
   `;
-  const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
-  const members = rows.map((row) => new Member(row));
-  return members;
+  try {
+    const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
+    const members = rows.map((row) => new Member(row));
+    return members;
+  } catch {
+    return false;
+  }
 }
 
 async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
@@ -462,9 +484,16 @@ async function findDirectChat(chatId = new ChatId({}), user_id) {
     AND agent2.user_id != $2
   `;
 
-  const { rows } = await pool.query(SQL_FIND_DIRECT_CHAT, [chatId.id, user_id]);
-  if (rows[0]) return new Direct(rows[0]);
-  else return false;
+  try {
+    const { rows } = await pool.query(SQL_FIND_DIRECT_CHAT, [
+      chatId.id,
+      user_id,
+    ]);
+    if (rows[0]) return new Direct(rows[0]);
+    else return false;
+  } catch {
+    return false;
+  }
 }
 
 export default {

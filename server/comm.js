@@ -84,6 +84,10 @@ function comm(server, sessionMiddleware) {
 
     console.log("*socket: " + socket.user.name + " connected");
 
+    socket.use(([, arg1], next) => {
+      if (arg1 instanceof Object) next();
+    });
+
     socket.on("disconnect", () => {
       console.log("*socket: " + socket.user.name + " disconnected");
     });
@@ -131,6 +135,9 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("message", async (data, callback) => {
+      if (!(callback instanceof Function)) return;
+      if (!PostMessage.isValid(data)) return callback(false);
+
       const postMessage = new PostMessage({
         ...data,
         chatId: new ChatId(data.chatId),

@@ -91,6 +91,19 @@ export class PostMessage {
     this.chatId = chatId;
     this.message = message;
   }
+
+  static isValid(data) {
+    if (!(data instanceof Object)) return false;
+
+    if (!Number.isSafeInteger(data.client_id)) return false;
+    if (typeof data.message !== "string") return false;
+
+    if (!(data.chatId instanceof Object)) return false;
+    if (!Number.isSafeInteger(data.chatId.id)) return false;
+    if (typeof data.chatId.isGroup !== "boolean") return false;
+
+    return true;
+  }
 }
 
 export class NewMessage {

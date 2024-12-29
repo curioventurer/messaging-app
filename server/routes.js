@@ -50,6 +50,7 @@ function routes(app, ioHandlers) {
 
   app.get("/api/user/:user_id", async (req, res) => {
     const user_id = req.params.user_id;
+
     const user = await queries.findUserById(user_id);
     if (user) delete user.password;
 
@@ -93,7 +94,7 @@ function routes(app, ioHandlers) {
       groupMembersPromise,
     ]);
 
-    if (!userInfo) return res.json(false);
+    if (!userInfo || !groupMembers) return res.json(false);
 
     const membership = groupMembers.find(
       (member) => member.user_id === userInfo.id,
