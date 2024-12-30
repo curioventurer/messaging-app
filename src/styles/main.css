@@ -62,6 +62,7 @@ nav ul {
   flex-direction: column;
 
   height: 100%;
+  position: relative;
 }
 
 .friend-overview {
@@ -200,6 +201,7 @@ ul.friend-list {
 .chat-list {
   color: #ccc;
   border: 1px solid white;
+  overflow: auto;
 
   a.button-link {
     padding: 10px;
@@ -241,18 +243,23 @@ ul.friend-list {
     padding: 0;
 
     &:hover {
-      scale: 1.2;
+      filter: brightness(0.5);
     }
   }
 }
 
 .chat-item-menu {
   position: absolute;
+  width: max-content;
   background-color: #222;
   padding-block: 5px;
 
-  &.hidden {
-    visibility: hidden;
+  --edge-highlight: 2px solid yellow;
+  border-top: var(--edge-highlight);
+
+  &.bottom-edge {
+    border-top: none;
+    border-bottom: var(--edge-highlight);
   }
 
   button {
@@ -280,16 +287,10 @@ ul.friend-list {
   */
   min-height: 0;
 
-  .room-left-screen {
-    height: 100%;
-    overflow: auto;
-  }
-
   .chat-list {
     width: 40ch;
     flex: none;
 
-    margin: 0;
     border: none;
     border-right: 1px solid white;
   }
@@ -299,7 +300,6 @@ ul.friend-list {
   display: flex;
   flex-direction: column;
 
-  height: 100%;
   flex: 1;
 
   button.room-header {

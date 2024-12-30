@@ -6,7 +6,7 @@ function ChatList() {
   const { chats } = useContext(ChatContext);
 
   return (
-    <ul className="chat-list room-left-screen">
+    <ul className="chat-list">
       {chats.map((chat) => (
         <li key={(chat.chatId.isGroup ? "g" : "d") + chat.chatId.id}>
           <ChatItem chat={chat} />

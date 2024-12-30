@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, createContext } from "react";
+import { useState, useEffect, useRef, createContext } from "react";
 import { Outlet } from "react-router-dom";
 import Nav from "./Nav";
 import ChatItemMenu from "./ChatItemMenu";
@@ -24,10 +24,10 @@ export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 function Layout() {
   const [chats, setChats] = useState(CHAT_CONTEXT_DEFAULT.chats);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [menuChatData, setMenuChatData] = useState(new ChatId({}));
+  const [chatItemActiveButton, setChatItemActiveButton] = useState(null);
+  const [layoutRect, setLayoutRect] = useState(null);
 
-  const chatItemButton = useRef(null);
-  const menuRef = useRef(null);
+  const layoutRef = useRef(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -55,6 +55,22 @@ function Layout() {
 
     return () => {
       window.socket.off("message", updateLastMsg);
+    };
+  }, []);
+
+  function updateLayoutRect() {
+    setLayoutRect(layoutRef.current.getBoundingClientRect());
+  }
+
+  useEffect(() => {
+    updateLayoutRect();
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateLayoutRect);
+
+    return () => {
+      window.removeEventListener("resize", updateLayoutRect);
     };
   }, []);
 
@@ -109,25 +125,11 @@ function Layout() {
     event.stopPropagation();
 
     //close menu instead if the same button is clicked for an already visible menu
-    if (chatItemButton.current === event.target && isMenuVisible)
+    if (chatItemActiveButton === event.target && isMenuVisible)
       return setIsMenuVisible(false);
 
+    setChatItemActiveButton(event.target);
     setIsMenuVisible(true);
-    setMenuChatData(new ChatId(JSON.parse(event.target.dataset.chat)));
-    chatItemButton.current = event.target;
-
-    const targetRect = event.target.getBoundingClientRect();
-    const menuRect = menuRef.current.getBoundingClientRect();
-    let top = targetRect.top;
-    let left = targetRect.right;
-
-    if (top + menuRect.height + 20 > window.innerHeight)
-      top = targetRect.bottom - menuRect.height;
-    if (left + menuRect.width + 20 > window.innerWidth)
-      left = targetRect.left - menuRect.width;
-
-    menuRef.current.style.top = top + "px";
-    menuRef.current.style.left = left + "px";
   }
 
   function closeMenu() {
@@ -135,7 +137,7 @@ function Layout() {
   }
 
   return (
-    <div className="layout" onClick={closeMenu}>
+    <div ref={layoutRef} className="layout" onClick={closeMenu}>
       <Nav />
       <LayoutContext.Provider
         value={{
@@ -146,11 +148,9 @@ function Layout() {
         <ChatContext.Provider value={{ chats }}>
           <Outlet />
         </ChatContext.Provider>
-        <ChatItemMenu
-          menuRef={menuRef}
-          isVisible={isMenuVisible}
-          chat={menuChatData}
-        />
+        {isMenuVisible ? (
+          <ChatItemMenu target={chatItemActiveButton} layoutRect={layoutRect} />
+        ) : null}
       </LayoutContext.Provider>
     </div>
   );
