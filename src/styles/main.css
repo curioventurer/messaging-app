@@ -202,6 +202,7 @@ ul.friend-list {
   color: #ccc;
   border: 1px solid white;
   overflow: auto;
+  scroll-behavior: smooth;
 
   a.button-link {
     padding: 10px;

@@ -10,7 +10,11 @@ function ChatList() {
 
   //when menu is open, disable scrolling by scrolling back to previous recorded position
   function handleScroll(event) {
-    if (isMenuVisible) event.target.scrollTo({ top: scrollTopRef.current });
+    if (isMenuVisible)
+      event.target.scrollTo({
+        top: scrollTopRef.current,
+        behavior: "instant",
+      });
     else scrollTopRef.current = event.target.scrollTop;
   }
 
