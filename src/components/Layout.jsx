@@ -10,6 +10,7 @@ import {
 } from "../controllers/chat-data.js";
 
 const LAYOUT_CONTEXT_DEFAULT = {
+  isMenuVisible: false,
   removeChat: function () {},
   openMenu: function () {},
 };
@@ -126,7 +127,7 @@ function Layout() {
 
     //close menu instead if the same button is clicked for an already visible menu
     if (chatItemActiveButton === event.target && isMenuVisible)
-      return setIsMenuVisible(false);
+      return closeMenu();
 
     setChatItemActiveButton(event.target);
     setIsMenuVisible(true);
@@ -136,11 +137,21 @@ function Layout() {
     setIsMenuVisible(false);
   }
 
+  function handleKey(event) {
+    if (event.key === "Escape") closeMenu();
+  }
+
   return (
-    <div ref={layoutRef} className="layout" onClick={closeMenu}>
+    <div
+      ref={layoutRef}
+      className="layout"
+      onClick={closeMenu}
+      onKeyDown={handleKey}
+    >
       <Nav />
       <LayoutContext.Provider
         value={{
+          isMenuVisible,
           removeChat,
           openMenu,
         }}

@@ -53,6 +53,11 @@ function ChatItemMenu({ target, layoutRect }) {
     };
   }, [updatePosition]);
 
+  useEffect(() => {
+    const firstButton = menuRef.current.querySelector("button");
+    firstButton.focus();
+  }, [target]);
+
   function hideChat() {
     const request = new Request(`/api/chat/${chat.id}/hide`, { method: "PUT" });
 
@@ -79,7 +84,7 @@ function ChatItemMenu({ target, layoutRect }) {
         </li>
       ) : null}
       <li>
-        <button>test</button>
+        <button>cancel</button>
       </li>
     </ul>
   );
