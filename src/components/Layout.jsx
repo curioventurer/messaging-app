@@ -59,9 +59,13 @@ function Layout() {
     };
   }, []);
 
-  function updateLayoutRect() {
-    setLayoutRect(layoutRef.current.getBoundingClientRect());
-  }
+  useEffect(() => {
+    window.socket.on("chat item", appendChatItem);
+
+    return () => {
+      window.socket.off("chat item", appendChatItem);
+    };
+  }, []);
 
   useEffect(() => {
     updateLayoutRect();
@@ -103,6 +107,23 @@ function Layout() {
     });
   }
 
+  function appendChatItem(chatItemData = new ChatItemData({})) {
+    const chatItem = new ChatItemData(chatItemData);
+
+    setChats((prevChats) => {
+      const index = prevChats.findIndex(
+        (chat) =>
+          chat.chatId.id === chatItem.chatId.id &&
+          chat.chatId.isGroup === chatItem.chatId.isGroup,
+      );
+      if (index !== -1) return prevChats;
+
+      const newChats = ChatItemData.sortChats([chatItem, ...prevChats]);
+
+      return newChats;
+    });
+  }
+
   function removeChat(chatId = new ChatId({})) {
     setChats((prevChats) => {
       const index = prevChats.findIndex(
@@ -119,6 +140,10 @@ function Layout() {
 
       return newChats;
     });
+  }
+
+  function updateLayoutRect() {
+    setLayoutRect(layoutRef.current.getBoundingClientRect());
   }
 
   function openMenu(event) {

@@ -115,9 +115,21 @@ async function getFriendships(user_id) {
     AND agent2.user_id != $1
     ORDER BY friendships.state, friendships.modified DESC, friendships.id DESC
   `;
-  const { rows } = await pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
 
-  return rows;
+  const friendshipsPromise = pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
+  const directChatsPromise = getDirectChats(user_id);
+  const values = await Promise.all([directChatsPromise, friendshipsPromise]);
+  const directArr = values[0];
+  const friendshipArr = values[1].rows;
+
+  for (const direct of directArr) {
+    const friendship = friendshipArr.find(
+      (friendship) => friendship.user_id === direct.user_id,
+    );
+    if (friendship) friendship.direct_chat_id = direct.id;
+  }
+
+  return friendshipArr;
 }
 
 async function getFriendsByUserId(user_id) {
@@ -303,6 +315,7 @@ async function hideDirectChat(chatId = new ChatId({}), user_id) {
   `;
   try {
     await pool.query(SQL_HIDE_DIRECT, [chatId.id, user_id]);
+    return true;
   } catch {
     return false;
   }
@@ -360,7 +373,24 @@ async function getDirectChats(user_id) {
   `;
 
   const { rows } = await pool.query(SQL_GET_DIRECT_CHATS, [user_id]);
-  return rows;
+  return rows.map((direct) => new Direct(direct));
+}
+
+async function findDirectChatSummary(chatId = new ChatId({}), user_id = 0) {
+  const directPromise = findDirectChat(chatId, user_id);
+  const messagesPromise = getMessagesByChatId(chatId, 1);
+  const values = await Promise.all([directPromise, messagesPromise]);
+
+  const direct = values[0];
+  if (direct === false) return false;
+
+  const directChat = ChatItemData.createDirect({
+    ...direct,
+    chatId,
+    lastMessage: values[1][0],
+  });
+
+  return directChat;
 }
 
 async function getDirectChatSummaries(user_id) {
@@ -509,6 +539,7 @@ export default {
   openDirectChat,
   hideDirectChat,
   getGroupsByUserId,
+  findDirectChatSummary,
   getChatList,
   findGroupById,
   getMembersByGroupId,

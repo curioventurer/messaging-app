@@ -1,7 +1,11 @@
 import { Server } from "socket.io";
 import passport from "passport";
 import queries from "./db/queries.js";
-import { ChatId, PostMessage } from "../src/controllers/chat-data.js";
+import {
+  ChatId,
+  ChatItemData,
+  PostMessage,
+} from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
   socket.user = await (socket.request.user ? socket.request.user() : null);
@@ -177,7 +181,11 @@ function comm(server, sessionMiddleware) {
     io.emit("add user", user);
   }
 
-  return { addUser };
+  async function addChatItem(user_id = 0, chatItem = new ChatItemData({})) {
+    io.to("user:" + user_id).emit("chat item", chatItem);
+  }
+
+  return { addUser, addChatItem };
 }
 
 export default comm;

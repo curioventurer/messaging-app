@@ -1,8 +1,15 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, createContext } from "react";
 import FriendList from "./FriendList";
 import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
 import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
+
+const FRIEND_OVERVIEW_CONTEXT_DEFAULT = {
+  showChat: function () {},
+};
+export const FriendOverviewContext = createContext(
+  FRIEND_OVERVIEW_CONTEXT_DEFAULT,
+);
 
 function FriendOverview() {
   const [friends, setFriends] = useState([]);
@@ -91,10 +98,42 @@ function FriendOverview() {
     };
   }, []);
 
+  function showChat(user_id) {
+    const request = new Request(`/api/open_chat/${user_id}`, {
+      method: "POST",
+    });
+
+    fetch(request)
+      .then((res) => res.json())
+      .then((direct_chat_id) => {
+        if (direct_chat_id === false) return;
+
+        setFriends((prevFriends) => {
+          const index = prevFriends.findIndex(
+            (friend) => friend.user_id === user_id,
+          );
+          if (index === -1) return prevFriends;
+
+          const friendship = {
+            ...prevFriends[index],
+            direct_chat_id,
+          };
+
+          const newFriends = [
+            ...prevFriends.slice(0, index),
+            friendship,
+            ...prevFriends.slice(index + 1),
+          ];
+          return newFriends;
+        });
+      })
+      .catch(() => {});
+  }
+
   const acceptedRequest = friends.filter(
     (friend) => friend.state === FRIEND_REQUEST_TYPE.ACCEPTED,
   );
-  const sendRequest = friends.filter(
+  const sentRequest = friends.filter(
     (friend) =>
       friend.state === FRIEND_REQUEST_TYPE.PENDING && !friend.is_initiator,
   );
@@ -108,33 +147,35 @@ function FriendOverview() {
   );
 
   return (
-    <div className="friend-overview">
-      <h1>Friend Overview</h1>
-      {receivedRequest.length > 0 ? (
-        <section>
-          <h2>Received Request</h2>
-          <FriendList friends={receivedRequest} />
-        </section>
-      ) : null}
-      {sendRequest.length > 0 ? (
-        <section>
-          <h2>Send Request</h2>
-          <FriendList friends={sendRequest} />
-        </section>
-      ) : null}
-      {acceptedRequest.length > 0 ? (
-        <section>
-          <h2>Friends</h2>
-          <FriendList friends={acceptedRequest} />
-        </section>
-      ) : null}
-      {rejectedRequest.length > 0 ? (
-        <section>
-          <h2>Rejected Request</h2>
-          <FriendList friends={rejectedRequest} />
-        </section>
-      ) : null}
-    </div>
+    <FriendOverviewContext.Provider value={{ showChat }}>
+      <div className="friend-overview">
+        <h1>Friend Overview</h1>
+        {receivedRequest.length > 0 ? (
+          <section>
+            <h2>Received Request</h2>
+            <FriendList friends={receivedRequest} />
+          </section>
+        ) : null}
+        {sentRequest.length > 0 ? (
+          <section>
+            <h2>Send Request</h2>
+            <FriendList friends={sentRequest} />
+          </section>
+        ) : null}
+        {acceptedRequest.length > 0 ? (
+          <section>
+            <h2>Friends</h2>
+            <FriendList friends={acceptedRequest} />
+          </section>
+        ) : null}
+        {rejectedRequest.length > 0 ? (
+          <section>
+            <h2>Rejected Request</h2>
+            <FriendList friends={rejectedRequest} />
+          </section>
+        ) : null}
+      </div>
+    </FriendOverviewContext.Provider>
   );
 }
 

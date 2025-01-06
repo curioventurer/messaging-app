@@ -146,6 +146,16 @@ function routes(app, ioHandlers) {
       req.params.user_id,
     );
     res.json(direct_chat_id);
+
+    if (direct_chat_id === false) return;
+
+    const directChat = await queries.findDirectChatSummary(
+      new ChatId({ id: direct_chat_id, isGroup: false }),
+      userInfo.id,
+    );
+    if (directChat === false) return;
+
+    ioHandlers.addChatItem(userInfo.id, directChat);
   });
 
   app.put("/api/chat/:direct_chat_id/hide", async (req, res) => {
@@ -156,8 +166,8 @@ function routes(app, ioHandlers) {
       id: req.params.direct_chat_id,
       isGroup: false,
     });
-    await queries.hideDirectChat(chatId, userInfo.id);
-    res.json(true);
+    const isValid = await queries.hideDirectChat(chatId, userInfo.id);
+    res.json(isValid);
   });
 }
 
