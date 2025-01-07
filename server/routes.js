@@ -149,13 +149,7 @@ function routes(app, ioHandlers) {
 
     if (direct_chat_id === false) return;
 
-    const directChat = await queries.findDirectChatSummary(
-      new ChatId({ id: direct_chat_id, isGroup: false }),
-      userInfo.id,
-    );
-    if (directChat === false) return;
-
-    ioHandlers.addChatItem(userInfo.id, directChat);
+    ioHandlers.addDirectChatItem(userInfo.id, direct_chat_id);
   });
 
   app.put("/api/chat/:direct_chat_id/hide", async (req, res) => {

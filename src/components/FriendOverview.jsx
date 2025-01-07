@@ -3,6 +3,7 @@ import FriendList from "./FriendList";
 import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
 import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
+import { ChatItemData } from "../controllers/chat-data.js";
 
 const FRIEND_OVERVIEW_CONTEXT_DEFAULT = {
   showChat: function () {},
@@ -98,6 +99,14 @@ function FriendOverview() {
     };
   }, []);
 
+  useEffect(() => {
+    window.socket.on("chat item", updateFriendDirectId);
+
+    return () => {
+      window.socket.off("chat item", updateFriendDirectId);
+    };
+  }, []);
+
   function showChat(user_id) {
     const request = new Request(`/api/open_chat/${user_id}`, {
       method: "POST",
@@ -128,6 +137,31 @@ function FriendOverview() {
         });
       })
       .catch(() => {});
+  }
+
+  function updateFriendDirectId(chatItemData = new ChatItemData({})) {
+    const chatItem = new ChatItemData(chatItemData);
+
+    if (chatItem.chatId.isGroup) return;
+
+    setFriends((prevFriends) => {
+      const index = prevFriends.findIndex(
+        (friend) => friend.user_id === chatItem.user_id,
+      );
+      if (index === -1) return prevFriends;
+
+      const friendship = {
+        ...prevFriends[index],
+        direct_chat_id: chatItem.chatId.id,
+      };
+
+      const newFriends = [
+        ...prevFriends.slice(0, index),
+        friendship,
+        ...prevFriends.slice(index + 1),
+      ];
+      return newFriends;
+    });
   }
 
   const acceptedRequest = friends.filter(

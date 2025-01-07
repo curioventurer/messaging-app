@@ -1,11 +1,7 @@
 import { Server } from "socket.io";
 import passport from "passport";
 import queries from "./db/queries.js";
-import {
-  ChatId,
-  ChatItemData,
-  PostMessage,
-} from "../src/controllers/chat-data.js";
+import { ChatId, PostMessage } from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
   socket.user = await (socket.request.user ? socket.request.user() : null);
@@ -168,11 +164,25 @@ function comm(server, sessionMiddleware) {
       if (!newMessage) return;
 
       newMessage.message.name = socket.user.name;
+
       if (newMessage.chatId.isGroup)
         io.to("group:" + newMessage.chatId.id).emit("message", newMessage);
       else {
-        socket.emit("message", newMessage);
-        io.to("user:" + directChat.user_id).emit("message", newMessage);
+        async function directMessageEmit(newMessage, user_id) {
+          io.to("user:" + user_id).emit("message", newMessage);
+
+          const isShown = await queries.findDirectChatShown(
+            newMessage.chatId,
+            user_id,
+          );
+
+          if (isShown === false) {
+            queries.showDirectChat(newMessage.chatId, user_id);
+            addDirectChatItem(user_id, newMessage.chatId.id);
+          }
+        }
+        directMessageEmit(newMessage, socket.user.id);
+        directMessageEmit(newMessage, directChat.user_id);
       }
     });
   });
@@ -181,11 +191,17 @@ function comm(server, sessionMiddleware) {
     io.emit("add user", user);
   }
 
-  async function addChatItem(user_id = 0, chatItem = new ChatItemData({})) {
-    io.to("user:" + user_id).emit("chat item", chatItem);
+  async function addDirectChatItem(user_id = 0, direct_chat_id = 0) {
+    const directChat = await queries.findDirectChatSummary(
+      new ChatId({ id: direct_chat_id, isGroup: false }),
+      user_id,
+    );
+    if (directChat === false) return;
+
+    io.to("user:" + user_id).emit("chat item", directChat);
   }
 
-  return { addUser, addChatItem };
+  return { addUser, addDirectChatItem };
 }
 
 export default comm;

@@ -321,6 +321,17 @@ async function hideDirectChat(chatId = new ChatId({}), user_id) {
   }
 }
 
+async function findDirectChatShown(chatId = new ChatId({}), user_id) {
+  const SQL_SHOW_DIRECT = `
+    SELECT is_shown
+    FROM direct_chat_agents
+    WHERE direct_chat_id = $1
+    AND user_id = $2
+  `;
+  const { rows } = await pool.query(SQL_SHOW_DIRECT, [chatId.id, user_id]);
+  return rows[0]?.is_shown;
+}
+
 async function getGroupsByUserId(userId) {
   const SQL_GET_GROUPS = `
     SELECT groups.id, groups.name, memberships.created AS joined
@@ -537,7 +548,9 @@ export default {
   updateFriendRequest,
   reverseFriendRequest,
   openDirectChat,
+  showDirectChat,
   hideDirectChat,
+  findDirectChatShown,
   getGroupsByUserId,
   findDirectChatSummary,
   getChatList,
