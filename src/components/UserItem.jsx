@@ -35,52 +35,61 @@ function UserItem({ user }) {
     });
   }
 
-  let friendshipPanel;
+  let itemsArray = [];
   if (!user.friendship)
-    friendshipPanel = <button onClick={addFriend}>Add</button>;
+    itemsArray.push(
+      <button key="add" onClick={addFriend}>
+        Add
+      </button>,
+    );
   else if (user.friendship.state === FRIEND_REQUEST_TYPE.ACCEPTED)
-    friendshipPanel = <p>friends</p>;
+    itemsArray.push(<p key="text">friends</p>);
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.PENDING &&
     !user.friendship.is_initiator
   )
-    friendshipPanel = (
-      <p>
+    itemsArray.push(
+      <p key="text">
         {"request sent "}
         <time>{duration}</time>
-      </p>
+      </p>,
     );
-  else if (
-    user.friendship.state === FRIEND_REQUEST_TYPE.PENDING &&
-    user.friendship.is_initiator
-  )
-    friendshipPanel = <FriendItemButtonBar friend={user.friendship} />;
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED &&
     !user.friendship.is_initiator
   )
-    friendshipPanel = (
-      <p>
+    itemsArray.push(
+      <p key="text">
         {"target rejected "}
         <time>{duration}</time>
-      </p>
+      </p>,
     );
   else if (
     user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED &&
     user.friendship.is_initiator
-  )
-    friendshipPanel = (
-      <p>
+  ) {
+    itemsArray.push(
+      <p key="text">
         {"you reject "}
         <time>{duration}</time>
-        <button onClick={reverseRequest}>Add</button>
-      </p>
+      </p>,
+    );
+    itemsArray.push(
+      <button key="add" onClick={reverseRequest}>
+        Add
+      </button>,
+    );
+  }
+
+  if (user.friendship)
+    itemsArray.push(
+      <FriendItemButtonBar key="buttonBar" friend={user.friendship} />,
     );
 
   return (
     <>
       <p className="clipped-text">{user.name}</p>
-      {friendshipPanel}
+      <div className="items-array">{itemsArray}</div>
     </>
   );
 }

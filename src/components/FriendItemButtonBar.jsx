@@ -1,17 +1,35 @@
-import { useContext } from "react";
+import { useContext, createContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { FriendOverviewContext } from "./FriendOverview.jsx";
 import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
 
+export const UpdateDirectChatIdContext = createContext({
+  updateDirectChatId: function () {},
+});
+
 function FriendItemButtonBar({ friend }) {
-  const { showChat } = useContext(FriendOverviewContext);
+  const { updateDirectChatId } = useContext(UpdateDirectChatIdContext);
 
   function answerRequest(event) {
     window.socket.emit("friend request update", {
       id: friend.id,
       state: event.target.value,
     });
+  }
+
+  function showChat(user_id) {
+    const request = new Request(`/api/open_chat/${user_id}`, {
+      method: "POST",
+    });
+
+    fetch(request)
+      .then((res) => res.json())
+      .then((direct_chat_id) => {
+        if (direct_chat_id === false) return;
+
+        updateDirectChatId(user_id, direct_chat_id);
+      })
+      .catch(() => {});
   }
 
   const buttonArray = [];
