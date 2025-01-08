@@ -107,6 +107,19 @@ function Room({ isGroup = true }) {
   }, [chatId]);
 
   useEffect(() => {
+    function handleUnfriend({ user_id }) {
+      if (groupData.direct.user_id === user_id) setGroupData(new ChatData({}));
+      //redirect to home and replace url
+    }
+
+    window.socket.on("unfriend", handleUnfriend);
+
+    return () => {
+      window.socket.off("unfriend", handleUnfriend);
+    };
+  }, [groupData]);
+
+  useEffect(() => {
     return () => {
       clearSocket();
     };

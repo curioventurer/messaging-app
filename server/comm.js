@@ -134,6 +134,17 @@ function comm(server, sessionMiddleware) {
       emitUpdateFriendship(io, response.update, user_ids);
     });
 
+    socket.on("unfriend", async (data) => {
+      const other_id = await queries.unfriend(
+        data.friendship_id,
+        socket.user.id,
+      );
+      if (other_id === false) return;
+
+      socket.emit("unfriend", { user_id: other_id });
+      io.to("user:" + other_id).emit("unfriend", { user_id: socket.user.id });
+    });
+
     socket.on("message", async (data, callback) => {
       if (!(callback instanceof Function)) return;
       if (!PostMessage.isValid(data)) return callback(false);

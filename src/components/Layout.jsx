@@ -52,18 +52,14 @@ function Layout() {
   }, []);
 
   useEffect(() => {
+    window.socket.on("chat item", addChat);
+    window.socket.on("unfriend", removeChat);
     window.socket.on("message", updateLastMsg);
 
     return () => {
+      window.socket.off("chat item", addChat);
+      window.socket.off("unfriend", removeChat);
       window.socket.off("message", updateLastMsg);
-    };
-  }, []);
-
-  useEffect(() => {
-    window.socket.on("chat item", appendChatItem);
-
-    return () => {
-      window.socket.off("chat item", appendChatItem);
     };
   }, []);
 
@@ -78,6 +74,46 @@ function Layout() {
       window.removeEventListener("resize", updateLayoutRect);
     };
   }, []);
+
+  function addChat(chatItemData = new ChatItemData({})) {
+    const chatItem = new ChatItemData(chatItemData);
+
+    setChats((prevChats) => {
+      const index = prevChats.findIndex(
+        (chat) =>
+          chat.chatId.id === chatItem.chatId.id &&
+          chat.chatId.isGroup === chatItem.chatId.isGroup,
+      );
+      if (index !== -1) return prevChats;
+
+      const newChats = ChatItemData.sortChats([chatItem, ...prevChats]);
+
+      return newChats;
+    });
+  }
+
+  //accepts either ChatId instance or { user_id } as identifier
+  function removeChat(identifier) {
+    let find = () => false;
+
+    if (identifier instanceof ChatId)
+      find = (chat) =>
+        chat.chatId.id === identifier.id &&
+        chat.chatId.isGroup === identifier.isGroup;
+    else find = (chat) => chat.user_id === identifier.user_id;
+
+    setChats((prevChats) => {
+      const index = prevChats.findIndex(find);
+      if (index === -1) return prevChats;
+
+      const newChats = [
+        ...prevChats.slice(0, index),
+        ...prevChats.slice(index + 1),
+      ];
+
+      return newChats;
+    });
+  }
 
   function updateLastMsg(messageData = new NewMessage({})) {
     const newMessage = new NewMessage({
@@ -102,41 +138,6 @@ function Layout() {
         ...prevChats.slice(0, index),
         ...prevChats.slice(index + 1),
       ]);
-
-      return newChats;
-    });
-  }
-
-  function appendChatItem(chatItemData = new ChatItemData({})) {
-    const chatItem = new ChatItemData(chatItemData);
-
-    setChats((prevChats) => {
-      const index = prevChats.findIndex(
-        (chat) =>
-          chat.chatId.id === chatItem.chatId.id &&
-          chat.chatId.isGroup === chatItem.chatId.isGroup,
-      );
-      if (index !== -1) return prevChats;
-
-      const newChats = ChatItemData.sortChats([chatItem, ...prevChats]);
-
-      return newChats;
-    });
-  }
-
-  function removeChat(chatId = new ChatId({})) {
-    setChats((prevChats) => {
-      const index = prevChats.findIndex(
-        (chat) =>
-          chat.chatId.id === chatId.id &&
-          chat.chatId.isGroup === chatId.isGroup,
-      );
-      if (index === -1) return prevChats;
-
-      const newChats = [
-        ...prevChats.slice(0, index),
-        ...prevChats.slice(index + 1),
-      ];
 
       return newChats;
     });

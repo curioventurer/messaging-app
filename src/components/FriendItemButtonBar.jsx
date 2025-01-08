@@ -1,6 +1,7 @@
 import { useContext, createContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
+import UnfriendButton from "./UnfriendButton.jsx";
 import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
 
 export const UpdateDirectChatIdContext = createContext({
@@ -53,29 +54,33 @@ function FriendItemButtonBar({ friend }) {
     });
   }
 
-  if (friend.state === FRIEND_REQUEST_TYPE.ACCEPTED && friend.direct_chat_id) {
-    buttonArray.push({
-      key: "chat",
-      element: (
-        <Link data-key="chat" to={"/chat/" + friend.direct_chat_id}>
-          <button>Chat</button>
-        </Link>
-      ),
-    });
-  }
+  if (friend.state === FRIEND_REQUEST_TYPE.ACCEPTED) {
+    if (friend.direct_chat_id)
+      buttonArray.push({
+        key: "chat",
+        element: (
+          <Link data-key="chat" to={"/chat/" + friend.direct_chat_id}>
+            <button>Chat</button>
+          </Link>
+        ),
+      });
+    else
+      buttonArray.push({
+        key: "show-chat",
+        element: (
+          <button
+            onClick={() => {
+              showChat(friend.user_id);
+            }}
+          >
+            Show chat
+          </button>
+        ),
+      });
 
-  if (friend.state === FRIEND_REQUEST_TYPE.ACCEPTED && !friend.direct_chat_id) {
     buttonArray.push({
-      key: "show-chat",
-      element: (
-        <button
-          onClick={() => {
-            showChat(friend.user_id);
-          }}
-        >
-          Show chat
-        </button>
-      ),
+      key: "unfriend",
+      element: <UnfriendButton friend={friend} />,
     });
   }
 

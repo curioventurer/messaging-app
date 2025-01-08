@@ -28,12 +28,14 @@ function UserList() {
   }, []);
 
   useEffect(() => {
-    window.socket.on("update friendship", updateFriendship);
     window.socket.on("add user", addUser);
+    window.socket.on("update friendship", updateFriendship);
+    window.socket.on("unfriend", unfriend);
 
     return () => {
-      window.socket.off("update friendship", updateFriendship);
       window.socket.off("add user", addUser);
+      window.socket.off("update friendship", updateFriendship);
+      window.socket.off("unfriend", unfriend);
     };
   }, []);
 
@@ -58,6 +60,17 @@ function UserList() {
     };
   }, []);
 
+  function addUser(newUser) {
+    setUsers((prevUsers) => {
+      const index = prevUsers.findIndex((user) => user.id === newUser.id);
+      if (index !== -1) return prevUsers;
+
+      const newUsers = sortUsers([...prevUsers, newUser]);
+
+      return newUsers;
+    });
+  }
+
   function updateFriendship(friendship) {
     setUsers((prevUsers) => {
       const index = prevUsers.findIndex(
@@ -80,12 +93,21 @@ function UserList() {
     });
   }
 
-  function addUser(newUser) {
+  function unfriend({ user_id }) {
     setUsers((prevUsers) => {
-      const index = prevUsers.findIndex((user) => user.id === newUser.id);
-      if (index !== -1) return prevUsers;
+      const index = prevUsers.findIndex((user) => user.id === user_id);
+      if (index === -1) return prevUsers;
 
-      const newUsers = sortUsers([...prevUsers, newUser]);
+      const updatedUser = {
+        ...prevUsers[index],
+      };
+      delete updatedUser.friendship;
+
+      const newUsers = [
+        ...prevUsers.slice(0, index),
+        updatedUser,
+        ...prevUsers.slice(index + 1),
+      ];
 
       return newUsers;
     });

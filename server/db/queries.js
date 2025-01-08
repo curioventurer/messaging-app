@@ -63,6 +63,51 @@ async function getUsers(user_id) {
   return users;
 }
 
+async function unfriend(friendship_id, user_id) {
+  if (!Number.isSafeInteger(friendship_id)) return false;
+
+  const friendship = await findFriendshipById(friendship_id);
+
+  if (!friendship || friendship.state !== FRIEND_REQUEST_TYPE.ACCEPTED)
+    return false;
+
+  let other_id = 0;
+  if (friendship.sender_id === user_id) other_id = friendship.receiver_id;
+  else if (friendship.receiver_id === user_id) other_id = friendship.sender_id;
+
+  //if other_id value not found(default value), this friendship did not belong to user
+  if (other_id === 0) return false;
+
+  const promise1 = deleteFriendship(friendship_id);
+
+  const promise2 = findDirectChatByUserId(user_id, other_id).then((direct) => {
+    if (direct !== false) return deleteDirectChat(direct.id);
+  });
+
+  //return response after deletion is complete, so that on client update following the server response, the deleted data won't reappear.
+  await Promise.all([promise1, promise2]);
+
+  //the socketIO needs user_id of the other user to send response for client update.
+  return other_id;
+}
+
+async function deleteFriendship(friendship_id) {
+  await pool.query("DELETE FROM friendship_agents WHERE friendship_id=$1", [
+    friendship_id,
+  ]);
+  await pool.query("DELETE FROM friendships WHERE id=$1", [friendship_id]);
+}
+
+async function deleteDirectChat(direct_chat_id) {
+  await pool.query("DELETE FROM direct_chat_agents WHERE direct_chat_id=$1", [
+    direct_chat_id,
+  ]);
+  await pool.query("DELETE FROM messages WHERE direct_chat_id=$1", [
+    direct_chat_id,
+  ]);
+  await pool.query("DELETE FROM direct_chats WHERE id=$1", [direct_chat_id]);
+}
+
 async function addFriend({ sender_id, receiver_id }) {
   if (sender_id === receiver_id) return false; //Must not reference yourself
 
@@ -230,10 +275,7 @@ async function reverseFriendRequest(id, user_id) {
   return { update, receiver_id: friendship.sender_id };
 }
 
-async function openDirectChat(sender_id, receiver_id) {
-  if (sender_id === receiver_id) return false; //Must not reference yourself
-
-  //search for preexisting direct chat, and show it if found.
+async function findDirectChatByUserId(user_id, other_id) {
   const SQL_FIND_DIRECT = `
     SELECT agent1.direct_chat_id AS id, agent1.is_shown
     FROM direct_chat_agents AS agent1
@@ -241,9 +283,17 @@ async function openDirectChat(sender_id, receiver_id) {
     WHERE agent1.user_id = $1
     AND agent2.user_id = $2
   `;
+  const { rows } = await pool.query(SQL_FIND_DIRECT, [user_id, other_id]);
+  if (rows[0]) return rows[0];
+  else return false;
+}
+
+async function openDirectChat(sender_id, receiver_id) {
+  if (sender_id === receiver_id) return false; //Must not reference yourself
+
+  //search for preexisting direct chat, and show it if found.
   try {
-    const direct = (await pool.query(SQL_FIND_DIRECT, [sender_id, receiver_id]))
-      .rows[0];
+    const direct = await findDirectChatByUserId(sender_id, receiver_id);
     if (direct) {
       if (direct.is_shown === false)
         await showDirectChat(
@@ -544,6 +594,7 @@ export default {
   getUsers,
   getFriendships,
   getFriendsByUserId,
+  unfriend,
   addFriend,
   updateFriendRequest,
   reverseFriendRequest,

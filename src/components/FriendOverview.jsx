@@ -108,6 +108,14 @@ function FriendOverview() {
     };
   }, []);
 
+  useEffect(() => {
+    window.socket.on("unfriend", removeFriendsEntry);
+
+    return () => {
+      window.socket.off("unfriend", removeFriendsEntry);
+    };
+  }, []);
+
   function updateDirectChatId(user_id, direct_chat_id) {
     setFriends((prevFriends) => {
       const index = prevFriends.findIndex(
@@ -123,6 +131,27 @@ function FriendOverview() {
       const newFriends = [
         ...prevFriends.slice(0, index),
         friendship,
+        ...prevFriends.slice(index + 1),
+      ];
+      return newFriends;
+    });
+  }
+
+  //specify either properties to identify entry
+  function removeFriendsEntry({ friendship_id = 0, user_id = 0 }) {
+    let find = () => false;
+    if (friendship_id !== 0)
+      //friendship_id is defined, use it for find function
+      find = (friend) => friend.id === friendship_id;
+    //else use user_id
+    else find = (friend) => friend.user_id === user_id;
+
+    setFriends((prevFriends) => {
+      const index = prevFriends.findIndex(find);
+      if (index === -1) return prevFriends;
+
+      const newFriends = [
+        ...prevFriends.slice(0, index),
         ...prevFriends.slice(index + 1),
       ];
       return newFriends;

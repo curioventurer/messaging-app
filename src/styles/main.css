@@ -125,6 +125,26 @@ ul.friend-list {
   }
 }
 
+.confirmation-dialog {
+  .name {
+    font-weight: bold;
+  }
+
+  ul {
+    display: flex;
+    justify-content: center;
+    column-gap: 20px;
+
+    margin-top: 10px;
+
+    button {
+      font-size: 1.2em;
+      background: #ddd;
+      border: 1px solid grey;
+    }
+  }
+}
+
 .user-list {
   li {
     display: flex;
