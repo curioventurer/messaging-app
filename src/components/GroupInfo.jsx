@@ -1,16 +1,19 @@
 import { useContext } from "react";
-import { ChatContext } from "./Room.jsx";
 import MemberItem from "./MemberItem.jsx";
+import { ChatContext } from "./Room.jsx";
+import DateFormat from "../controllers/DateFormat.js";
 
 function GroupInfo() {
-  const { chatData, toggleChatInfo } = useContext(ChatContext);
+  const { chatData } = useContext(ChatContext);
 
   return (
-    <div className="group-info room-left-screen">
-      <div className="group-info-header">
-        <p>Group Info</p>
-        <button onClick={toggleChatInfo}>&#x2A2F;</button>
-      </div>
+    <>
+      <p className="group-create-date">
+        {"Created on "}
+        <time dateTime={chatData.group.created}>
+          {DateFormat.timestamp(chatData.group.created)}
+        </time>
+      </p>
       <section className="member">
         <p>Members</p>
         <ul className="member-list">
@@ -21,7 +24,7 @@ function GroupInfo() {
           ))}
         </ul>
       </section>
-    </div>
+    </>
   );
 }
 

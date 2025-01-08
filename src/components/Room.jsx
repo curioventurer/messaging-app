@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, createContext } from "react";
 import { useParams, useRouteLoaderData } from "react-router-dom";
 import PropTypes from "prop-types";
 import ChatList from "./ChatList.jsx";
-import GroupInfo from "./GroupInfo.jsx";
+import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import clearSocket from "../controllers/clearSocket.js";
 import {
@@ -173,7 +173,7 @@ function Room({ isGroup = true }) {
           toggleChatInfo,
         }}
       >
-        {isChatInfoShown ? <GroupInfo /> : <ChatList />}
+        {isChatInfoShown ? <RoomInfo /> : <ChatList />}
         <RoomUI />
       </ChatContext.Provider>
     </div>

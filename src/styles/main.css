@@ -60,6 +60,7 @@ nav ul {
 .layout {
   display: flex;
   flex-direction: column;
+  row-gap: 5px;
 
   height: 100%;
   position: relative;
@@ -175,7 +176,11 @@ ul.friend-list {
   }
 }
 
-.group-info-header {
+.room-info {
+  padding-right: 10px;
+}
+
+.room-info-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -193,10 +198,7 @@ ul.friend-list {
     color: yellow;
     font-weight: bold;
     font-size: 1.5em;
-
-    padding: 0;
     aspect-ratio: 1;
-    height: 1.3em;
 
     &:hover {
       background: #fff2;
@@ -208,9 +210,14 @@ ul.friend-list {
   }
 }
 
-.group-info section.member {
+.group-create-date {
+  margin-block: 10px;
+}
+
+section.member {
   & > p {
     font-size: 1.1em;
+    font-weight: bold;
     margin-bottom: 5px;
   }
 }
@@ -219,6 +226,7 @@ ul.friend-list {
   display: flex;
   column-gap: 4ch;
   justify-content: space-between;
+  padding: 1px;
 
   &:first-child {
     background: #0f05;
@@ -315,25 +323,29 @@ ul.friend-list {
   */
   min-height: 0;
 
-  .chat-list {
+  > :first-child {
+    box-sizing: border-box;
     width: 40ch;
     flex: none;
 
     border: none;
     border-right: 1px solid white;
   }
+
+  .room-interface {
+    flex: 1;
+  }
 }
 
 .room-interface {
   display: flex;
   flex-direction: column;
-
-  flex: 1;
+  row-gap: 5px;
 
   button.room-header {
     background: transparent;
     color: inherit;
-    padding-bottom: 5px;
+    padding-block: 5px;
 
     &:hover {
       background: #fff2;
@@ -472,7 +484,6 @@ ul.friend-list {
 .messaging-form {
   display: flex;
   gap: 10px;
-  margin-top: 5px;
 
   font-size: 1.2em;
 
