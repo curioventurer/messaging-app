@@ -107,9 +107,9 @@ function Room({ isGroup = true }) {
   }, [chatId]);
 
   useEffect(() => {
+    //if current room shows the direct chat of removed friend, reset room to show default data
     function handleUnfriend({ user_id }) {
       if (groupData.direct.user_id === user_id) setGroupData(new ChatData({}));
-      //redirect to home and replace url
     }
 
     window.socket.on("unfriend", handleUnfriend);

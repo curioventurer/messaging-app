@@ -97,7 +97,10 @@ function comm(server, sessionMiddleware) {
         sender_id: socket.user.id,
         receiver_id: data.id,
       };
-      const friendship = await queries.addFriend(user_ids);
+      const friendship = await queries.addFriend(
+        user_ids.sender_id,
+        user_ids.receiver_id,
+      );
 
       if (!friendship) return;
       emitUpdateFriendship(io, friendship, user_ids);

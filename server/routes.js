@@ -137,13 +137,13 @@ function routes(app, ioHandlers) {
     res.json(chatData);
   });
 
-  app.post("/api/open_chat/:user_id", async (req, res) => {
+  app.post("/api/open_chat/:other_id", async (req, res) => {
     const userInfo = await getUserInfo(req);
     if (!userInfo) return res.json(false);
 
     const direct_chat_id = await queries.openDirectChat(
       userInfo.id,
-      req.params.user_id,
+      req.params.other_id,
     );
     res.json(direct_chat_id);
 
