@@ -1,10 +1,10 @@
 import { useEffect, useRef, useContext } from "react";
 import Message from "./Message";
-import { GroupContext } from "./Room.jsx";
+import { ChatContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function MessageList() {
-  const { groupData, chatId } = useContext(GroupContext);
+  const { chatData, chatId } = useContext(ChatContext);
   const msgListRef = useRef(null);
 
   let previousDate = "";
@@ -31,7 +31,7 @@ function MessageList() {
     };
   }, [chatId]);
 
-  for (const msg of groupData.messages) {
+  for (const msg of chatData.messages) {
     const timestamp = new Date(msg.created);
     const msgDate = timestamp.toLocaleDateString();
 

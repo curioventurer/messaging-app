@@ -1,20 +1,20 @@
 import { useContext } from "react";
-import { GroupContext } from "./Room.jsx";
+import { ChatContext } from "./Room.jsx";
 import MemberItem from "./MemberItem.jsx";
 
 function GroupInfo() {
-  const { groupData, toggleGroupInfo } = useContext(GroupContext);
+  const { chatData, toggleChatInfo } = useContext(ChatContext);
 
   return (
     <div className="group-info room-left-screen">
       <div className="group-info-header">
         <p>Group Info</p>
-        <button onClick={toggleGroupInfo}>&#x2A2F;</button>
+        <button onClick={toggleChatInfo}>&#x2A2F;</button>
       </div>
       <section className="member">
         <p>Members</p>
         <ul className="member-list">
-          {groupData.members.map((member) => (
+          {chatData.members.map((member) => (
             <li key={member.id}>
               <MemberItem member={member} />
             </li>

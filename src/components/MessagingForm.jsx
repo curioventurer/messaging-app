@@ -1,10 +1,10 @@
 import { useState, useRef, useContext } from "react";
-import { GroupContext } from "./Room.jsx";
+import { ChatContext } from "./Room.jsx";
 import { Message, PostMessage } from "../controllers/chat-data.js";
 
 function MessagingForm() {
   const { userData, chatId, appendMessage, deleteSentMsg } =
-    useContext(GroupContext);
+    useContext(ChatContext);
 
   const [message, setMessage] = useState("");
 

@@ -2,13 +2,13 @@ import { useContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { LayoutContext } from "./Layout.jsx";
-import { GroupContext } from "./Room.jsx";
+import { ChatContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 import { ChatItemData } from "../controllers/chat-data.js";
 
 function ChatItem({ chat = new ChatItemData({}) }) {
   const { openMenu } = useContext(LayoutContext);
-  const { chatId } = useContext(GroupContext);
+  const { chatId } = useContext(ChatContext);
 
   const hasLastMessage = chat.lastMessage.id !== 0;
 

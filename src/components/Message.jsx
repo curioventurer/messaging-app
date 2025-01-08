@@ -1,13 +1,13 @@
 import { useContext } from "react";
 import PropTypes from "prop-types";
-import { GroupContext } from "./Room.jsx";
+import { ChatContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 import { Message as MessageData } from "../controllers/chat-data.js";
 
 const SENT_STATUS_TEXT = "sending";
 
 function Message({ message, isJoined = false }) {
-  const { userData, chatId } = useContext(GroupContext);
+  const { userData, chatId } = useContext(ChatContext);
 
   const isUser = userData.id === message.user_id;
 

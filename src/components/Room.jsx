@@ -17,20 +17,20 @@ import {
 import sortMessages from "../controllers/sortMessages.js";
 import sortMembers from "../controllers/sortMembers.js";
 
-const GROUP_CONTEXT_DEFAULT = {
+const CHAT_CONTEXT_DEFAULT = {
   userData: {
     id: 0,
     name: "default_name",
     created: "1970-01-01T00:00:00.000Z",
   },
-  groupData: new ChatData({}),
+  chatData: new ChatData({}),
   chatId: new ChatId({}),
   appendMessage: function () {},
   deleteSentMsg: function () {},
-  toggleGroupInfo: function () {},
+  toggleChatInfo: function () {},
 };
 
-export const GroupContext = createContext(GROUP_CONTEXT_DEFAULT);
+export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true }) {
   const { chat_id } = useParams();
@@ -45,8 +45,8 @@ function Room({ isGroup = true }) {
 
   const userData = useRouteLoaderData("layout");
 
-  const [groupData, setGroupData] = useState(GROUP_CONTEXT_DEFAULT.groupData);
-  const [isGroupInfoShown, setIsGroupInfoShown] = useState(false);
+  const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
+  const [isChatInfoShown, setIsChatInfoShown] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -61,7 +61,7 @@ function Room({ isGroup = true }) {
     fetch(request)
       .then((res) => res.json())
       .then((data) => {
-        setGroupData(
+        setChatData(
           new ChatData({
             isGroup: data.isGroup,
             messages: data.messages.map((msg) => new Message(msg)),
@@ -109,7 +109,7 @@ function Room({ isGroup = true }) {
   useEffect(() => {
     //if current room shows the direct chat of removed friend, reset room to show default data
     function handleUnfriend({ user_id }) {
-      if (groupData.direct.user_id === user_id) setGroupData(new ChatData({}));
+      if (chatData.direct.user_id === user_id) setChatData(new ChatData({}));
     }
 
     window.socket.on("unfriend", handleUnfriend);
@@ -117,7 +117,7 @@ function Room({ isGroup = true }) {
     return () => {
       window.socket.off("unfriend", handleUnfriend);
     };
-  }, [groupData]);
+  }, [chatData]);
 
   useEffect(() => {
     return () => {
@@ -126,56 +126,56 @@ function Room({ isGroup = true }) {
   }, [chatId]);
 
   function appendMessage(message = new Message({})) {
-    setGroupData((prevGroupData) => {
-      const newMessages = sortMessages([...prevGroupData.messages, message]);
-      const newGroupData = {
-        ...prevGroupData,
+    setChatData((prevChatData) => {
+      const newMessages = sortMessages([...prevChatData.messages, message]);
+      const newChatData = {
+        ...prevChatData,
         messages: newMessages,
       };
-      return newGroupData;
+      return newChatData;
     });
   }
 
   function deleteSentMsg(clientId) {
-    setGroupData((prevGroupData) => {
-      const prevMessages = prevGroupData.messages;
+    setChatData((prevChatData) => {
+      const prevMessages = prevChatData.messages;
       const index = prevMessages.findIndex(
         (message) => message.id === clientId,
       );
-      if (index === -1) return prevGroupData;
+      if (index === -1) return prevChatData;
 
       const newMessages = [
         ...prevMessages.slice(0, index),
         ...prevMessages.slice(index + 1),
       ];
 
-      const newGroupData = {
-        ...prevGroupData,
+      const newChatData = {
+        ...prevChatData,
         messages: newMessages,
       };
-      return newGroupData;
+      return newChatData;
     });
   }
 
-  function toggleGroupInfo() {
-    setIsGroupInfoShown(!isGroupInfoShown);
+  function toggleChatInfo() {
+    setIsChatInfoShown(!isChatInfoShown);
   }
 
   return (
     <div className="room">
-      <GroupContext.Provider
+      <ChatContext.Provider
         value={{
           userData,
-          groupData,
+          chatData,
           chatId,
           appendMessage,
           deleteSentMsg,
-          toggleGroupInfo,
+          toggleChatInfo,
         }}
       >
-        {isGroupInfoShown ? <GroupInfo /> : <ChatList />}
+        {isChatInfoShown ? <GroupInfo /> : <ChatList />}
         <RoomUI />
-      </GroupContext.Provider>
+      </ChatContext.Provider>
     </div>
   );
 }
