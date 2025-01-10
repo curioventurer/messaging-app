@@ -8,6 +8,7 @@ function RoomHeader() {
   return (
     <button className="room-header" onClick={toggleChatInfo}>
       <h1>{chat.name}</h1>
+      <p>click for info</p>
     </button>
   );
 }

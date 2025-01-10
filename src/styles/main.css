@@ -361,29 +361,28 @@ section.member {
   display: flex;
   flex-direction: column;
   row-gap: 5px;
+}
 
-  button.room-header {
-    background: transparent;
-    color: inherit;
-    padding-block: 5px;
+.room-header {
+  background: transparent;
+  color: inherit;
+  text-align: center;
 
-    &:hover {
-      background: #fff2;
-    }
+  &:hover {
+    background: #fff2;
+  }
+  &:active {
+    background: #fff3;
+  }
 
-    &:active {
-      background: #fff3;
-    }
+  h1 {
+    margin: 0;
+    font-size: 1.6em;
+  }
 
-    h1 {
-      margin: 0;
-      text-align: center;
-      font-size: 1.6em;
-    }
-    p {
-      margin-top: 5px;
-      text-align: center;
-    }
+  p {
+    font-size: 0.8em;
+    color: #aaa;
   }
 }
 
