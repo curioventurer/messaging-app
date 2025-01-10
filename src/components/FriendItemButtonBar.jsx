@@ -59,8 +59,12 @@ function FriendItemButtonBar({ friend }) {
       buttonArray.push({
         key: "chat",
         element: (
-          <Link data-key="chat" to={"/chat/" + friend.direct_chat_id}>
-            <button>Chat</button>
+          <Link
+            data-key="chat"
+            to={"/chat/" + friend.direct_chat_id}
+            className="button-link"
+          >
+            Chat
           </Link>
         ),
       });

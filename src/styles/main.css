@@ -29,10 +29,6 @@ ul {
 nav ul {
   display: flex;
   gap: 20px;
-
-  .button-link {
-    cursor: pointer;
-  }
 }
 
 .button-link {
@@ -40,10 +36,12 @@ nav ul {
   display: block;
   padding: 5px;
   color: inherit;
-  cursor: default;
+  border: 1px solid #fff2;
+  background: #fff1;
+  cursor: pointer;
 
   &:hover {
-    background: #fff2;
+    background: #fff3;
   }
 
   &.button-highlight {
@@ -157,7 +155,7 @@ ul.friend-list {
   }
 
   li:nth-child(2n + 1) {
-    background: #fff2;
+    background: #fff1;
   }
 
   .items-array {
@@ -239,8 +237,19 @@ section.member {
   overflow: auto;
   scroll-behavior: smooth;
 
-  a.button-link {
+  .button-link {
     padding: 10px;
+    cursor: default;
+    background: none;
+    border: none;
+
+    &:hover {
+      background: #fff3;
+    }
+
+    &.button-highlight {
+      background: #0f05;
+    }
   }
 
   .chat-item-header {
