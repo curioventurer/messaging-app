@@ -14,6 +14,13 @@ class DateFormat {
     "December",
   ];
 
+  static getMonthStr(monthIndex, short = false) {
+    const month = this.MONTHS[monthIndex];
+
+    if (short) return month.slice(0, 3);
+    else return month;
+  }
+
   /*Provide proper arguments based on Date(), returns only formatted time.
     Argument example: "2024-11-13T08:57:03.608Z", 1731488223608, dateObject
     Return example: "08:57"
@@ -31,7 +38,7 @@ class DateFormat {
     Argument example: "2024-11-13T08:57:03.608Z", 1731488223608, dateObject
     Return example: "Today", "13 November", "13 November 2024"
   */
-  static date(date) {
+  static date(date, short = false) {
     const clock = new Date();
     const timestamp = new Date(date);
 
@@ -43,13 +50,15 @@ class DateFormat {
     } else if (timestamp.getFullYear() === clock.getFullYear()) {
       //on same year
       displayDate =
-        timestamp.getDate() + " " + this.MONTHS[timestamp.getMonth()];
+        timestamp.getDate() +
+        " " +
+        this.getMonthStr(timestamp.getMonth(), short);
     } else {
       //msg on different year
       displayDate =
         timestamp.getDate() +
         " " +
-        this.MONTHS[timestamp.getMonth()] +
+        this.getMonthStr(timestamp.getMonth(), short) +
         " " +
         timestamp.getFullYear();
     }
@@ -62,8 +71,8 @@ class DateFormat {
     If argument date is today, return time. Return example: "08:57"
     If argument date is not today, return date. Return example: "13 November", "13 November 2024"
   */
-  static timestamp(date) {
-    const displayDate = this.date(date);
+  static timestamp(date, short = false) {
+    const displayDate = this.date(date, short);
 
     if (displayDate === "Today") return this.time(date);
     else return displayDate;

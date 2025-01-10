@@ -255,15 +255,11 @@ section.member {
       font-size: 1.4em;
       color: white;
       font-weight: bold;
-
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
   }
 }
 
-.chat-item-header .right-side {
+.chat-item-header-right {
   width: max-content;
   flex: none;
 
@@ -281,6 +277,21 @@ section.member {
     &:hover {
       filter: brightness(0.5);
     }
+  }
+}
+
+.chat-item-content {
+  display: flex;
+  align-items: center;
+
+  .chat-item-name {
+    flex: none;
+    max-width: 16ch;
+  }
+
+  .chat-item-separator {
+    white-space: pre;
+    font-weight: bold;
   }
 }
 

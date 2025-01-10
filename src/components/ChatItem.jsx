@@ -13,14 +13,29 @@ function ChatItem({ chat = new ChatItemData({}) }) {
   const hasLastMessage = chat.lastMessage.id !== 0;
 
   const date = chat.selectTime();
-  const displayDate = DateFormat.timestamp(date);
+  const displayDate = DateFormat.timestamp(date, true);
 
-  let shownMessage;
-  if (hasLastMessage)
-    shownMessage = chat.chatId.isGroup
-      ? `${chat.lastMessage.name}: ${chat.lastMessage.text}`
-      : chat.lastMessage.text;
-  else shownMessage = chat.chatId.isGroup ? "Joined group" : "Chat created";
+  let shownMessage = [];
+  if (hasLastMessage) {
+    if (chat.chatId.isGroup) {
+      shownMessage.push(
+        <span key="name" className="clipped-text chat-item-name">
+          {chat.lastMessage.name}
+        </span>,
+      );
+      shownMessage.push(
+        <span key="separator" className="chat-item-separator">
+          :{" "}
+        </span>,
+      );
+    }
+    shownMessage.push(
+      <span key="message" className="clipped-text chat-item-text">
+        {chat.lastMessage.text}
+      </span>,
+    );
+  } else
+    shownMessage.push(chat.chatId.isGroup ? "Joined group" : "Chat created");
 
   let isActive = false;
   if (chat.chatId.id === chatId.id && chat.chatId.isGroup === chatId.isGroup)
@@ -33,15 +48,15 @@ function ChatItem({ chat = new ChatItemData({}) }) {
         className={"button-link" + (isActive ? " button-highlight" : "")}
       >
         <div className="chat-item-header">
-          <p>{chat.name}</p>
-          <div className="right-side">
+          <p className="clipped-text">{chat.name}</p>
+          <div className="chat-item-header-right">
             <time dateTime={date}>{displayDate}</time>
             <button onClick={openMenu} data-chat={JSON.stringify(chat.chatId)}>
               ⋮
             </button>
           </div>
         </div>
-        <p className="clipped-text">{shownMessage}</p>
+        <p className="chat-item-content">{shownMessage}</p>
       </Link>
     </>
   );
