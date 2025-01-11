@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import UserItem from "./UserItem";
-import { UpdateDirectChatIdContext } from "./FriendItemButtonBar";
+import { UpdateDirectChatIdContext } from "./FriendButtonBar.jsx";
 import clearSocket from "../controllers/clearSocket.js";
 import sortUsers from "../controllers/sortUsers.js";
 import { ChatItemData } from "../controllers/chat-data.js";
@@ -147,15 +147,15 @@ function UserList() {
         for them to accept your request. Your can check your pending request in
         friend page.
       </p>
-      <ul className="user-list">
-        {users.map((user) => (
-          <li key={user.id}>
-            <UpdateDirectChatIdContext.Provider value={{ updateDirectChatId }}>
-              <UserItem user={user} />
-            </UpdateDirectChatIdContext.Provider>
-          </li>
-        ))}
-      </ul>
+      <UpdateDirectChatIdContext.Provider value={{ updateDirectChatId }}>
+        <table className="user-list">
+          <tbody>
+            {users.map((user) => (
+              <UserItem key={user.id} user={user} />
+            ))}
+          </tbody>
+        </table>
+      </UpdateDirectChatIdContext.Provider>
     </>
   );
 }

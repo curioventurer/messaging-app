@@ -8,8 +8,20 @@ export const UpdateDirectChatIdContext = createContext({
   updateDirectChatId: function () {},
 });
 
-function FriendItemButtonBar({ friend }) {
+function FriendButtonBar({ friend }) {
   const { updateDirectChatId } = useContext(UpdateDirectChatIdContext);
+
+  function addFriend() {
+    window.socket.emit("add friend", {
+      id: friend.user_id,
+    });
+  }
+
+  function inverseAdd() {
+    window.socket.emit("reverse friend request", {
+      id: friend.id,
+    });
+  }
 
   function answerRequest(event) {
     window.socket.emit("friend request update", {
@@ -18,7 +30,8 @@ function FriendItemButtonBar({ friend }) {
     });
   }
 
-  function showChat(user_id) {
+  function showChat() {
+    const user_id = friend.user_id;
     const request = new Request(`/api/open_chat/${user_id}`, {
       method: "POST",
     });
@@ -35,7 +48,15 @@ function FriendItemButtonBar({ friend }) {
 
   const buttonArray = [];
 
-  if (friend.state === FRIEND_REQUEST_TYPE.PENDING && friend.is_initiator) {
+  if (friend.state === undefined)
+    buttonArray.push({
+      key: "add",
+      element: <button onClick={addFriend}>Add</button>,
+    });
+  else if (
+    friend.state === FRIEND_REQUEST_TYPE.PENDING &&
+    friend.is_initiator
+  ) {
     buttonArray.push({
       key: "accept",
       element: (
@@ -52,18 +73,20 @@ function FriendItemButtonBar({ friend }) {
         </button>
       ),
     });
-  }
-
-  if (friend.state === FRIEND_REQUEST_TYPE.ACCEPTED) {
+  } else if (
+    friend.state === FRIEND_REQUEST_TYPE.REJECTED &&
+    friend.is_initiator
+  )
+    buttonArray.push({
+      key: "inverse add",
+      element: <button onClick={inverseAdd}>Add</button>,
+    });
+  else if (friend.state === FRIEND_REQUEST_TYPE.ACCEPTED) {
     if (friend.direct_chat_id)
       buttonArray.push({
         key: "chat",
         element: (
-          <Link
-            data-key="chat"
-            to={"/chat/" + friend.direct_chat_id}
-            className="button-link"
-          >
+          <Link to={"/chat/" + friend.direct_chat_id} className="button-link">
             Chat
           </Link>
         ),
@@ -71,15 +94,7 @@ function FriendItemButtonBar({ friend }) {
     else
       buttonArray.push({
         key: "show-chat",
-        element: (
-          <button
-            onClick={() => {
-              showChat(friend.user_id);
-            }}
-          >
-            Show chat
-          </button>
-        ),
+        element: <button onClick={showChat}>Show chat</button>,
       });
 
     buttonArray.push({
@@ -99,8 +114,8 @@ function FriendItemButtonBar({ friend }) {
   );
 }
 
-FriendItemButtonBar.propTypes = {
+FriendButtonBar.propTypes = {
   friend: PropTypes.object.isRequired,
 };
 
-export default FriendItemButtonBar;
+export default FriendButtonBar;

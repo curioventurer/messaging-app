@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import FriendList from "./FriendList";
-import { UpdateDirectChatIdContext } from "./FriendItemButtonBar";
+import { UpdateDirectChatIdContext } from "./FriendButtonBar";
 import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
 import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";

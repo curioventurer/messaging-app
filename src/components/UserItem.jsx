@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import FriendItemButtonBar from "./FriendItemButtonBar";
+import FriendButtonBar from "./FriendButtonBar";
 import { FRIEND_REQUEST_TYPE } from "../controllers/constants";
 import DurationFormat from "../controllers/DurationFormat";
 
@@ -23,74 +23,47 @@ function UserItem({ user }) {
     };
   }, [modified]);
 
-  function addFriend() {
-    window.socket.emit("add friend", {
-      id: user.id,
-    });
-  }
+  let friendshipStatus;
 
-  function reverseRequest() {
-    window.socket.emit("reverse friend request", {
-      id: user.friendship.id,
-    });
-  }
-
-  let itemsArray = [];
-  if (!user.friendship)
-    itemsArray.push(
-      <button key="add" onClick={addFriend}>
-        Add
-      </button>,
-    );
+  if (!user.friendship);
   else if (user.friendship.state === FRIEND_REQUEST_TYPE.ACCEPTED)
-    itemsArray.push(<p key="text">friends</p>);
-  else if (
-    user.friendship.state === FRIEND_REQUEST_TYPE.PENDING &&
-    !user.friendship.is_initiator
-  )
-    itemsArray.push(
-      <p key="text">
-        {"request sent "}
+    friendshipStatus = "friends";
+  else if (user.friendship.state === FRIEND_REQUEST_TYPE.PENDING) {
+    friendshipStatus = user.friendship.is_initiator ? (
+      <p>
+        {"impending - "}
         <time>{duration}</time>
-      </p>,
-    );
-  else if (
-    user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED &&
-    !user.friendship.is_initiator
-  )
-    itemsArray.push(
-      <p key="text">
-        {"target rejected "}
+      </p>
+    ) : (
+      <p>
+        {"sent - "}
         <time>{duration}</time>
-      </p>,
+      </p>
     );
-  else if (
-    user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED &&
-    user.friendship.is_initiator
-  ) {
-    itemsArray.push(
-      <p key="text">
-        {"you reject "}
+  } else if (user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED) {
+    friendshipStatus = user.friendship.is_initiator ? (
+      <p>
+        {"you reject - "}
         <time>{duration}</time>
-      </p>,
-    );
-    itemsArray.push(
-      <button key="add" onClick={reverseRequest}>
-        Add
-      </button>,
+      </p>
+    ) : (
+      <p>
+        {"target reject - "}
+        <time>{duration}</time>
+      </p>
     );
   }
-
-  if (user.friendship)
-    itemsArray.push(
-      <FriendItemButtonBar key="buttonBar" friend={user.friendship} />,
-    );
 
   return (
-    <>
-      <p className="clipped-text">{user.name}</p>
-      <div className="items-array">{itemsArray}</div>
-    </>
+    <tr>
+      <td className="clipped-text">{user.name}</td>
+      <td>{friendshipStatus}</td>
+      <td>
+        <FriendButtonBar
+          friend={user.friendship ? user.friendship : { user_id: user.id }}
+        />
+      </td>
+    </tr>
   );
 }
 
