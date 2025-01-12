@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import FriendButtonBar from "./FriendButtonBar";
-import { FRIEND_REQUEST_TYPE } from "../controllers/constants";
+import { FriendRequest } from "../controllers/chat-data";
 import DurationFormat from "../controllers/DurationFormat";
 
 function UserItem({ user }) {
@@ -26,12 +26,12 @@ function UserItem({ user }) {
   let friendshipStatus;
 
   if (!user.friendship);
-  else if (user.friendship.state === FRIEND_REQUEST_TYPE.ACCEPTED)
+  else if (user.friendship.state === FriendRequest.ACCEPTED)
     friendshipStatus = "friends";
-  else if (user.friendship.state === FRIEND_REQUEST_TYPE.PENDING) {
+  else if (user.friendship.state === FriendRequest.PENDING) {
     friendshipStatus = user.friendship.is_initiator ? (
       <p>
-        {"impending - "}
+        {"received - "}
         <time>{duration}</time>
       </p>
     ) : (
@@ -40,7 +40,7 @@ function UserItem({ user }) {
         <time>{duration}</time>
       </p>
     );
-  } else if (user.friendship.state === FRIEND_REQUEST_TYPE.REJECTED) {
+  } else if (user.friendship.state === FriendRequest.REJECTED) {
     friendshipStatus = user.friendship.is_initiator ? (
       <p>
         {"you reject - "}

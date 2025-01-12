@@ -2,7 +2,7 @@ import { useContext, createContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import UnfriendButton from "./UnfriendButton.jsx";
-import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
+import { FriendRequest } from "../controllers/chat-data.js";
 
 export const UpdateDirectChatIdContext = createContext({
   updateDirectChatId: function () {},
@@ -59,12 +59,12 @@ function FriendButtonBar({ friend }) {
       key: "add",
       element: <button onClick={addFriend}>Add</button>,
     });
-  else if (friend.state === FRIEND_REQUEST_TYPE.PENDING) {
+  else if (friend.state === FriendRequest.PENDING) {
     if (friend.is_initiator) {
       buttonArray.push({
         key: "accept",
         element: (
-          <button onClick={answerRequest} value={FRIEND_REQUEST_TYPE.ACCEPTED}>
+          <button onClick={answerRequest} value={FriendRequest.ACCEPTED}>
             Accept
           </button>
         ),
@@ -72,7 +72,7 @@ function FriendButtonBar({ friend }) {
       buttonArray.push({
         key: "reject",
         element: (
-          <button onClick={answerRequest} value={FRIEND_REQUEST_TYPE.REJECTED}>
+          <button onClick={answerRequest} value={FriendRequest.REJECTED}>
             Reject
           </button>
         ),
@@ -82,15 +82,12 @@ function FriendButtonBar({ friend }) {
         key: "cancel",
         element: <button onClick={deleteRequest}>Cancel</button>,
       });
-  } else if (
-    friend.state === FRIEND_REQUEST_TYPE.REJECTED &&
-    friend.is_initiator
-  )
+  } else if (friend.state === FriendRequest.REJECTED && friend.is_initiator)
     buttonArray.push({
       key: "inverse add",
       element: <button onClick={inverseAdd}>Add</button>,
     });
-  else if (friend.state === FRIEND_REQUEST_TYPE.ACCEPTED) {
+  else if (friend.state === FriendRequest.ACCEPTED) {
     if (friend.direct_chat_id)
       buttonArray.push({
         key: "chat",

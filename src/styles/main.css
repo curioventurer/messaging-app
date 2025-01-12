@@ -55,6 +55,21 @@ nav ul {
   text-overflow: ellipsis;
 }
 
+.status {
+  &::before {
+    content: "●";
+    margin-right: 5px;
+  }
+
+  &.online::before {
+    color: green;
+  }
+
+  &.offline::before {
+    color: black;
+  }
+}
+
 .layout {
   display: flex;
   flex-direction: column;

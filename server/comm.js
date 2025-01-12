@@ -1,7 +1,11 @@
 import { Server } from "socket.io";
 import passport from "passport";
 import queries from "./db/queries.js";
-import { ChatId, PostMessage } from "../src/controllers/chat-data.js";
+import {
+  ChatId,
+  PostMessage,
+  UserActivity,
+} from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
   socket.user = await (socket.request.user ? socket.request.user() : null);
@@ -25,6 +29,13 @@ async function initializeConnection(socket) {
 
   await Promise.all([groupsPromise, friendsPromise]);
   return true;
+}
+
+function doPostConnect(socket) {
+  socket
+    .to("friend:" + socket.user.id)
+    .emit("friend", { user_id: socket.user.id, activity: UserActivity.ONLINE });
+  console.log("*socket: " + socket.user.name + " connected");
 }
 
 function formatUpdateFriendship(
@@ -82,13 +93,15 @@ function comm(server, sessionMiddleware) {
     const initializeStatus = await initializeConnection(socket);
     if (!initializeStatus) return socket.disconnect(true);
 
-    console.log("*socket: " + socket.user.name + " connected");
-
     socket.use(([, arg1], next) => {
       if (arg1 instanceof Object) next();
     });
 
     socket.on("disconnect", () => {
+      socket.to("friend:" + socket.user.id).emit("friend", {
+        user_id: socket.user.id,
+        activity: UserActivity.OFFLINE,
+      });
       console.log("*socket: " + socket.user.name + " disconnected");
     });
 
@@ -213,6 +226,8 @@ function comm(server, sessionMiddleware) {
         directMessageEmit(newMessage, directChat.user_id);
       }
     });
+
+    doPostConnect(socket);
   });
 
   async function addUser(user) {

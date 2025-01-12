@@ -1,5 +1,47 @@
 export const PERMISSION_TYPE = ["member", "admin", "owner"];
 
+export class FriendRequest {
+  static PENDING = "pending";
+  static ACCEPTED = "accepted";
+  static REJECTED = "rejected";
+
+  static getOrder(request = this.PENDING) {
+    switch (request) {
+      case this.PENDING:
+        return 0;
+      case this.ACCEPTED:
+        return 1;
+      case this.REJECTED:
+        return 2;
+      default:
+        return -1;
+    }
+  }
+
+  static isRequestValid(request) {
+    return [this.PENDING, this.ACCEPTED, this.REJECTED].includes(request);
+  }
+}
+
+export class UserActivity {
+  static OFFLINE = 0;
+  static ONLINE = 1;
+  static TYPING = 2;
+
+  static getString(activity = this.OFFLINE) {
+    switch (activity) {
+      case this.OFFLINE:
+        return "offline";
+      case this.ONLINE:
+        return "online";
+      case this.TYPING:
+        return "typing";
+      default:
+        return "invalid";
+    }
+  }
+}
+
 export class ChatId {
   constructor({ id = 0, isGroup = true }) {
     this.id = id;

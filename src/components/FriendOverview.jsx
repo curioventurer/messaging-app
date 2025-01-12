@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import FriendList from "./FriendList";
 import { UpdateDirectChatIdContext } from "./FriendButtonBar";
-import { FRIEND_REQUEST_TYPE } from "../controllers/constants.js";
 import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
-import { ChatItemData } from "../controllers/chat-data.js";
+import { ChatItemData, FriendRequest } from "../controllers/chat-data.js";
 
 function FriendOverview() {
   const [friends, setFriends] = useState([]);
@@ -17,7 +16,7 @@ function FriendOverview() {
 
     fetch(request)
       .then((res) => res.json())
-      .then((data) => setFriends(data))
+      .then((data) => setFriends(sortFriends(data)))
       .catch(() => {});
 
     return () => {
@@ -109,14 +108,37 @@ function FriendOverview() {
   }, []);
 
   useEffect(() => {
+    window.socket.on("friend", updateFriendStatus);
     window.socket.on("unfriend", removeFriendsEntry);
     window.socket.on("delete friend request", removeFriendsEntry);
 
     return () => {
+      window.socket.off("friend", updateFriendStatus);
       window.socket.off("unfriend", removeFriendsEntry);
       window.socket.off("delete friend request", removeFriendsEntry);
     };
   }, []);
+
+  function updateFriendStatus({ user_id = 0, activity = 0 }) {
+    setFriends((prevFriends) => {
+      const index = prevFriends.findIndex(
+        (friend) => friend.user_id === user_id,
+      );
+      if (index === -1) return prevFriends;
+
+      const friendship = {
+        ...prevFriends[index],
+        activity,
+      };
+
+      const newFriends = sortFriends([
+        ...prevFriends.slice(0, index),
+        friendship,
+        ...prevFriends.slice(index + 1),
+      ]);
+      return newFriends;
+    });
+  }
 
   function updateDirectChatId(user_id, direct_chat_id) {
     setFriends((prevFriends) => {
@@ -161,19 +183,16 @@ function FriendOverview() {
   }
 
   const acceptedRequest = friends.filter(
-    (friend) => friend.state === FRIEND_REQUEST_TYPE.ACCEPTED,
+    (friend) => friend.state === FriendRequest.ACCEPTED,
   );
   const sentRequest = friends.filter(
-    (friend) =>
-      friend.state === FRIEND_REQUEST_TYPE.PENDING && !friend.is_initiator,
+    (friend) => friend.state === FriendRequest.PENDING && !friend.is_initiator,
   );
   const receivedRequest = friends.filter(
-    (friend) =>
-      friend.state === FRIEND_REQUEST_TYPE.PENDING && friend.is_initiator,
+    (friend) => friend.state === FriendRequest.PENDING && friend.is_initiator,
   );
   const rejectedRequest = friends.filter(
-    (friend) =>
-      friend.state === FRIEND_REQUEST_TYPE.REJECTED && !friend.is_initiator,
+    (friend) => friend.state === FriendRequest.REJECTED && !friend.is_initiator,
   );
 
   return (

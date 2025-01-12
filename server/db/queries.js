@@ -8,8 +8,8 @@ import {
   Direct,
   Member,
   ChatItemData,
+  FriendRequest,
 } from "../../src/controllers/chat-data.js";
-import { FRIEND_REQUEST_TYPE } from "../../src/controllers/constants.js";
 
 async function registerUser(name, password) {
   const { rows } = await pool.query(
@@ -68,8 +68,7 @@ async function unfriend(friendship_id, user_id) {
 
   const friendship = await findFriendshipById(friendship_id);
 
-  if (!friendship || friendship.state !== FRIEND_REQUEST_TYPE.ACCEPTED)
-    return false;
+  if (!friendship || friendship.state !== FriendRequest.ACCEPTED) return false;
 
   let other_id = 0;
   if (friendship.sender_id === user_id) other_id = friendship.receiver_id;
@@ -226,8 +225,8 @@ async function setFriendshipStateById(id, state) {
 
 async function updateFriendRequest(id, user_id, state) {
   //check validity of state, abort if invalid
-  if (!Object.values(FRIEND_REQUEST_TYPE).includes(state)) return false;
-  if (state === FRIEND_REQUEST_TYPE.PENDING) return false;
+  if (!FriendRequest.isRequestValid(state)) return false;
+  if (state === FriendRequest.PENDING) return false;
 
   //search for id, abort if not found
   const friendship = await findFriendshipById(id);
@@ -237,7 +236,7 @@ async function updateFriendRequest(id, user_id, state) {
   if (friendship.receiver_id !== user_id) return false;
 
   //if state is no longer pending, abort attempt
-  if (friendship.state !== FRIEND_REQUEST_TYPE.PENDING) return false;
+  if (friendship.state !== FriendRequest.PENDING) return false;
 
   const update = await setFriendshipStateById(id, state);
 
@@ -253,7 +252,7 @@ async function deleteFriendRequest(friendship_id = 0, user_id = 0) {
   if (friendship.sender_id !== user_id) return false;
 
   //if state is no longer pending, abort attempt
-  if (friendship.state !== FRIEND_REQUEST_TYPE.PENDING) return false;
+  if (friendship.state !== FriendRequest.PENDING) return false;
 
   await deleteFriendship(friendship_id);
 
@@ -269,15 +268,12 @@ async function reverseFriendRequest(id, user_id) {
   if (
     !(
       friendship.receiver_id === user_id &&
-      friendship.state === FRIEND_REQUEST_TYPE.REJECTED
+      friendship.state === FriendRequest.REJECTED
     )
   )
     return new Error("friendship conditions not valid");
 
-  const setStatePromise = setFriendshipStateById(
-    id,
-    FRIEND_REQUEST_TYPE.PENDING,
-  );
+  const setStatePromise = setFriendshipStateById(id, FriendRequest.PENDING);
 
   const SQL_INVERT_INITIATOR = `
     UPDATE friendship_agents
@@ -337,7 +333,7 @@ async function openDirectChat(user_id, other_id) {
   ).rows[0];
 
   //Friendship not found, or not friends. Abort
-  if (friendship?.state !== FRIEND_REQUEST_TYPE.ACCEPTED) return false;
+  if (friendship?.state !== FriendRequest.ACCEPTED) return false;
 
   const direct_chat_id = await createDirectChat(user_id, other_id);
   return direct_chat_id;
