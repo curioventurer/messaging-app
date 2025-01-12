@@ -244,6 +244,22 @@ async function updateFriendRequest(id, user_id, state) {
   return { update, sender_id: friendship.sender_id };
 }
 
+async function deleteFriendRequest(friendship_id = 0, user_id = 0) {
+  //search for id, abort if not found
+  const friendship = await findFriendshipById(friendship_id);
+  if (!friendship) return false;
+
+  //user allowed to delete if user is sender, else abort
+  if (friendship.sender_id !== user_id) return false;
+
+  //if state is no longer pending, abort attempt
+  if (friendship.state !== FRIEND_REQUEST_TYPE.PENDING) return false;
+
+  await deleteFriendship(friendship_id);
+
+  return { other_id: friendship.receiver_id };
+}
+
 async function reverseFriendRequest(id, user_id) {
   //search for id, abort if not found
   const friendship = await findFriendshipById(id);
@@ -597,6 +613,7 @@ export default {
   unfriend,
   addFriend,
   updateFriendRequest,
+  deleteFriendRequest,
   reverseFriendRequest,
   openDirectChat,
   showDirectChat,

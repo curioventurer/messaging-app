@@ -30,6 +30,12 @@ function FriendButtonBar({ friend }) {
     });
   }
 
+  function deleteRequest() {
+    window.socket.emit("delete friend request", {
+      id: friend.id,
+    });
+  }
+
   function showChat() {
     const user_id = friend.user_id;
     const request = new Request(`/api/open_chat/${user_id}`, {
@@ -53,26 +59,29 @@ function FriendButtonBar({ friend }) {
       key: "add",
       element: <button onClick={addFriend}>Add</button>,
     });
-  else if (
-    friend.state === FRIEND_REQUEST_TYPE.PENDING &&
-    friend.is_initiator
-  ) {
-    buttonArray.push({
-      key: "accept",
-      element: (
-        <button onClick={answerRequest} value={FRIEND_REQUEST_TYPE.ACCEPTED}>
-          Accept
-        </button>
-      ),
-    });
-    buttonArray.push({
-      key: "reject",
-      element: (
-        <button onClick={answerRequest} value={FRIEND_REQUEST_TYPE.REJECTED}>
-          Reject
-        </button>
-      ),
-    });
+  else if (friend.state === FRIEND_REQUEST_TYPE.PENDING) {
+    if (friend.is_initiator) {
+      buttonArray.push({
+        key: "accept",
+        element: (
+          <button onClick={answerRequest} value={FRIEND_REQUEST_TYPE.ACCEPTED}>
+            Accept
+          </button>
+        ),
+      });
+      buttonArray.push({
+        key: "reject",
+        element: (
+          <button onClick={answerRequest} value={FRIEND_REQUEST_TYPE.REJECTED}>
+            Reject
+          </button>
+        ),
+      });
+    } else
+      buttonArray.push({
+        key: "cancel",
+        element: <button onClick={deleteRequest}>Cancel</button>,
+      });
   } else if (
     friend.state === FRIEND_REQUEST_TYPE.REJECTED &&
     friend.is_initiator

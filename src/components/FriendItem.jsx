@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import FriendItemButtonBar from "./FriendItemButtonBar";
+import FriendButtonBar from "./FriendButtonBar";
 import DurationFormat from "../controllers/DurationFormat.js";
 
 function FriendItem({ friend }) {
@@ -24,7 +24,7 @@ function FriendItem({ friend }) {
       <p className="clipped-text">{friend.name}</p>
       <div className="details">
         <time>{duration}</time>
-        <FriendItemButtonBar friend={friend} />
+        <FriendButtonBar friend={friend} />
       </div>
     </>
   );

@@ -30,12 +30,14 @@ function UserList() {
   useEffect(() => {
     window.socket.on("add user", addUser);
     window.socket.on("update friendship", updateFriendship);
-    window.socket.on("unfriend", unfriend);
+    window.socket.on("unfriend", deleteFriendshipProp);
+    window.socket.on("delete friend request", deleteFriendshipProp);
 
     return () => {
       window.socket.off("add user", addUser);
       window.socket.off("update friendship", updateFriendship);
-      window.socket.off("unfriend", unfriend);
+      window.socket.off("unfriend", deleteFriendshipProp);
+      window.socket.off("delete friend request", deleteFriendshipProp);
     };
   }, []);
 
@@ -93,9 +95,13 @@ function UserList() {
     });
   }
 
-  function unfriend({ user_id }) {
+  function deleteFriendshipProp({ friendship_id = 0, user_id = 0 }) {
+    let find = () => false;
+    if (user_id !== 0) find = (user) => user.id === user_id;
+    else find = (user) => user.friendship?.id === friendship_id;
+
     setUsers((prevUsers) => {
-      const index = prevUsers.findIndex((user) => user.id === user_id);
+      const index = prevUsers.findIndex(find);
       if (index === -1) return prevUsers;
 
       const updatedUser = {

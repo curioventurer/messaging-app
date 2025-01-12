@@ -110,9 +110,11 @@ function FriendOverview() {
 
   useEffect(() => {
     window.socket.on("unfriend", removeFriendsEntry);
+    window.socket.on("delete friend request", removeFriendsEntry);
 
     return () => {
       window.socket.off("unfriend", removeFriendsEntry);
+      window.socket.off("delete friend request", removeFriendsEntry);
     };
   }, []);
 

@@ -122,6 +122,20 @@ function comm(server, sessionMiddleware) {
       emitUpdateFriendship(io, response.update, user_ids);
     });
 
+    socket.on("delete friend request", async (data) => {
+      const response = await queries.deleteFriendRequest(
+        data.id,
+        socket.user.id,
+      );
+
+      if (!response) return;
+
+      socket.emit("delete friend request", { friendship_id: data.id });
+      io.to("user:" + response.other_id).emit("delete friend request", {
+        friendship_id: data.id,
+      });
+    });
+
     socket.on("reverse friend request", async (data) => {
       const response = await queries.reverseFriendRequest(
         data.id,
