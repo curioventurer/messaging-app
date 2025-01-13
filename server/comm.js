@@ -5,37 +5,39 @@ import {
   ChatId,
   PostMessage,
   UserActivity,
+  FriendRequest,
 } from "../src/controllers/chat-data.js";
 
 async function initializeConnection(socket) {
-  socket.user = await (socket.request.user ? socket.request.user() : null);
-  if (!socket.user) return false;
+  socket.data.user = await (socket.request.user ? socket.request.user() : null);
+  if (!socket.data.user) return false;
 
-  socket.join("user:" + socket.user.id);
+  socket.join("user:" + socket.data.user.id);
 
   async function joinGroupRooms(socket, user_id) {
     const groups = await queries.getGroupsByUserId(user_id);
     const group_ids = groups.map((group) => "group:" + group.id);
     socket.join(group_ids);
   }
-  const groupsPromise = joinGroupRooms(socket, socket.user.id);
+  const groupsPromise = joinGroupRooms(socket, socket.data.user.id);
 
   async function joinFriendRooms(socket, user_id) {
     const friends = await queries.getFriendsByUserId(user_id);
     const friend_ids = friends.map((friend) => "friend:" + friend.user_id);
     socket.join(friend_ids);
   }
-  const friendsPromise = joinFriendRooms(socket, socket.user.id);
+  const friendsPromise = joinFriendRooms(socket, socket.data.user.id);
 
   await Promise.all([groupsPromise, friendsPromise]);
   return true;
 }
 
 function doPostConnect(socket) {
-  socket
-    .to("friend:" + socket.user.id)
-    .emit("friend", { user_id: socket.user.id, activity: UserActivity.ONLINE });
-  console.log("*socket: " + socket.user.name + " connected");
+  socket.to("friend:" + socket.data.user.id).emit("friend", {
+    user_id: socket.data.user.id,
+    activity: UserActivity.ONLINE,
+  });
+  console.log("*socket: " + socket.data.user.name + " connected");
 }
 
 function formatUpdateFriendship(
@@ -51,12 +53,40 @@ function formatUpdateFriendship(
   return data;
 }
 
-function emitUpdateFriendship(io, friendship, user_ids) {
-  const senderData = formatUpdateFriendship(friendship, user_ids, true);
-  io.to("user:" + user_ids.sender_id).emit("update friendship", senderData);
+function emitUpdateFriendship(io, friendship, { sender_id, receiver_id }) {
+  const senderData = formatUpdateFriendship(
+    friendship,
+    { sender_id, receiver_id },
+    true,
+  );
+  io.to("user:" + sender_id).emit("update friendship", senderData);
 
-  const receiverData = formatUpdateFriendship(friendship, user_ids, false);
-  io.to("user:" + user_ids.receiver_id).emit("update friendship", receiverData);
+  const receiverData = formatUpdateFriendship(
+    friendship,
+    { sender_id, receiver_id },
+    false,
+  );
+  io.to("user:" + receiver_id).emit("update friendship", receiverData);
+
+  //if they become friends, join the respective friend rooms to receive friend updates
+  if (friendship.state === FriendRequest.ACCEPTED) {
+    io.in("user:" + sender_id).socketsJoin("friend:" + receiver_id);
+    io.in("user:" + receiver_id).socketsJoin("friend:" + sender_id);
+
+    //if user is online, inform the other user, as newly joined user lacks initial room events.
+    informIfOnline(io, sender_id, receiver_id);
+    informIfOnline(io, receiver_id, sender_id);
+  }
+}
+
+//emit friend online status to user if friend is online.
+function informIfOnline(io, user_id, friend_id) {
+  //if friend's user room exist, friend is online, emit friend event to user.
+  if (io.of("/").adapter.rooms.has("user:" + friend_id))
+    io.to("user:" + user_id).emit("friend", {
+      user_id: friend_id,
+      activity: UserActivity.ONLINE,
+    });
 }
 
 function onlyForHandshake(middleware) {
@@ -98,16 +128,16 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("disconnect", () => {
-      socket.to("friend:" + socket.user.id).emit("friend", {
-        user_id: socket.user.id,
+      socket.to("friend:" + socket.data.user.id).emit("friend", {
+        user_id: socket.data.user.id,
         activity: UserActivity.OFFLINE,
       });
-      console.log("*socket: " + socket.user.name + " disconnected");
+      console.log("*socket: " + socket.data.user.name + " disconnected");
     });
 
     socket.on("add friend", async (data) => {
       const user_ids = {
-        sender_id: socket.user.id,
+        sender_id: socket.data.user.id,
         receiver_id: data.id,
       };
       const friendship = await queries.addFriend(
@@ -122,7 +152,7 @@ function comm(server, sessionMiddleware) {
     socket.on("friend request update", async (data) => {
       const response = await queries.updateFriendRequest(
         data.id,
-        socket.user.id,
+        socket.data.user.id,
         data.state,
       );
 
@@ -130,7 +160,7 @@ function comm(server, sessionMiddleware) {
 
       const user_ids = {
         sender_id: response.sender_id,
-        receiver_id: socket.user.id,
+        receiver_id: socket.data.user.id,
       };
       emitUpdateFriendship(io, response.update, user_ids);
     });
@@ -138,7 +168,7 @@ function comm(server, sessionMiddleware) {
     socket.on("delete friend request", async (data) => {
       const response = await queries.deleteFriendRequest(
         data.id,
-        socket.user.id,
+        socket.data.user.id,
       );
 
       if (!response) return;
@@ -147,18 +177,24 @@ function comm(server, sessionMiddleware) {
       io.to("user:" + response.other_id).emit("delete friend request", {
         friendship_id: data.id,
       });
+
+      //remove the users from their respective friend rooms to stop receiving friend updates
+      socket.leave("friend:" + response.other_id);
+      io.in("user:" + response.other_id).socketsLeave(
+        "friend:" + socket.data.user.id,
+      );
     });
 
     socket.on("reverse friend request", async (data) => {
       const response = await queries.reverseFriendRequest(
         data.id,
-        socket.user.id,
+        socket.data.user.id,
       );
 
       if (!response || response instanceof Error) return;
 
       const user_ids = {
-        sender_id: socket.user.id,
+        sender_id: socket.data.user.id,
         receiver_id: response.receiver_id,
       };
       emitUpdateFriendship(io, response.update, user_ids);
@@ -167,12 +203,14 @@ function comm(server, sessionMiddleware) {
     socket.on("unfriend", async (data) => {
       const other_id = await queries.unfriend(
         data.friendship_id,
-        socket.user.id,
+        socket.data.user.id,
       );
       if (other_id === false) return;
 
       socket.emit("unfriend", { user_id: other_id });
-      io.to("user:" + other_id).emit("unfriend", { user_id: socket.user.id });
+      io.to("user:" + other_id).emit("unfriend", {
+        user_id: socket.data.user.id,
+      });
     });
 
     socket.on("message", async (data, callback) => {
@@ -193,18 +231,21 @@ function comm(server, sessionMiddleware) {
       else {
         directChat = await queries.findDirectChat(
           postMessage.chatId,
-          socket.user.id,
+          socket.data.user.id,
         );
         if (directChat) isValid = true;
       }
 
       if (!isValid) return callback(postMessage.client_id);
-      const newMessage = await queries.postMessage(socket.user.id, postMessage);
+      const newMessage = await queries.postMessage(
+        socket.data.user.id,
+        postMessage,
+      );
 
       callback(postMessage.client_id);
       if (!newMessage) return;
 
-      newMessage.message.name = socket.user.name;
+      newMessage.message.name = socket.data.user.name;
 
       if (newMessage.chatId.isGroup)
         io.to("group:" + newMessage.chatId.id).emit("message", newMessage);
@@ -222,7 +263,7 @@ function comm(server, sessionMiddleware) {
             addDirectChatItem(user_id, newMessage.chatId.id);
           }
         }
-        directMessageEmit(newMessage, socket.user.id);
+        directMessageEmit(newMessage, socket.data.user.id);
         directMessageEmit(newMessage, directChat.user_id);
       }
     });

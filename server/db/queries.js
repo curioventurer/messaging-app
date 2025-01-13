@@ -240,7 +240,8 @@ async function updateFriendRequest(id, user_id, state) {
 
   const update = await setFriendshipStateById(id, state);
 
-  return { update, sender_id: friendship.sender_id };
+  if (update) return { update, sender_id: friendship.sender_id };
+  else return false;
 }
 
 async function deleteFriendRequest(friendship_id = 0, user_id = 0) {
@@ -284,7 +285,8 @@ async function reverseFriendRequest(id, user_id) {
 
   const values = await Promise.all([setStatePromise, invertPromise]);
   const update = values[0];
-  return { update, receiver_id: friendship.sender_id };
+  if (update) return { update, receiver_id: friendship.sender_id };
+  else return new Error("return from update failed");
 }
 
 async function findDirectChatByUserId(user_id, other_id) {
