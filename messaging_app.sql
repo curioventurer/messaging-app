@@ -2,10 +2,14 @@ DROP DATABASE IF EXISTS messaging_app;
 CREATE DATABASE messaging_app;
 \c messaging_app
 
+CREATE TYPE user_activity_type AS ENUM ('offline', 'online', 'typing');
+
 CREATE TABLE users (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name VARCHAR ( 255 ) NOT NULL,
   password VARCHAR ( 255 ) NOT NULL,
+  activity user_activity_type DEFAULT 'online',
+  last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -74,17 +78,17 @@ CREATE TABLE direct_chat_agents (
   last_read_message_id INT REFERENCES messages ( id )
 );
 
-INSERT INTO users ( name, password, created ) VALUES
-  ( 'windseeker', 'alpha', '2020-02-29 18:52:12+06' ),
-  ( 'obb', 'run', '2023-09-30 09:07:00+07' ),
-  ( 'hill', 'bee', '2024-09-01 22:57:22+04' ),
-  ( 'gin', 'yoyo', '2024-10-13 09:07:00-01' ),
-  ( 'hue', 'loop', '2024-10-14 10:07:00-03' ),
-  ( 'alex', 'rain', '2024-10-15 10:07:00+08' ),
-  ( 'john lock door', 'pin', '2024-10-16 10:07:00+08' ),
-  ( 'bob train', 'keg', '2024-10-17 10:07:00+08' ),
-  ( 'lock', 'bun', '2024-10-18 10:07:00+08' ),
-  ( 'orange', 'sweet', '2024-10-19 10:07:00+08' );
+INSERT INTO users ( name, password, activity, created ) VALUES
+  ( 'windseeker', 'alpha', 'offline', '2020-02-29 18:52:12+06' ),
+  ( 'obb', 'run', 'offline', '2023-09-30 09:07:00+07' ),
+  ( 'hill', 'bee', 'offline', '2024-09-01 22:57:22+04' ),
+  ( 'gin', 'yoyo', 'offline', '2024-10-13 09:07:00-01' ),
+  ( 'hue', 'loop', 'offline', '2024-10-14 10:07:00-03' ),
+  ( 'alex', 'rain', 'offline', '2024-10-15 10:07:00+08' ),
+  ( 'john lock door', 'pin', 'offline', '2024-10-16 10:07:00+08' ),
+  ( 'bob train', 'keg', 'offline', '2024-10-17 10:07:00+08' ),
+  ( 'lock', 'bun', 'offline', '2024-10-18 10:07:00+08' ),
+  ( 'orange', 'sweet', 'offline', '2024-10-19 10:07:00+08' );
 
 INSERT INTO friendships ( state, modified ) VALUES
   ( 'accepted', '2023-10-13 09:07:00+07' ),

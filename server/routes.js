@@ -14,8 +14,11 @@ function routes(app, ioHandlers) {
       const userInfo = await getUserInfo(req);
       if (!userInfo) return res.json(false);
 
-      delete userInfo.password;
-      res.json(userInfo);
+      res.json({
+        id: userInfo.id,
+        name: userInfo.name,
+        created: userInfo.created,
+      });
     } else res.json(false);
   });
 
@@ -52,9 +55,13 @@ function routes(app, ioHandlers) {
     const user_id = req.params.user_id;
 
     const user = await queries.findUserById(user_id);
-    if (user) delete user.password;
+    if (!user) return false;
 
-    res.json(user);
+    res.json({
+      id: user.id,
+      name: user.name,
+      created: user.created,
+    });
   });
 
   app.get("/api/users", async (req, res) => {

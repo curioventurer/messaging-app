@@ -21,17 +21,19 @@ async function registerUser(name, password) {
 }
 
 async function findUser(name) {
-  const { rows } = await pool.query("SELECT * FROM users WHERE name = $1", [
-    name,
-  ]);
+  const { rows } = await pool.query(
+    "SELECT id, name, password, activity, last_seen, created FROM users WHERE name = $1",
+    [name],
+  );
   return rows[0];
 }
 
 async function findUserById(id) {
   try {
-    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
-      id,
-    ]);
+    const { rows } = await pool.query(
+      "SELECT id, name, activity, last_seen, created FROM users WHERE id = $1",
+      [id],
+    );
     return rows[0];
   } catch {
     return false;
@@ -128,7 +130,7 @@ async function addFriend(user_id, other_id) {
   const SQL_ADD_FRIENDSHIP = `
     INSERT INTO friendships
     VALUES ( DEFAULT )
-    RETURNING *
+    RETURNING id, state, modified
   `;
   const friendship = (await pool.query(SQL_ADD_FRIENDSHIP)).rows[0];
   if (!friendship) return false; //insert failure
@@ -217,7 +219,7 @@ async function setFriendshipStateById(id, state) {
     UPDATE friendships
     SET state = $2
     WHERE id = $1
-    RETURNING *
+    RETURNING id, state, modified
   `;
   const { rows } = await pool.query(SQL_UPDATE_FRIENDSHIP, [id, state]);
   return rows[0];
@@ -502,9 +504,10 @@ async function getChatList(user_id) {
 }
 
 async function findGroupById(groupId) {
-  const { rows } = await pool.query("SELECT * FROM groups WHERE id = $1", [
-    groupId,
-  ]);
+  const { rows } = await pool.query(
+    "SELECT id, name, created FROM groups WHERE id = $1",
+    [groupId],
+  );
   return rows[0] ? new Group(rows[0]) : false;
 }
 
@@ -531,7 +534,7 @@ async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
     INSERT INTO messages
     ( group_id, user_id, text )
     VALUES ( $1, $2, $3 )
-    RETURNING *
+    RETURNING id, text, group_id, direct_chat_id, user_id, created
   `;
 
   let sql = SQL_POST_MESSAGE;
