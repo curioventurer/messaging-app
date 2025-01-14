@@ -3,7 +3,7 @@ import UserItem from "./UserItem";
 import { UpdateDirectChatIdContext } from "./FriendButtonBar.jsx";
 import clearSocket from "../controllers/clearSocket.js";
 import sortUsers from "../controllers/sortUsers.js";
-import { ChatItemData } from "../controllers/chat-data.js";
+import { UserFriendship, ChatItemData } from "../controllers/chat-data.js";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -15,7 +15,16 @@ function UserList() {
 
     fetch(request)
       .then((res) => res.json())
-      .then((data) => setUsers(data))
+      .then((arr) =>
+        setUsers(
+          arr.map((user) => {
+            return {
+              ...user,
+              friendship: new UserFriendship(user.friendship),
+            };
+          }),
+        ),
+      )
       .catch(() => {});
 
     return () => {
@@ -30,14 +39,14 @@ function UserList() {
   useEffect(() => {
     window.socket.on("add user", addUser);
     window.socket.on("update friendship", updateFriendship);
-    window.socket.on("unfriend", deleteFriendshipProp);
-    window.socket.on("delete friend request", deleteFriendshipProp);
+    window.socket.on("unfriend", clearFriendship);
+    window.socket.on("delete friend request", clearFriendship);
 
     return () => {
       window.socket.off("add user", addUser);
       window.socket.off("update friendship", updateFriendship);
-      window.socket.off("unfriend", deleteFriendshipProp);
-      window.socket.off("delete friend request", deleteFriendshipProp);
+      window.socket.off("unfriend", clearFriendship);
+      window.socket.off("delete friend request", clearFriendship);
     };
   }, []);
 
@@ -56,11 +65,7 @@ function UserList() {
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      clearSocket();
-    };
-  }, []);
+  useEffect(() => clearSocket, []);
 
   function addUser(newUser) {
     setUsers((prevUsers) => {
@@ -73,7 +78,9 @@ function UserList() {
     });
   }
 
-  function updateFriendship(friendship) {
+  function updateFriendship(friendshipData = new UserFriendship({})) {
+    const friendship = new UserFriendship(friendshipData);
+
     setUsers((prevUsers) => {
       const index = prevUsers.findIndex(
         (user) => user.id === friendship.user_id,
@@ -95,19 +102,27 @@ function UserList() {
     });
   }
 
-  function deleteFriendshipProp({ friendship_id = 0, user_id = 0 }) {
+  //reset friendship prop to default values, to indicate removal of the record.
+  function clearFriendship({ friendship_id = 0, user_id = 0 }) {
     let find = () => false;
     if (user_id !== 0) find = (user) => user.id === user_id;
-    else find = (user) => user.friendship?.id === friendship_id;
+    else find = (user) => user.friendship.id === friendship_id;
 
     setUsers((prevUsers) => {
       const index = prevUsers.findIndex(find);
       if (index === -1) return prevUsers;
 
+      const user = prevUsers[index];
+
+      const friendship = new UserFriendship({
+        user_id: user.id,
+        name: user.name,
+      });
+
       const updatedUser = {
-        ...prevUsers[index],
+        ...user,
+        friendship,
       };
-      delete updatedUser.friendship;
 
       const newUsers = [
         ...prevUsers.slice(0, index),
@@ -126,10 +141,10 @@ function UserList() {
 
       const user = prevUsers[index];
 
-      const friendship = {
+      const friendship = new UserFriendship({
         ...user.friendship,
         direct_chat_id,
-      };
+      });
 
       const updatedUser = {
         ...user,

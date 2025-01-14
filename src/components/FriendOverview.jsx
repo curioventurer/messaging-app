@@ -1,13 +1,17 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import FriendList from "./FriendList";
 import { UpdateDirectChatIdContext } from "./FriendButtonBar";
 import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
-import { ChatItemData, FriendRequest } from "../controllers/chat-data.js";
+import {
+  ChatItemData,
+  UserFriendship,
+  FriendRequest,
+  UserActivity,
+} from "../controllers/chat-data.js";
 
 function FriendOverview() {
-  const [friends, setFriends] = useState([]);
-  const controllerRef = useRef(new AbortController());
+  const [friends, setFriends] = useState([new UserFriendship({})]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -16,7 +20,8 @@ function FriendOverview() {
 
     fetch(request)
       .then((res) => res.json())
-      .then((data) => setFriends(sortFriends(data)))
+      .then((array) => array.map((friend) => new UserFriendship(friend)))
+      .then((array) => setFriends(sortFriends(array)))
       .catch(() => {});
 
     return () => {
@@ -28,69 +33,7 @@ function FriendOverview() {
     };
   }, []);
 
-  useEffect(() => {
-    /*If there is a pre-existing entry, state can be updated directly.
-      Otherwise, fetch missing information to form an entry, then update.
-    */
-    function updateFriends(friendship) {
-      //find entry from state
-      const index = friends.findIndex((friend) => friend.id === friendship.id);
-
-      //update state directly
-      if (index !== -1) {
-        setFriends((prevFriends) => {
-          const index = prevFriends.findIndex(
-            (friend) => friend.id === friendship.id,
-          );
-
-          friendship.name = prevFriends[index].name;
-
-          const newFriends = sortFriends([
-            ...prevFriends.slice(0, index),
-            friendship,
-            ...prevFriends.slice(index + 1),
-          ]);
-          return newFriends;
-        });
-        return;
-      }
-
-      //fetch missing information to form entry, then update.
-      const request = new Request("/api/user/" + friendship.user_id, {
-        signal: controllerRef.current.signal,
-      });
-
-      fetch(request)
-        .then((res) => res.json())
-        .then((data) => {
-          setFriends((prevFriends) => {
-            friendship.name = data ? data.name : "default_name";
-            return sortFriends([friendship, ...prevFriends]);
-          });
-        })
-        .catch(() => {});
-    }
-
-    window.socket.on("update friendship", updateFriends);
-
-    return () => {
-      window.socket.off("update friendship", updateFriends);
-    };
-  }, [friends]);
-
-  useEffect(() => {
-    controllerRef.current = new AbortController();
-
-    return () => {
-      clearSocket();
-
-      controllerRef.current.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
-    };
-  }, []);
+  useEffect(() => clearSocket, []);
 
   useEffect(() => {
     function socketChatItemCB(chatItemData = new ChatItemData({})) {
@@ -108,28 +51,60 @@ function FriendOverview() {
   }, []);
 
   useEffect(() => {
+    window.socket.on("update friendship", updateFriends);
     window.socket.on("friend", updateFriendStatus);
     window.socket.on("unfriend", removeFriendsEntry);
     window.socket.on("delete friend request", removeFriendsEntry);
 
     return () => {
+      window.socket.off("update friendship", updateFriends);
       window.socket.off("friend", updateFriendStatus);
       window.socket.off("unfriend", removeFriendsEntry);
       window.socket.off("delete friend request", removeFriendsEntry);
     };
   }, []);
 
-  function updateFriendStatus({ user_id = 0, activity = 0 }) {
+  function updateFriends(friendshipData = new UserFriendship({})) {
+    const friendship = new UserFriendship(friendshipData);
+
     setFriends((prevFriends) => {
       const index = prevFriends.findIndex(
-        (friend) => friend.user_id === user_id,
+        (friend) => friend.id === friendship.id,
+      );
+
+      let newFriends;
+      if (index === -1)
+        //add
+        newFriends = [friendship, ...prevFriends];
+      //replace
+      else
+        newFriends = [
+          ...prevFriends.slice(0, index),
+          friendship,
+          ...prevFriends.slice(index + 1),
+        ];
+
+      return sortFriends(newFriends);
+    });
+  }
+
+  function updateFriendStatus(statusData = new UserActivity({})) {
+    const status = new UserActivity(statusData);
+
+    setFriends((prevFriends) => {
+      const index = prevFriends.findIndex(
+        (friend) => friend.user_id === status.user_id,
       );
       if (index === -1) return prevFriends;
 
-      const friendship = {
+      const friendship = new UserFriendship({
         ...prevFriends[index],
-        activity,
-      };
+        activity: status.activity,
+      });
+
+      //if offline, store last_seen value.
+      if (status.activity === UserActivity.OFFLINE)
+        friendship.last_seen = status.last_seen;
 
       const newFriends = sortFriends([
         ...prevFriends.slice(0, index),
@@ -147,10 +122,10 @@ function FriendOverview() {
       );
       if (index === -1) return prevFriends;
 
-      const friendship = {
+      const friendship = new UserFriendship({
         ...prevFriends[index],
         direct_chat_id,
-      };
+      });
 
       const newFriends = [
         ...prevFriends.slice(0, index),

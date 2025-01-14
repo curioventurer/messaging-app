@@ -7,9 +7,12 @@ import DurationFormat from "../controllers/DurationFormat";
 function UserItem({ user }) {
   const [duration, setDuration] = useState("");
 
-  const modified = user.friendship?.modified;
+  //if id = 0, indicating defaults, there is no friendship, isFriendship = false
+  const isFriendship = user.friendship.id !== 0;
+
+  const modified = user.friendship.modified;
   useEffect(() => {
-    if (!modified) return;
+    if (!isFriendship) return; //if there is no friendship, don't set interval;
 
     function updateDuration() {
       setDuration(DurationFormat.getString(modified));
@@ -21,11 +24,11 @@ function UserItem({ user }) {
     return () => {
       clearInterval(interval);
     };
-  }, [modified]);
+  }, [modified, isFriendship]);
 
   let friendshipStatus;
 
-  if (!user.friendship);
+  if (!isFriendship) friendshipStatus = "";
   else if (user.friendship.state === FriendRequest.ACCEPTED)
     friendshipStatus = "friends";
   else if (user.friendship.state === FriendRequest.PENDING) {
@@ -59,9 +62,7 @@ function UserItem({ user }) {
       <td className="clipped-text">{user.name}</td>
       <td>{friendshipStatus}</td>
       <td>
-        <FriendButtonBar
-          friend={user.friendship ? user.friendship : { user_id: user.id }}
-        />
+        <FriendButtonBar friend={user.friendship} />
       </td>
     </tr>
   );

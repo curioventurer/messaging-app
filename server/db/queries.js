@@ -8,7 +8,10 @@ import {
   Direct,
   Member,
   ChatItemData,
+  Friendship,
   FriendRequest,
+  UserActivity,
+  UserFriendship,
 } from "../../src/controllers/chat-data.js";
 
 async function registerUser(name, password) {
@@ -16,8 +19,15 @@ async function registerUser(name, password) {
     "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
     [name, password],
   );
+  const user = rows[0];
 
-  return rows[0];
+  if (user) {
+    user.friendship = new UserFriendship({
+      user_id: user.id,
+      name: user.name,
+    });
+    return user;
+  } else return false;
 }
 
 async function findUser(name) {
@@ -59,10 +69,41 @@ async function getUsers(user_id) {
     const friendship = friendshipArr.find(
       (friendship) => friendship.user_id === user.id,
     );
+
     if (friendship) user.friendship = friendship;
+    //if no friendship, provide friendship object with mostly default values
+    else
+      user.friendship = new UserFriendship({
+        user_id: user.id,
+        name: user.name,
+      });
   }
 
   return users;
+}
+
+async function putUserActivity(id = 0, activity = UserActivity.OFFLINE) {
+  const SQL_PUT_ACTIVITY = `
+    UPDATE users
+    SET activity = $2
+    WHERE id = $1
+  `;
+
+  //if going offline, update last_seen and return the time value
+  const SQL_PUT_OFFLINE = `
+    UPDATE users
+    SET activity = $2
+    , last_seen = default
+    WHERE id = $1
+    RETURNING last_seen
+  `;
+
+  let sql = SQL_PUT_ACTIVITY;
+  if (activity === UserActivity.OFFLINE) sql = SQL_PUT_OFFLINE;
+
+  const { rows } = await pool.query(sql, [id, activity]);
+  const response = rows[0];
+  return response?.last_seen;
 }
 
 async function unfriend(friendship_id, user_id) {
@@ -109,6 +150,10 @@ async function deleteDirectChat(direct_chat_id) {
   await pool.query("DELETE FROM direct_chats WHERE id=$1", [direct_chat_id]);
 }
 
+/*Verify validity of adding friend, then create pending friend request.
+  Returns friendship data if successful.
+  Returns false if database queries fails or arguments invalid.
+*/
 async function addFriend(user_id, other_id) {
   if (user_id === other_id) return false; //Must not reference yourself
 
@@ -127,32 +172,55 @@ async function addFriend(user_id, other_id) {
   const entry = await pool.query(SQL_FIND_ENTRY, [user_id, other_id]);
   if (entry.rows[0]) return false;
 
-  const SQL_ADD_FRIENDSHIP = `
+  return await postFriendship(user_id, other_id);
+}
+
+/*Create pending friend request with sender and receiver user id.
+  Returns friendship data if successful.
+  Returns false if database queries fails.
+*/
+async function postFriendship(sender_id = 0, receiver_id = 0) {
+  //create record in friendships, returning id.
+  const SQL_POST_FRIENDSHIP = `
     INSERT INTO friendships
     VALUES ( DEFAULT )
-    RETURNING id, state, modified
+    RETURNING id
   `;
-  const friendship = (await pool.query(SQL_ADD_FRIENDSHIP)).rows[0];
-  if (!friendship) return false; //insert failure
+  const friendship_id = (await pool.query(SQL_POST_FRIENDSHIP)).rows[0]?.id;
+  if (!friendship_id) return false; //insert failure
 
-  const SQL_ADD_FRIENDSHIP_AGENT = `
-    INSERT INTO friendship_agents
-    ( friendship_id, user_id, is_initiator )
-    VALUES ( $1, $2, TRUE ),
-    ( $1, $3, FALSE )
-  `;
-  await pool.query(SQL_ADD_FRIENDSHIP_AGENT, [
-    friendship.id,
-    user_id,
-    other_id,
-  ]);
+  //create 2 agents with specified friendship_id.
+  async function postFriendshipAgents(
+    friendship_id = 0,
+    sender_id = 0,
+    receiver_id = 0,
+  ) {
+    const SQL_POST_FRIENDSHIP_AGENT = `
+      INSERT INTO friendship_agents
+      ( friendship_id, user_id, is_initiator )
+      VALUES ( $1, $2, TRUE ),
+      ( $1, $3, FALSE )
+    `;
+    await pool.query(SQL_POST_FRIENDSHIP_AGENT, [
+      friendship_id,
+      sender_id,
+      receiver_id,
+    ]);
+  }
+  await postFriendshipAgents(friendship_id, sender_id, receiver_id);
 
-  return friendship;
+  //get friendship data after completion of insertions.
+  const friendship = await findFriendshipById(friendship_id);
+
+  if (friendship) {
+    friendship.clearSensitive();
+    return friendship;
+  } else return false;
 }
 
 async function getFriendships(user_id) {
   const SQL_GET_FRIENDSHIPS = `
-    SELECT friendships.id, friendships.state, friendships.modified, agent2.user_id, agent2.is_initiator, users.name
+    SELECT friendships.id, friendships.state, friendships.modified, agent2.is_initiator, agent2.user_id, users.name, users.activity, users.last_seen
     FROM friendships
     INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
     INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
@@ -166,14 +234,20 @@ async function getFriendships(user_id) {
   const directChatsPromise = getDirectChats(user_id);
   const values = await Promise.all([directChatsPromise, friendshipsPromise]);
   const directArr = values[0];
-  const friendshipArr = values[1].rows;
+  const friendshipArr = values[1].rows.map(
+    (friendship) => new UserFriendship(friendship),
+  );
 
-  for (const direct of directArr) {
-    const friendship = friendshipArr.find(
-      (friendship) => friendship.user_id === direct.user_id,
+  friendshipArr.forEach((friendship) => {
+    const direct = directArr.find(
+      (direct) => direct.user_id === friendship.user_id,
     );
-    if (friendship) friendship.direct_chat_id = direct.id;
-  }
+    if (direct) friendship.direct_chat_id = direct.id;
+
+    //if not friends, delete sensitive info meant for friends
+    if (friendship.state !== FriendRequest.ACCEPTED)
+      friendship.clearSensitive();
+  });
 
   return friendshipArr;
 }
@@ -195,20 +269,27 @@ async function getFriendsByUserId(user_id) {
   return rows;
 }
 
-async function findFriendshipById(id) {
+async function findFriendshipById(friendship_id = 0) {
   const SQL_FIND_FRIENDSHIP = `
-    SELECT friendships.id, friendships.state, friendships.modified, agent1.user_id AS sender_id, agent2.user_id AS receiver_id
+    SELECT friendships.id, friendships.state, friendships.modified,
+      user1.id AS sender_id, user1.name AS sender_name,
+      user1.activity AS sender_activity, user1.last_seen AS sender_last_seen,
+      user2.id AS receiver_id, user2.name AS receiver_name,
+      user2.activity AS receiver_activity, user2.last_seen AS receiver_last_seen
     FROM friendships
     INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
     INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
+    INNER JOIN users AS user1 ON agent1.user_id = user1.id
+    INNER JOIN users AS user2 ON agent2.user_id = user2.id
     WHERE friendships.id = $1
     AND agent1.is_initiator = TRUE
     AND agent2.is_initiator = FALSE
   `;
-
   try {
-    const { rows } = await pool.query(SQL_FIND_FRIENDSHIP, [id]);
-    return rows[0];
+    const { rows } = await pool.query(SQL_FIND_FRIENDSHIP, [friendship_id]);
+
+    if (rows[0]) return new Friendship(rows[0]);
+    else return false;
   } catch {
     return false;
   }
@@ -219,7 +300,7 @@ async function setFriendshipStateById(id, state) {
     UPDATE friendships
     SET state = $2
     WHERE id = $1
-    RETURNING id, state, modified
+    RETURNING state, modified
   `;
   const { rows } = await pool.query(SQL_UPDATE_FRIENDSHIP, [id, state]);
   return rows[0];
@@ -242,8 +323,16 @@ async function updateFriendRequest(id, user_id, state) {
 
   const update = await setFriendshipStateById(id, state);
 
-  if (update) return { update, sender_id: friendship.sender_id };
-  else return false;
+  if (update) {
+    //update the friendship object with new values from query update
+    friendship.state = update.state;
+    friendship.modified = update.modified;
+
+    if (friendship.state !== FriendRequest.ACCEPTED)
+      friendship.clearSensitive();
+
+    return friendship;
+  } else return false;
 }
 
 async function deleteFriendRequest(friendship_id = 0, user_id = 0) {
@@ -262,6 +351,18 @@ async function deleteFriendRequest(friendship_id = 0, user_id = 0) {
   return { other_id: friendship.receiver_id };
 }
 
+/*Add the user whose friend request you previously rejected.
+  
+  Because the friendship record created by the previous request still exists,
+  the query won't create a new friendship record,
+  instead it will switch the initiators and reset the state to pending.
+  
+  Hence, the need for this specific query instead of using the add friend query.
+
+  It effectively reverses the previous friend request,
+  reversing the roles(sender/receiver of friend request) of the users,
+  hence the choice of naming.
+*/
 async function reverseFriendRequest(id, user_id) {
   //search for id, abort if not found
   const friendship = await findFriendshipById(id);
@@ -287,8 +388,17 @@ async function reverseFriendRequest(id, user_id) {
 
   const values = await Promise.all([setStatePromise, invertPromise]);
   const update = values[0];
-  if (update) return { update, receiver_id: friendship.sender_id };
-  else return new Error("return from update failed");
+
+  if (update) {
+    //update the friendship object with new values from query update
+    friendship.state = update.state;
+    friendship.modified = update.modified;
+    friendship.reverseInitiator();
+
+    friendship.clearSensitive();
+
+    return friendship;
+  } else return new Error("return from update failed");
 }
 
 async function findDirectChatByUserId(user_id, other_id) {
@@ -611,6 +721,7 @@ export default {
   getUsers,
   getFriendships,
   getFriendsByUserId,
+  putUserActivity,
   unfriend,
   addFriend,
   updateFriendRequest,

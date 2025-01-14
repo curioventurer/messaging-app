@@ -2,7 +2,7 @@ import { useContext, createContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import UnfriendButton from "./UnfriendButton.jsx";
-import { FriendRequest } from "../controllers/chat-data.js";
+import { UserFriendship, FriendRequest } from "../controllers/chat-data.js";
 
 export const UpdateDirectChatIdContext = createContext({
   updateDirectChatId: function () {},
@@ -54,7 +54,10 @@ function FriendButtonBar({ friend }) {
 
   const buttonArray = [];
 
-  if (friend.state === undefined)
+  /*If id = 0, default value is used, meaning the friendship relation is absent.
+    Thus, provide add friend button.
+  */
+  if (friend.id === 0)
     buttonArray.push({
       key: "add",
       element: <button onClick={addFriend}>Add</button>,
@@ -88,7 +91,8 @@ function FriendButtonBar({ friend }) {
       element: <button onClick={inverseAdd}>Add</button>,
     });
   else if (friend.state === FriendRequest.ACCEPTED) {
-    if (friend.direct_chat_id)
+    //if not default value(0), chat is already shown, provide link to chat
+    if (friend.direct_chat_id !== 0)
       buttonArray.push({
         key: "chat",
         element: (
@@ -97,6 +101,7 @@ function FriendButtonBar({ friend }) {
           </Link>
         ),
       });
+    //chat not shown, add show chat button
     else
       buttonArray.push({
         key: "show-chat",
@@ -121,7 +126,7 @@ function FriendButtonBar({ friend }) {
 }
 
 FriendButtonBar.propTypes = {
-  friend: PropTypes.object.isRequired,
+  friend: PropTypes.instanceOf(UserFriendship).isRequired,
 };
 
 export default FriendButtonBar;

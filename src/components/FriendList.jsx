@@ -1,5 +1,6 @@
 import PropTypes from "prop-types";
 import FriendItem from "./FriendItem";
+import { UserFriendship } from "../controllers/chat-data";
 
 function FriendList({ friends }) {
   return (
@@ -14,7 +15,7 @@ function FriendList({ friends }) {
 }
 
 FriendList.propTypes = {
-  friends: PropTypes.array.isRequired,
+  friends: PropTypes.arrayOf(PropTypes.instanceOf(UserFriendship)).isRequired,
 };
 
 export default FriendList;

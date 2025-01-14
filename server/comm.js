@@ -4,6 +4,7 @@ import queries from "./db/queries.js";
 import {
   ChatId,
   PostMessage,
+  Friendship,
   UserActivity,
   FriendRequest,
 } from "../src/controllers/chat-data.js";
@@ -32,61 +33,33 @@ async function initializeConnection(socket) {
   return true;
 }
 
-function doPostConnect(socket) {
-  socket.to("friend:" + socket.data.user.id).emit("friend", {
+async function doPostConnect(socket) {
+  await queries.putUserActivity(socket.data.user.id, UserActivity.ONLINE);
+
+  const activity = new UserActivity({
     user_id: socket.data.user.id,
     activity: UserActivity.ONLINE,
   });
+  socket.to("friend:" + socket.data.user.id).emit("friend", activity);
+
   console.log("*socket: " + socket.data.user.name + " connected");
 }
 
-function formatUpdateFriendship(
-  friendship,
-  { sender_id, receiver_id },
-  isForSender = true,
-) {
-  const data = {
-    ...friendship,
-    user_id: isForSender ? receiver_id : sender_id,
-    is_initiator: !isForSender,
-  };
-  return data;
-}
+function emitUpdateFriendship(io, friendship = new Friendship({})) {
+  const sender_id = friendship.sender_id;
+  const receiver_id = friendship.receiver_id;
 
-function emitUpdateFriendship(io, friendship, { sender_id, receiver_id }) {
-  const senderData = formatUpdateFriendship(
-    friendship,
-    { sender_id, receiver_id },
-    true,
-  );
-  io.to("user:" + sender_id).emit("update friendship", senderData);
+  const senderResponse = friendship.getUserFriendship(true);
+  io.to("user:" + sender_id).emit("update friendship", senderResponse);
 
-  const receiverData = formatUpdateFriendship(
-    friendship,
-    { sender_id, receiver_id },
-    false,
-  );
-  io.to("user:" + receiver_id).emit("update friendship", receiverData);
+  const receiverResponse = friendship.getUserFriendship(false);
+  io.to("user:" + receiver_id).emit("update friendship", receiverResponse);
 
   //if they become friends, join the respective friend rooms to receive friend updates
   if (friendship.state === FriendRequest.ACCEPTED) {
     io.in("user:" + sender_id).socketsJoin("friend:" + receiver_id);
     io.in("user:" + receiver_id).socketsJoin("friend:" + sender_id);
-
-    //if user is online, inform the other user, as newly joined user lacks initial room events.
-    informIfOnline(io, sender_id, receiver_id);
-    informIfOnline(io, receiver_id, sender_id);
   }
-}
-
-//emit friend online status to user if friend is online.
-function informIfOnline(io, user_id, friend_id) {
-  //if friend's user room exist, friend is online, emit friend event to user.
-  if (io.of("/").adapter.rooms.has("user:" + friend_id))
-    io.to("user:" + user_id).emit("friend", {
-      user_id: friend_id,
-      activity: UserActivity.ONLINE,
-    });
 }
 
 function onlyForHandshake(middleware) {
@@ -127,42 +100,37 @@ function comm(server, sessionMiddleware) {
       if (arg1 instanceof Object) next();
     });
 
-    socket.on("disconnect", () => {
-      socket.to("friend:" + socket.data.user.id).emit("friend", {
+    socket.on("disconnect", async () => {
+      const last_seen = await queries.putUserActivity(
+        socket.data.user.id,
+        UserActivity.OFFLINE,
+      );
+
+      const activity = new UserActivity({
         user_id: socket.data.user.id,
         activity: UserActivity.OFFLINE,
+        last_seen,
       });
+      socket.to("friend:" + socket.data.user.id).emit("friend", activity);
+
       console.log("*socket: " + socket.data.user.name + " disconnected");
     });
 
     socket.on("add friend", async (data) => {
-      const user_ids = {
-        sender_id: socket.data.user.id,
-        receiver_id: data.id,
-      };
-      const friendship = await queries.addFriend(
-        user_ids.sender_id,
-        user_ids.receiver_id,
-      );
-
+      const friendship = await queries.addFriend(socket.data.user.id, data.id);
       if (!friendship) return;
-      emitUpdateFriendship(io, friendship, user_ids);
+      else emitUpdateFriendship(io, friendship);
     });
 
     socket.on("friend request update", async (data) => {
-      const response = await queries.updateFriendRequest(
+      const friendship = await queries.updateFriendRequest(
         data.id,
         socket.data.user.id,
         data.state,
       );
 
-      if (!response) return;
-
-      const user_ids = {
-        sender_id: response.sender_id,
-        receiver_id: socket.data.user.id,
-      };
-      emitUpdateFriendship(io, response.update, user_ids);
+      if (!friendship) return;
+      else emitUpdateFriendship(io, friendship);
     });
 
     socket.on("delete friend request", async (data) => {
@@ -170,34 +138,22 @@ function comm(server, sessionMiddleware) {
         data.id,
         socket.data.user.id,
       );
-
       if (!response) return;
 
       socket.emit("delete friend request", { friendship_id: data.id });
       io.to("user:" + response.other_id).emit("delete friend request", {
         friendship_id: data.id,
       });
-
-      //remove the users from their respective friend rooms to stop receiving friend updates
-      socket.leave("friend:" + response.other_id);
-      io.in("user:" + response.other_id).socketsLeave(
-        "friend:" + socket.data.user.id,
-      );
     });
 
     socket.on("reverse friend request", async (data) => {
-      const response = await queries.reverseFriendRequest(
+      const friendship = await queries.reverseFriendRequest(
         data.id,
         socket.data.user.id,
       );
 
-      if (!response || response instanceof Error) return;
-
-      const user_ids = {
-        sender_id: socket.data.user.id,
-        receiver_id: response.receiver_id,
-      };
-      emitUpdateFriendship(io, response.update, user_ids);
+      if (!friendship || friendship instanceof Error) return;
+      else emitUpdateFriendship(io, friendship);
     });
 
     socket.on("unfriend", async (data) => {
@@ -211,6 +167,10 @@ function comm(server, sessionMiddleware) {
       io.to("user:" + other_id).emit("unfriend", {
         user_id: socket.data.user.id,
       });
+
+      //remove the users from their respective friend rooms to stop receiving friend updates
+      socket.leave("friend:" + other_id);
+      io.in("user:" + other_id).socketsLeave("friend:" + socket.data.user.id);
     });
 
     socket.on("message", async (data, callback) => {
