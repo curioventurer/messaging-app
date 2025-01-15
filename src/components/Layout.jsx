@@ -15,8 +15,9 @@ const LAYOUT_CONTEXT_DEFAULT = {
   openMenu: function () {},
 };
 
+//chats: contain instances of ChatItemData - chat-data.js
 const CHAT_CONTEXT_DEFAULT = {
-  chats: [new ChatItemData({})],
+  chats: [],
 };
 
 export const LayoutContext = createContext(LAYOUT_CONTEXT_DEFAULT);

@@ -1,6 +1,5 @@
-import { Message } from "./chat-data";
-
-function sortMessages(messages = [new Message({})]) {
+//messages: contain instances of Message - chat-data.js
+function sortMessages(messages = []) {
   const sortedMessages = messages.toSorted((a, b) => {
     //if sorting subjects consists of a message(+id) and a sent message(-id), always place message first.
     if (a.id < 0 && b.id > 0) return 1;

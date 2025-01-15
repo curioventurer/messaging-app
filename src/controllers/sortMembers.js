@@ -1,8 +1,7 @@
-import { Member } from "./chat-data";
-
 const PERMISSION_TYPE = ["member", "admin", "owner"];
 
-function sortMembers(members = [new Member({})], user_id = 0) {
+//members: contain instances of Member - chat-data.js
+function sortMembers(members = [], user_id = 0) {
   const sortedMembers = members.toSorted((a, b) => {
     const powerA = PERMISSION_TYPE.indexOf(a.permission);
     const powerB = PERMISSION_TYPE.indexOf(b.permission);

@@ -1,7 +1,12 @@
 export const PERMISSION_TYPE = ["member", "admin", "owner"];
 
 const DEFAULT_TIME = "1970-01-01T00:00:00.000Z";
-const DEFAULT_NAME = "default_name";
+
+/*Zero Width Space (ZWSP)
+  Used to prevent display of visible or selectable default text when text is not yet loaded.
+  Also prevent the text container from collapsing due to white space collapse.
+*/
+const DEFAULT_TEXT = "\u200B";
 
 export class FriendRequest {
   static PENDING = "pending";
@@ -74,11 +79,11 @@ export class Friendship {
     modified = DEFAULT_TIME,
     direct_chat_id = 0,
     sender_id = 0,
-    sender_name = DEFAULT_NAME,
+    sender_name = DEFAULT_TEXT,
     sender_activity = UserActivity.OFFLINE,
     sender_last_seen = DEFAULT_TIME,
     receiver_id = 0,
-    receiver_name = DEFAULT_NAME,
+    receiver_name = DEFAULT_TEXT,
     receiver_activity = UserActivity.OFFLINE,
     receiver_last_seen = DEFAULT_TIME,
   }) {
@@ -169,7 +174,7 @@ export class UserFriendship {
     direct_chat_id = 0,
     is_initiator = true,
     user_id = 0,
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
     activity = UserActivity.OFFLINE,
     last_seen = DEFAULT_TIME,
   }) {
@@ -192,12 +197,14 @@ export class UserFriendship {
 }
 
 export class ChatData {
+  //messages: contain instances of Message - chat-data.js
+  //members: contain instances of Member - chat-data.js
   constructor({
     isGroup = true,
-    messages = [new Message({})],
+    messages = [],
     group = new Group({}),
     direct = new Direct({}),
-    members = [new Member({})],
+    members = [],
   }) {
     this.isGroup = isGroup;
     this.messages = messages;
@@ -208,7 +215,7 @@ export class ChatData {
 }
 
 export class Group {
-  constructor({ id = 0, name = DEFAULT_NAME, created = DEFAULT_TIME }) {
+  constructor({ id = 0, name = DEFAULT_TEXT, created = DEFAULT_TIME }) {
     this.id = id;
     this.name = name;
     this.created = created;
@@ -218,7 +225,7 @@ export class Group {
 export class Direct {
   constructor({
     id = 0,
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
     user_id = 0,
     time_shown = DEFAULT_TIME,
   }) {
@@ -233,7 +240,7 @@ export class Member {
   constructor({
     id = 0,
     user_id = 0,
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
     permission = PERMISSION_TYPE[0],
     created = DEFAULT_TIME,
   }) {
@@ -248,10 +255,10 @@ export class Member {
 export class Message {
   constructor({
     id = 0,
-    text = "default_text",
+    text = DEFAULT_TEXT,
     created = DEFAULT_TIME,
     user_id = 0,
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
   }) {
     this.id = id;
     this.text = text;
@@ -265,7 +272,7 @@ export class PostMessage {
   constructor({
     client_id = 0,
     chatId = new ChatId({}),
-    message = "default_message",
+    message = DEFAULT_TEXT,
   }) {
     this.client_id = client_id;
     this.chatId = chatId;
@@ -299,7 +306,7 @@ export class ChatItemData {
 
   constructor({
     chatId = new ChatId({}),
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
     user_id = 0,
     joined = DEFAULT_TIME,
     time_shown = DEFAULT_TIME,
@@ -316,7 +323,7 @@ export class ChatItemData {
   //more specialized constructor specifying only properties needed for group chat item
   static createGroup({
     chatId = new ChatId({}),
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
     joined = DEFAULT_TIME,
     lastMessage = new Message({}),
   }) {
@@ -326,7 +333,7 @@ export class ChatItemData {
   //more specialized constructor specifying only properties needed for direct chat item
   static createDirect({
     chatId = new ChatId({}),
-    name = DEFAULT_NAME,
+    name = DEFAULT_TEXT,
     user_id = 0,
     time_shown = DEFAULT_TIME,
     lastMessage = new Message({}),
@@ -375,7 +382,8 @@ export class ChatItemData {
     };
   }
 
-  static sortChats(chats = [new this({})]) {
+  //chats: contain instances of ChatItemData - chat-data.js
+  static sortChats(chats = []) {
     const sortedChats = chats.toSorted((a, b) => {
       //Sort by new item first, using time.
       const timeA = a.getEpoch();

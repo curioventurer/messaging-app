@@ -1,4 +1,4 @@
-import { UserFriendship, UserActivity, FriendRequest } from "./chat-data.js";
+import { UserActivity, FriendRequest } from "./chat-data.js";
 
 //compare by asc friend_request order (state prop).
 function compare_state(a, b) {
@@ -55,8 +55,10 @@ function compare_activity_name(a, b) {
   else return compare_name(a, b);
 }
 
-//sort array of friendship records.
-function sortFriends(friends = [new UserFriendship({})]) {
+/*Sort array of friendship records.
+  friends: contain instances of UserFriendship - chat-data.js
+*/
+function sortFriends(friends = []) {
   const sortedFriends = friends.toSorted((a, b) => {
     const state_diff = compare_state(a, b);
     if (state_diff !== 0) return state_diff;

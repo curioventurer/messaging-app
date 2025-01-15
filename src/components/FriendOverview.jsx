@@ -11,7 +11,8 @@ import {
 } from "../controllers/chat-data.js";
 
 function FriendOverview() {
-  const [friends, setFriends] = useState([new UserFriendship({})]);
+  //[]: contain instances of UserFriendship - chat-data.js
+  const [friends, setFriends] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
