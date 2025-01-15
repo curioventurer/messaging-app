@@ -98,8 +98,9 @@ async function putUserActivity(id = 0, activity = UserActivity.OFFLINE) {
     RETURNING last_seen
   `;
 
-  let sql = SQL_PUT_ACTIVITY;
+  let sql;
   if (activity === UserActivity.OFFLINE) sql = SQL_PUT_OFFLINE;
+  else sql = SQL_PUT_ACTIVITY;
 
   const { rows } = await pool.query(sql, [id, activity]);
   const response = rows[0];
@@ -218,27 +219,63 @@ async function postFriendship(sender_id = 0, receiver_id = 0) {
   } else return false;
 }
 
-async function getFriendships(user_id) {
-  const SQL_GET_FRIENDSHIPS = `
-    SELECT friendships.id, friendships.state, friendships.modified, agent2.is_initiator, agent2.user_id, users.name, users.activity, users.last_seen
-    FROM friendships
-    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
-    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
-    INNER JOIN users ON agent2.user_id = users.id
-    WHERE agent1.user_id = $1
-    AND agent2.user_id != $1
-    ORDER BY friendships.state, friendships.modified DESC, friendships.id DESC
-  `;
+/*Get all friendships of the client based on arguments.
 
-  const friendshipsPromise = pool.query(SQL_GET_FRIENDSHIPS, [user_id]);
+  user_id: client's user_id
+  state: friendship state. If default("all"), get all friendship states.
+
+  Returns array of UserFriendship instance.
+*/
+async function getFriendships(user_id, state = "all") {
+  /*Returns the requested records, but it is incomplete.
+    Returned record needs to be filled with data from other queries.
+  */
+  async function getRecords(user_id, state = "all") {
+    const SQL_GET_FRIENDSHIPS = `
+      SELECT friendships.id, friendships.state, friendships.modified, agent2.is_initiator, agent2.user_id, users.name, users.activity, users.last_seen
+      FROM friendships
+      INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
+      INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
+      INNER JOIN users ON agent2.user_id = users.id
+      WHERE agent1.user_id = $1
+      AND agent2.user_id != $1
+      <state_condition>
+      ORDER BY friendships.state, friendships.modified DESC, friendships.id DESC
+    `;
+
+    let sql;
+    let inputs = [user_id, state];
+
+    /*Get all friendship states.
+      Remove state from inputs array, and remove condition placeholder from sql.
+    */
+    if (state === "all") {
+      sql = SQL_GET_FRIENDSHIPS.replace("<state_condition>", "");
+      inputs = inputs.slice(0, 1);
+    }
+    //Replace condition placeholder with condition statement in sql.
+    else
+      sql = SQL_GET_FRIENDSHIPS.replace(
+        "<state_condition>",
+        "AND friendships.state = $2",
+      );
+
+    const { rows } = await pool.query(sql, inputs);
+    const friendships = rows.map(
+      (friendship) => new UserFriendship(friendship),
+    );
+
+    return friendships;
+  }
+
+  const friendshipsPromise = getRecords(user_id, state);
   const directChatsPromise = getDirectChats(user_id);
   const values = await Promise.all([directChatsPromise, friendshipsPromise]);
   const directArr = values[0];
-  const friendshipArr = values[1].rows.map(
-    (friendship) => new UserFriendship(friendship),
-  );
+  const friendshipArr = values[1];
 
   friendshipArr.forEach((friendship) => {
+    //Add in direct_chat_id if info is found.
     const direct = directArr.find(
       (direct) => direct.user_id === friendship.user_id,
     );
@@ -252,23 +289,11 @@ async function getFriendships(user_id) {
   return friendshipArr;
 }
 
-async function getFriendsByUserId(user_id) {
-  const SQL_GET_FRIENDS = `
-    SELECT friendships.id, agent2.user_id, users.name
-    FROM friendships
-    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
-    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
-    INNER JOIN users ON agent2.user_id = users.id
-    WHERE agent1.user_id = $1
-    AND agent2.user_id != $1
-    AND friendships.state = 'accepted'
-    ORDER BY users.name
-  `;
-  const { rows } = await pool.query(SQL_GET_FRIENDS, [user_id]);
-
-  return rows;
-}
-
+/*Find friendships by friendship_id
+  
+  Returns Friendship instance.
+  Returns false if not found.
+*/
 async function findFriendshipById(friendship_id = 0) {
   const SQL_FIND_FRIENDSHIP = `
     SELECT friendships.id, friendships.state, friendships.modified,
@@ -647,9 +672,9 @@ async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
     RETURNING id, text, group_id, direct_chat_id, user_id, created
   `;
 
-  let sql = SQL_POST_MESSAGE;
-  if (!postMessage.chatId.isGroup)
-    sql = sql.replace("group_id", "direct_chat_id");
+  let sql;
+  if (postMessage.chatId.isGroup) sql = SQL_POST_MESSAGE;
+  else sql = SQL_POST_MESSAGE.replace("group_id", "direct_chat_id");
 
   const { rows } = await pool.query(sql, [
     postMessage.chatId.id,
@@ -664,6 +689,7 @@ async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
   else return false;
 }
 
+//limit: number of most recent messages to retrieve. Default(-1) indicates to retrieve all.
 async function getMessagesByChatId(chatId = new ChatId({}), limit = -1) {
   const SQL_GET_MESSAGES = `
     SELECT messages.id, messages.text, messages.created, users.id AS user_id, users.name
@@ -675,18 +701,22 @@ async function getMessagesByChatId(chatId = new ChatId({}), limit = -1) {
     LIMIT $2
   `;
 
-  let sql = SQL_GET_MESSAGES;
-  let values = [chatId.id, limit];
+  let sql;
+  let inputs = [chatId.id, limit];
 
-  if (!chatId.isGroup) sql = sql.replace("group_id", "direct_chat_id");
+  if (chatId.isGroup) sql = SQL_GET_MESSAGES;
+  else sql = SQL_GET_MESSAGES.replace("group_id", "direct_chat_id");
 
-  //-1 indicates to replace limit parameter with string 'ALL' to select all messages
+  /*If true, retrieve all messages.
+    Replace sql limit parameter with string 'ALL' to select all messages.
+    Also, remove limit from inputs array.
+  */
   if (limit === -1) {
     sql = sql.replace("$2", "ALL");
-    values = values.slice(0, 1);
+    inputs = inputs.slice(0, 1);
   }
 
-  const { rows } = await pool.query(sql, values);
+  const { rows } = await pool.query(sql, inputs);
   const messages = rows.map((row) => new Message(row)).reverse();
   return messages;
 }
@@ -720,7 +750,6 @@ export default {
   findUserById,
   getUsers,
   getFriendships,
-  getFriendsByUserId,
   putUserActivity,
   unfriend,
   addFriend,

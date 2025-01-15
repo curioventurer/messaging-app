@@ -23,7 +23,10 @@ async function initializeConnection(socket) {
   const groupsPromise = joinGroupRooms(socket, socket.data.user.id);
 
   async function joinFriendRooms(socket, user_id) {
-    const friends = await queries.getFriendsByUserId(user_id);
+    const friends = await queries.getFriendships(
+      user_id,
+      FriendRequest.ACCEPTED,
+    );
     const friend_ids = friends.map((friend) => "friend:" + friend.user_id);
     socket.join(friend_ids);
   }
