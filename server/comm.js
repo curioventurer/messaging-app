@@ -1,6 +1,20 @@
 import { Server } from "socket.io";
 import passport from "passport";
-import queries from "./db/queries.js";
+import {
+  putUserActivity,
+  addFriend,
+  getFriendships,
+  updateFriendRequest,
+  reverseFriendRequest,
+  deleteFriendRequest,
+  unfriend,
+  showDirectChat,
+  findDirectChat,
+  findDirectChatShown,
+  findDirectChatSummary,
+  getGroupsByUserId,
+  postMessageDB,
+} from "./db/dbControls.js";
 import {
   ChatId,
   PostMessage,
@@ -16,17 +30,14 @@ async function initializeConnection(socket) {
   socket.join("user:" + socket.data.user.id);
 
   async function joinGroupRooms(socket, user_id) {
-    const groups = await queries.getGroupsByUserId(user_id);
+    const groups = await getGroupsByUserId(user_id);
     const group_ids = groups.map((group) => "group:" + group.id);
     socket.join(group_ids);
   }
   const groupsPromise = joinGroupRooms(socket, socket.data.user.id);
 
   async function joinFriendRooms(socket, user_id) {
-    const friends = await queries.getFriendships(
-      user_id,
-      FriendRequest.ACCEPTED,
-    );
+    const friends = await getFriendships(user_id, FriendRequest.ACCEPTED);
     const friend_ids = friends.map((friend) => "friend:" + friend.user_id);
     socket.join(friend_ids);
   }
@@ -37,7 +48,7 @@ async function initializeConnection(socket) {
 }
 
 async function doPostConnect(socket) {
-  await queries.putUserActivity(socket.data.user.id, UserActivity.ONLINE);
+  await putUserActivity(socket.data.user.id, UserActivity.ONLINE);
 
   const activity = new UserActivity({
     user_id: socket.data.user.id,
@@ -104,7 +115,7 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("disconnect", async () => {
-      const last_seen = await queries.putUserActivity(
+      const last_seen = await putUserActivity(
         socket.data.user.id,
         UserActivity.OFFLINE,
       );
@@ -120,13 +131,13 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("add friend", async (data) => {
-      const friendship = await queries.addFriend(socket.data.user.id, data.id);
+      const friendship = await addFriend(socket.data.user.id, data.id);
       if (!friendship) return;
       else emitUpdateFriendship(io, friendship);
     });
 
     socket.on("friend request update", async (data) => {
-      const friendship = await queries.updateFriendRequest(
+      const friendship = await updateFriendRequest(
         data.id,
         socket.data.user.id,
         data.state,
@@ -137,10 +148,7 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("delete friend request", async (data) => {
-      const response = await queries.deleteFriendRequest(
-        data.id,
-        socket.data.user.id,
-      );
+      const response = await deleteFriendRequest(data.id, socket.data.user.id);
       if (!response) return;
 
       socket.emit("delete friend request", { friendship_id: data.id });
@@ -150,7 +158,7 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("reverse friend request", async (data) => {
-      const friendship = await queries.reverseFriendRequest(
+      const friendship = await reverseFriendRequest(
         data.id,
         socket.data.user.id,
       );
@@ -160,10 +168,7 @@ function comm(server, sessionMiddleware) {
     });
 
     socket.on("unfriend", async (data) => {
-      const other_id = await queries.unfriend(
-        data.friendship_id,
-        socket.data.user.id,
-      );
+      const other_id = await unfriend(data.friendship_id, socket.data.user.id);
       if (other_id === false) return;
 
       socket.emit("unfriend", { user_id: other_id });
@@ -192,7 +197,7 @@ function comm(server, sessionMiddleware) {
           .adapter.sids.get(socket.id)
           .has("group:" + postMessage.chatId.id);
       else {
-        directChat = await queries.findDirectChat(
+        directChat = await findDirectChat(
           postMessage.chatId,
           socket.data.user.id,
         );
@@ -200,10 +205,7 @@ function comm(server, sessionMiddleware) {
       }
 
       if (!isValid) return callback(postMessage.client_id);
-      const newMessage = await queries.postMessage(
-        socket.data.user.id,
-        postMessage,
-      );
+      const newMessage = await postMessageDB(socket.data.user.id, postMessage);
 
       callback(postMessage.client_id);
       if (!newMessage) return;
@@ -216,13 +218,10 @@ function comm(server, sessionMiddleware) {
         async function directMessageEmit(newMessage, user_id) {
           io.to("user:" + user_id).emit("message", newMessage);
 
-          const isShown = await queries.findDirectChatShown(
-            newMessage.chatId,
-            user_id,
-          );
+          const isShown = await findDirectChatShown(newMessage.chatId, user_id);
 
           if (isShown === false) {
-            queries.showDirectChat(newMessage.chatId, user_id);
+            showDirectChat(newMessage.chatId, user_id);
             addDirectChatItem(user_id, newMessage.chatId.id);
           }
         }
@@ -239,7 +238,7 @@ function comm(server, sessionMiddleware) {
   }
 
   async function addDirectChatItem(user_id = 0, direct_chat_id = 0) {
-    const directChat = await queries.findDirectChatSummary(
+    const directChat = await findDirectChatSummary(
       new ChatId({ id: direct_chat_id, isGroup: false }),
       user_id,
     );

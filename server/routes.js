@@ -1,5 +1,17 @@
 import passport from "passport";
-import queries from "./db/queries.js";
+import {
+  registerUser,
+  getUsers,
+  findUserById,
+  getFriendships,
+  openDirectChat,
+  hideDirectChat,
+  findDirectChat,
+  getChatList,
+  findGroupById,
+  getMembersByGroupId,
+  getMessagesByChatId,
+} from "./db/dbControls.js";
 import { ChatId, ChatData } from "../src/controllers/chat-data.js";
 
 async function getUserInfo(req) {
@@ -36,7 +48,7 @@ function routes(app, ioHandlers) {
   });
 
   app.post("/sign-up", async (req, res) => {
-    const user = await queries.registerUser(req.body.name, req.body.password);
+    const user = await registerUser(req.body.name, req.body.password);
     res.redirect("/");
 
     //update online users on successful registration of new users
@@ -54,7 +66,7 @@ function routes(app, ioHandlers) {
   app.get("/api/user/:user_id", async (req, res) => {
     const user_id = req.params.user_id;
 
-    const user = await queries.findUserById(user_id);
+    const user = await findUserById(user_id);
     if (!user) return false;
 
     res.json({
@@ -68,7 +80,7 @@ function routes(app, ioHandlers) {
     const userInfo = await getUserInfo(req);
     if (!userInfo) return res.json(false);
 
-    const users = await queries.getUsers(userInfo.id);
+    const users = await getUsers(userInfo.id);
     res.json(users);
   });
 
@@ -76,7 +88,7 @@ function routes(app, ioHandlers) {
     const userInfo = await getUserInfo(req);
     if (!userInfo) return res.json(false);
 
-    const friends = await queries.getFriendships(userInfo.id);
+    const friends = await getFriendships(userInfo.id);
     res.json(friends);
   });
 
@@ -84,7 +96,7 @@ function routes(app, ioHandlers) {
     const userInfo = await getUserInfo(req);
     if (!userInfo) return res.json(false);
 
-    const chatList = await queries.getChatList(userInfo.id);
+    const chatList = await getChatList(userInfo.id);
     res.json(chatList);
   });
 
@@ -95,7 +107,7 @@ function routes(app, ioHandlers) {
     if (!req.user) return res.json(false);
 
     const userInfoPromise = req.user();
-    const groupMembersPromise = queries.getMembersByGroupId(groupId);
+    const groupMembersPromise = getMembersByGroupId(groupId);
     const [userInfo, groupMembers] = await Promise.all([
       userInfoPromise,
       groupMembersPromise,
@@ -108,9 +120,9 @@ function routes(app, ioHandlers) {
     );
     if (!membership) return res.json(false);
 
-    const group = queries.findGroupById(groupId);
-    const members = queries.getMembersByGroupId(groupId);
-    const messages = queries.getMessagesByChatId(new ChatId({ id: groupId }));
+    const group = findGroupById(groupId);
+    const members = getMembersByGroupId(groupId);
+    const messages = getMessagesByChatId(new ChatId({ id: groupId }));
     const results = await Promise.all([group, members, messages]);
 
     const chatData = new ChatData({
@@ -131,10 +143,10 @@ function routes(app, ioHandlers) {
       isGroup: false,
     });
 
-    const direct = await queries.findDirectChat(chatId, userInfo.id);
+    const direct = await findDirectChat(chatId, userInfo.id);
     if (!direct) return res.json(false);
 
-    const messages = await queries.getMessagesByChatId(chatId);
+    const messages = await getMessagesByChatId(chatId);
 
     const chatData = new ChatData({
       isGroup: false,
@@ -148,7 +160,7 @@ function routes(app, ioHandlers) {
     const userInfo = await getUserInfo(req);
     if (!userInfo) return res.json(false);
 
-    const direct_chat_id = await queries.openDirectChat(
+    const direct_chat_id = await openDirectChat(
       userInfo.id,
       req.params.other_id,
     );
@@ -167,7 +179,7 @@ function routes(app, ioHandlers) {
       id: req.params.direct_chat_id,
       isGroup: false,
     });
-    const isValid = await queries.hideDirectChat(chatId, userInfo.id);
+    const isValid = await hideDirectChat(chatId, userInfo.id);
     res.json(isValid);
   });
 }
