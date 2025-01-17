@@ -40,12 +40,12 @@ function FriendItem({ friend = new UserFriendship({}) }) {
 
   return (
     <>
-      <p className="clipped-text">{friend.name}</p>
+      <p className="name clipped-text">{friend.name}</p>
       <div className="details">
         {isFriend ? (
-          <p className={"status " + activity}>{status}</p>
+          <p className={"clipped-text status " + activity}>{status}</p>
         ) : (
-          <time>{duration}</time>
+          <time className="clipped-text">{duration}</time>
         )}
         <FriendButtonBar friend={friend} />
       </div>
