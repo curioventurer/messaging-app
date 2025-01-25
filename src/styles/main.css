@@ -1,4 +1,6 @@
 #root {
+  --screen-padding: 10px;
+
   background: linear-gradient(#00f, #f00);
   background-attachment: fixed;
   color: white;
@@ -6,8 +8,6 @@
   box-sizing: border-box;
   height: 100vh;
   overflow: auto;
-
-  --screen-padding: 10px;
   padding: var(--screen-padding);
 }
 
@@ -247,6 +247,7 @@ section.member {
 }
 
 .chat-list {
+  font-size: 1rem;
   color: #ccc;
   border: 1px solid white;
   overflow: auto;
@@ -320,12 +321,13 @@ section.member {
 }
 
 .chat-item-menu {
+  --edge-highlight: 2px solid yellow;
+
   position: absolute;
   width: max-content;
-  background-color: #222;
   padding-block: 5px;
 
-  --edge-highlight: 2px solid yellow;
+  background-color: #222;
   border-top: var(--edge-highlight);
 
   &.bottom-edge {
@@ -359,8 +361,10 @@ section.member {
   min-height: 0;
 
   > :first-child {
+    --width: 40ch;
+
     box-sizing: border-box;
-    width: 40ch;
+    width: var(--width);
     flex: none;
 
     border: none;
@@ -369,6 +373,11 @@ section.member {
 
   .room-interface {
     flex: 1;
+
+    /*Without this, it's width will overflow.
+      I don't know why this happens.
+    */
+    min-width: 0;
   }
 }
 
@@ -436,20 +445,22 @@ section.member {
 }
 
 .message-box {
+  --min-width: 20ch;
+  --margin-inline-large: 7ch;
+  --margin-inline-small: 10px;
+  --border-radius: 15px;
   --background: #111;
+  --font-size: 1.2rem;
+
   background: var(--background);
-  font-size: 1.2em;
+  font-size: var(--font-size);
 
   max-width: max-content;
-  min-width: 20ch;
+  min-width: var(--min-width);
   padding: 10px;
   margin-block-start: 7px;
-
-  --margin-inline-small: 10px;
-  --margin-inline-large: 70px;
   margin-inline: var(--margin-inline-small) var(--margin-inline-large);
 
-  --border-radius: 15px;
   border-radius: var(--border-radius);
   border-top-left-radius: 0;
 
@@ -457,8 +468,9 @@ section.member {
   z-index: 0;
 
   &.user-owned {
-    align-self: end;
     --background: #020;
+
+    align-self: end;
     margin-inline: var(--margin-inline-large) var(--margin-inline-small);
 
     border-top-left-radius: var(--border-radius);
@@ -501,12 +513,13 @@ section.member {
 }
 
 .message-box::before {
+  --arrow-width: 10px;
+
   content: "";
   display: block;
   position: absolute;
   z-index: -1;
 
-  --arrow-width: 10px;
   border-top: 7px solid var(--background);
   border-left: var(--arrow-width) solid transparent;
   border-right: var(--arrow-width) solid transparent;
@@ -529,6 +542,7 @@ section.member {
     padding: 0.5em 1em;
     border-radius: 1em;
     flex: 1;
+    min-width: 0;
 
     &:hover {
       filter: brightness(1.5);

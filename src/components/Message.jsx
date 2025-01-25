@@ -21,7 +21,9 @@ function Message({ message, isJoined = false }) {
 
   return (
     <li className={liClass}>
-      {isNameShown ? <p className="message-sender">{message.name}</p> : null}
+      {isNameShown ? (
+        <p className="message-sender clipped-text">{message.name}</p>
+      ) : null}
       <div>
         <p>{message.text}</p>
         <p className="message-footer">
