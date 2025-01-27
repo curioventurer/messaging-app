@@ -354,9 +354,10 @@ section.member {
 
   flex: 1;
 
-  /*Without this, it's height will overflow.
-    I don't know why this happens.
-    "flex: 1" should have been enough to set the height.
+  /*Prevent child's overflow failure.
+    When child has overflow in y, and it's height is determined by align stretch, and the parent's height is determined by column flex, and the parent has no height prop, the child suffers from overflow failure.
+    The parent needs a height, min-height, or max-height prop set to some numerical value to prevent this failure.
+    I don't know why flex behaves like this.
   */
   min-height: 0;
 
@@ -374,8 +375,10 @@ section.member {
   .room-interface {
     flex: 1;
 
-    /*Without this, it's width will overflow.
-      I don't know why this happens.
+    /*Prevent child's overflow failure.
+      When child has overflow in x, and it's width is determined by align stretch, and the parent's width is determined by row flex, and the parent has no width prop, the child suffers from overflow failure.
+      The parent needs a width, min-width, or max-width prop set to some numerical value to prevent this failure.
+      I don't know why flex behaves like this.
     */
     min-width: 0;
   }
