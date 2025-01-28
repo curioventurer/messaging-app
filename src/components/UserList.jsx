@@ -161,7 +161,7 @@ function UserList() {
   }
 
   return (
-    <>
+    <div className="user-list-page">
       <h1>Users</h1>
       <p>
         You can add friends from the list of users. But you will have to wait
@@ -177,7 +177,7 @@ function UserList() {
           </tbody>
         </table>
       </UpdateDirectChatIdContext.Provider>
-    </>
+    </div>
   );
 }
 
