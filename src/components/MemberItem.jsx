@@ -3,10 +3,10 @@ import { Member } from "../controllers/chat-data";
 
 function MemberItem({ member }) {
   return (
-    <>
-      <p>{member.name}</p>
-      <p>{member.permission}</p>
-    </>
+    <tr>
+      <td className="clipped-text">{member.name}</td>
+      <td>{member.permission}</td>
+    </tr>
   );
 }
 

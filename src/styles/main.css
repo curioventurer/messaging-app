@@ -191,6 +191,7 @@ nav .button-link {
 
 .room-info {
   padding-right: 10px;
+  overflow: auto;
 }
 
 .room-info-header {
@@ -235,13 +236,33 @@ section.member {
   }
 }
 
-.member-list li {
-  display: flex;
-  column-gap: 4ch;
-  justify-content: space-between;
-  padding: 1px;
+.member-list {
+  width: 100%;
 
-  &:first-child {
+  tbody {
+    display: grid;
+    grid-auto-rows: 1fr;
+    grid-template-columns: 1fr auto;
+  }
+
+  tr {
+    display: contents;
+  }
+
+  td {
+    padding: 1px;
+    padding-right: 5px;
+
+    &:last-child {
+      padding-right: 1px;
+    }
+  }
+
+  tr:nth-child(2n + 1) td {
+    background: #fff1;
+  }
+
+  tr:first-child td {
     background: #0f05;
   }
 }

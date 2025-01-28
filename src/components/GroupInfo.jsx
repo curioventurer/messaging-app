@@ -16,13 +16,13 @@ function GroupInfo() {
       </p>
       <section className="member">
         <p>Members</p>
-        <ul className="member-list">
-          {chatData.members.map((member) => (
-            <li key={member.id}>
-              <MemberItem member={member} />
-            </li>
-          ))}
-        </ul>
+        <table className="member-list">
+          <tbody>
+            {chatData.members.map((member) => (
+              <MemberItem key={member.id} member={member} />
+            ))}
+          </tbody>
+        </table>
       </section>
     </>
   );
