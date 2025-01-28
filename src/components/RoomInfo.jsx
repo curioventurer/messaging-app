@@ -7,7 +7,7 @@ function RoomInfo() {
   const { chatId, toggleChatInfo } = useContext(ChatContext);
 
   return (
-    <div className="room-info">
+    <div className="room-info narrow-width">
       <div className="room-info-header">
         <p>{chatId.isGroup ? "Group Info" : "Direct Chat Info"}</p>
         <button onClick={toggleChatInfo}>&#x2A2F;</button>

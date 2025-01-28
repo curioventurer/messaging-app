@@ -19,7 +19,10 @@ function ChatList() {
   }
 
   return (
-    <ul onScroll={handleScroll} className="chat-list">
+    <ul
+      onScroll={handleScroll}
+      className="chat-list narrow-width low-priority-display"
+    >
       {chats.map((chat) => (
         <li key={(chat.chatId.isGroup ? "g" : "d") + chat.chatId.id}>
           <ChatItem chat={chat} />

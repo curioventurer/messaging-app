@@ -174,7 +174,7 @@ function Room({ isGroup = true }) {
         }}
       >
         {isChatInfoShown ? <RoomInfo /> : <ChatList />}
-        <RoomUI />
+        <RoomUI isChatInfoShown={isChatInfoShown} />
       </ChatContext.Provider>
     </div>
   );

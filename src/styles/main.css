@@ -392,7 +392,7 @@ section.member {
   */
   min-height: 0;
 
-  > :first-child {
+  > .narrow-width {
     --width: 40ch;
 
     box-sizing: border-box;
@@ -403,7 +403,7 @@ section.member {
     border-right: 1px solid white;
   }
 
-  .room-interface {
+  > .wide-width {
     flex: 1;
 
     /*Prevent child's overflow failure.
@@ -596,6 +596,24 @@ section.member {
 
     &:hover {
       filter: brightness(0.7);
+    }
+  }
+}
+
+/*Switch layout for .room when width decreases.
+  Breakpoint is the minimum width plus some margins.
+
+  Breakpoint:
+    room-first-child-width
+    + (message-min-width + message-margin-inline-large) * message-font-size
+    + all-remaining-spaces
+    + message-list-scrollbar-width
+    + some-margins
+*/
+@media (max-width: calc(40ch + (20ch + 7ch)*1.2 + 50px + 16px + 10ch)) {
+  .room {
+    > .low-priority-display {
+      display: none;
     }
   }
 }
