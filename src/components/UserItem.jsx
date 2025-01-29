@@ -33,34 +33,38 @@ function UserItem({ user }) {
     friendshipStatus = "friends";
   else if (user.friendship.state === FriendRequest.PENDING) {
     friendshipStatus = user.friendship.is_initiator ? (
-      <p>
+      <>
         {"received - "}
         <time>{duration}</time>
-      </p>
+      </>
     ) : (
-      <p>
+      <>
         {"sent - "}
         <time>{duration}</time>
-      </p>
+      </>
     );
   } else if (user.friendship.state === FriendRequest.REJECTED) {
     friendshipStatus = user.friendship.is_initiator ? (
-      <p>
+      <>
         {"you reject - "}
         <time>{duration}</time>
-      </p>
+      </>
     ) : (
-      <p>
+      <>
         {"target reject - "}
         <time>{duration}</time>
-      </p>
+      </>
     );
   }
 
   return (
     <tr>
-      <td className="clipped-text">{user.name}</td>
-      <td>{friendshipStatus}</td>
+      <td>
+        <p className="clipped-text bold">{user.name}</p>
+      </td>
+      <td>
+        <p className="clipped-text">{friendshipStatus}</p>
+      </td>
       <td>
         <FriendButtonBar friend={user.friendship} />
       </td>

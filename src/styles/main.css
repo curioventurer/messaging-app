@@ -56,6 +56,10 @@ nav ul {
   text-overflow: ellipsis;
 }
 
+.bold {
+  font-weight: bold;
+}
+
 .status {
   &::before {
     content: "●";
@@ -134,10 +138,9 @@ nav .button-link {
 
 .button-bar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  column-gap: 5px;
-
-  flex: none;
+  gap: 5px;
 
   button {
     padding: 0 4px;
@@ -174,15 +177,19 @@ nav .button-link {
 .user-list-page {
   overflow: auto;
   flex: 1;
+  padding-right: 5px;
 }
 
 .user-list {
+  --background: #0005;
+
   width: 100%;
+  margin-top: 10px;
 
   tbody {
     display: grid;
     grid-auto-rows: 1fr;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 2fr 3fr auto;
   }
 
   tr {
@@ -190,12 +197,17 @@ nav .button-link {
   }
 
   tr:nth-child(2n + 1) td {
-    background: #fff1;
+    background: var(--background);
   }
 
   td {
-    padding-block: 10px;
-    padding-inline: 5px;
+    display: flex;
+    align-items: center;
+
+    padding: 5px;
+
+    /*Prevent 'flex child overflow failure'.*/
+    min-width: 0;
   }
 }
 
@@ -385,7 +397,7 @@ section.member {
 
   flex: 1;
 
-  /*Prevent child's overflow failure.
+  /*Prevent 'flex child overflow failure'.
     When child has overflow in y, and it's height is determined by align stretch, and the parent's height is determined by column flex, and the parent has no height prop, the child suffers from overflow failure.
     The parent needs a height, min-height, or max-height prop set to some numerical value to prevent this failure.
     I don't know why flex behaves like this.
@@ -406,11 +418,7 @@ section.member {
   > .wide-width {
     flex: 1;
 
-    /*Prevent child's overflow failure.
-      When child has overflow in x, and it's width is determined by align stretch, and the parent's width is determined by row flex, and the parent has no width prop, the child suffers from overflow failure.
-      The parent needs a width, min-width, or max-width prop set to some numerical value to prevent this failure.
-      I don't know why flex behaves like this.
-    */
+    /*Prevent 'flex child overflow failure'.*/
     min-width: 0;
   }
 }
@@ -614,6 +622,51 @@ section.member {
   .room {
     > .low-priority-display {
       display: none;
+    }
+  }
+}
+
+/*Switch layout for .user-list when width decreases.
+  Breakpoint is an arbitrary value by approximate character counts.
+  Value is to be changed, if the length of content changes.
+*/
+@media (max-width: 80ch) {
+  .user-list {
+    tbody {
+      grid-template-columns: 1fr;
+    }
+
+    tr {
+      display: flex;
+      flex-direction: column;
+      row-gap: 2px;
+
+      padding: 10px;
+      border: 1px solid white;
+      border-bottom: none;
+
+      &:last-child {
+        border-bottom: 1px solid white;
+      }
+
+      /*Prevent 'flex child overflow failure'.*/
+      min-width: 0;
+    }
+
+    tr:nth-child(2n + 1) {
+      background: var(--background);
+
+      td {
+        background: initial;
+      }
+    }
+
+    td:empty {
+      display: none;
+    }
+
+    td {
+      padding: 0;
     }
   }
 }
