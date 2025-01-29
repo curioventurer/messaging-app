@@ -397,9 +397,9 @@ section.member {
 
   flex: 1;
 
-  /*Prevent 'flex child overflow failure'.
-    When child has overflow in y, and it's height is determined by align stretch, and the parent's height is determined by column flex, and the parent has no height prop, the child suffers from overflow failure.
-    The parent needs a height, min-height, or max-height prop set to some numerical value to prevent this failure.
+  /*Prevent 'flex overflow failure'.
+    When a container overflows, and it's overflow dimension is determined by it's parent(flex container), and the parent's same dimension is determined by the grandparent(flex/grid fr), overflow failure happens.
+    The parent needs a dim(width/height), min-dim, or max-dim property set to some numerical value to prevent this failure.
     I don't know why flex behaves like this.
   */
   min-height: 0;
@@ -418,7 +418,7 @@ section.member {
   > .wide-width {
     flex: 1;
 
-    /*Prevent 'flex child overflow failure'.*/
+    /*Prevent 'flex overflow failure'.*/
     min-width: 0;
   }
 }
@@ -649,7 +649,7 @@ section.member {
         border-bottom: 1px solid white;
       }
 
-      /*Prevent 'flex child overflow failure'.*/
+      /*Prevent 'flex overflow failure'.*/
       min-width: 0;
     }
 
