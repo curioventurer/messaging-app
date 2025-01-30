@@ -41,7 +41,7 @@ export class UserActivity {
 
   constructor({
     user_id = 0,
-    activity = this.constructor.OFFLINE,
+    activity = UserActivity.OFFLINE,
     last_seen = new Date().toISOString(),
   }) {
     this.user_id = user_id;
@@ -54,6 +54,12 @@ export class ChatId {
   constructor({ id = 0, isGroup = true }) {
     this.id = id;
     this.isGroup = isGroup;
+  }
+
+  //is the object's values the same?
+  isEqual(chatId = new ChatId({})) {
+    if (this.id === chatId.id && this.isGroup === chatId.isGroup) return true;
+    else return false;
   }
 }
 

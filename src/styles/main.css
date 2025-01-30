@@ -81,7 +81,6 @@ nav ul {
   row-gap: 5px;
 
   height: 100%;
-  position: relative;
 }
 
 nav .button-link {
@@ -366,7 +365,8 @@ section.member {
 .chat-item-menu {
   --edge-highlight: 2px solid yellow;
 
-  position: absolute;
+  position: fixed;
+  z-index: 1;
   width: max-content;
   padding-block: 5px;
 

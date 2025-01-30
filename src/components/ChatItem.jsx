@@ -1,14 +1,19 @@
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
+import ChatItemMenu from "./ChatItemMenu";
 import { LayoutContext } from "./Layout.jsx";
 import { ChatContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 import { ChatItemData } from "../controllers/chat-data.js";
 
 function ChatItem({ chat = new ChatItemData({}) }) {
-  const { openMenu } = useContext(LayoutContext);
+  const { isMenuVisible, menuChatId, openMenu } = useContext(LayoutContext);
   const { chatId } = useContext(ChatContext);
+  const menuButtonRef = useRef(null);
+
+  //Show this menu if state is visible, and the menu chatId matches this chatId.
+  const isMenuShown = isMenuVisible && menuChatId.isEqual(chat.chatId);
 
   const hasLastMessage = chat.lastMessage.id !== 0;
 
@@ -38,8 +43,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
     shownMessage.push(chat.chatId.isGroup ? "Joined group" : "Chat created");
 
   let isActive = false;
-  if (chat.chatId.id === chatId.id && chat.chatId.isGroup === chatId.isGroup)
-    isActive = true;
+  if (chat.chatId.isEqual(chatId)) isActive = true;
 
   return (
     <>
@@ -51,13 +55,21 @@ function ChatItem({ chat = new ChatItemData({}) }) {
           <p className="clipped-text">{chat.name}</p>
           <div className="chat-item-header-right">
             <time dateTime={date}>{displayDate}</time>
-            <button onClick={openMenu} data-chat={JSON.stringify(chat.chatId)}>
+            <button
+              ref={menuButtonRef}
+              onClick={(event) => {
+                openMenu(event, chat.chatId);
+              }}
+            >
               ⋮
             </button>
           </div>
         </div>
         <p className="chat-item-content">{shownMessage}</p>
       </Link>
+      {isMenuShown ? (
+        <ChatItemMenu chatId={chat.chatId} target={menuButtonRef.current} />
+      ) : null}
     </>
   );
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, createContext } from "react";
 import { Outlet } from "react-router-dom";
 import Nav from "./Nav";
-import ChatItemMenu from "./ChatItemMenu";
 import {
   ChatItemData,
   ChatId,
@@ -11,6 +10,8 @@ import {
 
 const LAYOUT_CONTEXT_DEFAULT = {
   isMenuVisible: false,
+  menuChatId: new ChatId({}),
+  layoutRect: null,
   removeChat: function () {},
   openMenu: function () {},
 };
@@ -25,9 +26,15 @@ export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 
 function Layout() {
   const [chats, setChats] = useState(CHAT_CONTEXT_DEFAULT.chats);
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [chatItemActiveButton, setChatItemActiveButton] = useState(null);
-  const [layoutRect, setLayoutRect] = useState(null);
+  const [isMenuVisible, setIsMenuVisible] = useState(
+    LAYOUT_CONTEXT_DEFAULT.isMenuVisible,
+  );
+  const [menuChatId, setMenuChatId] = useState(
+    LAYOUT_CONTEXT_DEFAULT.menuChatId,
+  );
+  const [layoutRect, setLayoutRect] = useState(
+    LAYOUT_CONTEXT_DEFAULT.layoutRect,
+  );
 
   const layoutRef = useRef(null);
 
@@ -148,15 +155,14 @@ function Layout() {
     setLayoutRect(layoutRef.current.getBoundingClientRect());
   }
 
-  function openMenu(event) {
+  function openMenu(event, chatId = new ChatId({})) {
     event.preventDefault();
     event.stopPropagation();
 
     //close menu instead if the same button is clicked for an already visible menu
-    if (chatItemActiveButton === event.target && isMenuVisible)
-      return closeMenu();
+    if (isMenuVisible && menuChatId.isEqual(chatId)) return closeMenu();
 
-    setChatItemActiveButton(event.target);
+    setMenuChatId(chatId);
     setIsMenuVisible(true);
   }
 
@@ -179,6 +185,8 @@ function Layout() {
       <LayoutContext.Provider
         value={{
           isMenuVisible,
+          menuChatId,
+          layoutRect,
           removeChat,
           openMenu,
         }}
@@ -186,9 +194,6 @@ function Layout() {
         <ChatContext.Provider value={{ chats }}>
           <Outlet />
         </ChatContext.Provider>
-        {isMenuVisible ? (
-          <ChatItemMenu target={chatItemActiveButton} layoutRect={layoutRect} />
-        ) : null}
       </LayoutContext.Provider>
     </div>
   );

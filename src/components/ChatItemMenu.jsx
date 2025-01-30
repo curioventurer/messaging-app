@@ -3,12 +3,10 @@ import PropTypes from "prop-types";
 import { LayoutContext } from "./Layout.jsx";
 import { ChatId } from "../controllers/chat-data.js";
 
-function ChatItemMenu({ target, layoutRect }) {
-  const { removeChat } = useContext(LayoutContext);
+function ChatItemMenu({ chatId, target }) {
+  const { layoutRect, removeChat } = useContext(LayoutContext);
   const [isBottomEdge, setIsBottomEdge] = useState(false);
   const menuRef = useRef(null);
-
-  const chat = new ChatId(JSON.parse(target.dataset.chat));
 
   const updatePosition = useCallback(
     function () {
@@ -29,8 +27,8 @@ function ChatItemMenu({ target, layoutRect }) {
       if (left + menuRect.width > xBoundary)
         left = Math.min(targetRect.left, xBoundary) - menuRect.width;
 
-      menuRef.current.style.top = top - layoutRect.top + "px";
-      menuRef.current.style.left = left - layoutRect.left + "px";
+      menuRef.current.style.top = top + "px";
+      menuRef.current.style.left = left + "px";
 
       setIsBottomEdge(isBottomEdge);
     },
@@ -53,21 +51,14 @@ function ChatItemMenu({ target, layoutRect }) {
     };
   }, [updatePosition]);
 
-  useEffect(() => {
-    const firstButton = menuRef.current.querySelector("button");
-    firstButton.focus();
-  }, [target]);
-
   function hideChat() {
-    const request = new Request(`/api/chat/${chat.id}/hide`, { method: "PUT" });
+    const request = new Request(`/api/chat/${chatId.id}/hide`, {
+      method: "PUT",
+    });
 
     fetch(request)
       .then((res) => res.json())
       .then((data) => {
-        const chatId = new ChatId({
-          id: chat.id,
-          isGroup: chat.isGroup,
-        });
         if (data) removeChat(chatId);
       })
       .catch(() => {});
@@ -78,7 +69,7 @@ function ChatItemMenu({ target, layoutRect }) {
       ref={menuRef}
       className={"chat-item-menu" + (isBottomEdge ? " bottom-edge" : "")}
     >
-      {!chat.isGroup ? (
+      {!chatId.isGroup ? (
         <li>
           <button onClick={hideChat}>hide chat</button>
         </li>
@@ -91,8 +82,8 @@ function ChatItemMenu({ target, layoutRect }) {
 }
 
 ChatItemMenu.propTypes = {
+  chatId: PropTypes.instanceOf(ChatId).isRequired,
   target: PropTypes.instanceOf(HTMLButtonElement).isRequired,
-  layoutRect: PropTypes.instanceOf(DOMRect).isRequired,
 };
 
 export default ChatItemMenu;
