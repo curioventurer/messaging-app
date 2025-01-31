@@ -81,16 +81,36 @@ nav ul {
   row-gap: 5px;
 
   height: 100%;
+
+  .outlet {
+    flex: 1;
+
+    /*Prevent 'flex overflow failure'.
+      When a container overflows, and it's overflow dimension is determined by it's parent(flex container), and the parent's same dimension is determined by the grandparent(flex/grid fr), overflow failure happens.
+      The parent needs a dim(width/height), min-dim, or max-dim property set to some numerical value to prevent this failure.
+      I don't know why flex behaves like this.
+    */
+    min-height: 0;
+
+    > * {
+      height: 100%;
+      overflow: auto;
+    }
+  }
 }
 
 nav .button-link {
   padding: 5px;
 }
 
+.home {
+  > p {
+    margin-block: 10px;
+  }
+}
+
 .friend-overview {
   text-align: center;
-  overflow: auto;
-  flex: 1;
 
   h1 {
     font-size: 1.5em;
@@ -174,8 +194,6 @@ nav .button-link {
 }
 
 .user-list-page {
-  overflow: auto;
-  flex: 1;
   padding-right: 5px;
 }
 
@@ -394,15 +412,6 @@ section.member {
 .room {
   display: flex;
   column-gap: 10px;
-
-  flex: 1;
-
-  /*Prevent 'flex overflow failure'.
-    When a container overflows, and it's overflow dimension is determined by it's parent(flex container), and the parent's same dimension is determined by the grandparent(flex/grid fr), overflow failure happens.
-    The parent needs a dim(width/height), min-dim, or max-dim property set to some numerical value to prevent this failure.
-    I don't know why flex behaves like this.
-  */
-  min-height: 0;
 
   > .narrow-width {
     --width: 40ch;

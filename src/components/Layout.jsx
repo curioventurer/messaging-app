@@ -186,7 +186,9 @@ function Layout() {
         }}
       >
         <ChatContext.Provider value={{ chats }}>
-          <Outlet />
+          <div className="outlet">
+            <Outlet />
+          </div>
         </ChatContext.Provider>
       </LayoutContext.Provider>
     </div>

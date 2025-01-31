@@ -5,10 +5,10 @@ function Home() {
   const userData = useRouteLoaderData("layout");
 
   return (
-    <>
+    <div className="home">
       <p>Welcome {userData.name}, to our messaging app!</p>
       <ChatList />
-    </>
+    </div>
   );
 }
 
