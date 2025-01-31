@@ -11,7 +11,7 @@ import {
 const LAYOUT_CONTEXT_DEFAULT = {
   isMenuVisible: false,
   menuChatId: new ChatId({}),
-  layoutRect: null,
+  outletRect: new DOMRect(),
   removeChat: function () {},
   openMenu: function () {},
 };
@@ -32,11 +32,11 @@ function Layout() {
   const [menuChatId, setMenuChatId] = useState(
     LAYOUT_CONTEXT_DEFAULT.menuChatId,
   );
-  const [layoutRect, setLayoutRect] = useState(
-    LAYOUT_CONTEXT_DEFAULT.layoutRect,
+  const [outletRect, setOutletRect] = useState(
+    LAYOUT_CONTEXT_DEFAULT.outletRect,
   );
 
-  const layoutRef = useRef(null);
+  const outletRef = useRef(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -72,14 +72,14 @@ function Layout() {
   }, []);
 
   useEffect(() => {
-    updateLayoutRect();
+    updateOutletRect();
   }, []);
 
   useEffect(() => {
-    window.addEventListener("resize", updateLayoutRect);
+    window.addEventListener("resize", updateOutletRect);
 
     return () => {
-      window.removeEventListener("resize", updateLayoutRect);
+      window.removeEventListener("resize", updateOutletRect);
     };
   }, []);
 
@@ -145,8 +145,8 @@ function Layout() {
     });
   }
 
-  function updateLayoutRect() {
-    setLayoutRect(layoutRef.current.getBoundingClientRect());
+  function updateOutletRect() {
+    setOutletRect(outletRef.current.getBoundingClientRect());
   }
 
   function openMenu(event, chatId = new ChatId({})) {
@@ -169,24 +169,19 @@ function Layout() {
   }
 
   return (
-    <div
-      ref={layoutRef}
-      className="layout"
-      onClick={closeMenu}
-      onKeyDown={handleKey}
-    >
+    <div className="layout" onClick={closeMenu} onKeyDown={handleKey}>
       <Nav />
       <LayoutContext.Provider
         value={{
           isMenuVisible,
           menuChatId,
-          layoutRect,
+          outletRect,
           removeChat,
           openMenu,
         }}
       >
         <ChatContext.Provider value={{ chats }}>
-          <div className="outlet">
+          <div ref={outletRef} className="outlet">
             <Outlet />
           </div>
         </ChatContext.Provider>

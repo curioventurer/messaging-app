@@ -1,4 +1,4 @@
-import { useContext, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import ChatItemMenu from "./ChatItemMenu";
@@ -10,7 +10,18 @@ import { ChatItemData } from "../controllers/chat-data.js";
 function ChatItem({ chat = new ChatItemData({}) }) {
   const { isMenuVisible, menuChatId, openMenu } = useContext(LayoutContext);
   const { chatId } = useContext(ChatContext);
+
+  const [menuButtonRect, setMenuButtonRect] = useState(new DOMRect());
+
   const menuButtonRef = useRef(null);
+
+  useEffect(() => {
+    updateButtonRect();
+  }, []);
+
+  function updateButtonRect() {
+    setMenuButtonRect(menuButtonRef.current.getBoundingClientRect());
+  }
 
   //Show this menu if state is visible, and the menu chatId matches this chatId.
   const isMenuShown = isMenuVisible && menuChatId.isEqual(chat.chatId);
@@ -68,7 +79,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
         <p className="chat-item-content">{shownMessage}</p>
       </Link>
       {isMenuShown ? (
-        <ChatItemMenu chatId={chat.chatId} target={menuButtonRef.current} />
+        <ChatItemMenu chatId={chat.chatId} targetRect={menuButtonRect} />
       ) : null}
     </>
   );

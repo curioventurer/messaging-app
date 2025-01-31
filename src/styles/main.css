@@ -104,6 +104,8 @@ nav .button-link {
 }
 
 .home {
+  padding-right: 5px;
+
   > p {
     margin-block: 10px;
   }

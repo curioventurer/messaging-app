@@ -3,22 +3,21 @@ import PropTypes from "prop-types";
 import { LayoutContext } from "./Layout.jsx";
 import { ChatId } from "../controllers/chat-data.js";
 
-function ChatItemMenu({ chatId, target }) {
-  const { layoutRect, removeChat } = useContext(LayoutContext);
+function ChatItemMenu({ chatId, targetRect }) {
+  const { outletRect, removeChat } = useContext(LayoutContext);
   const [isBottomEdge, setIsBottomEdge] = useState(false);
   const menuRef = useRef(null);
 
   const updatePosition = useCallback(
     function () {
-      const targetRect = target.getBoundingClientRect();
       const menuRect = menuRef.current.getBoundingClientRect();
       const MENU_MARGIN = 5;
 
       let isBottomEdge = false;
       let top = targetRect.top;
       let left = targetRect.right;
-      const yBoundary = layoutRect.bottom - MENU_MARGIN;
-      const xBoundary = layoutRect.right - MENU_MARGIN;
+      const yBoundary = outletRect.bottom - MENU_MARGIN;
+      const xBoundary = outletRect.right - MENU_MARGIN;
 
       if (top + menuRect.height > yBoundary) {
         isBottomEdge = true;
@@ -32,7 +31,7 @@ function ChatItemMenu({ chatId, target }) {
 
       setIsBottomEdge(isBottomEdge);
     },
-    [target, layoutRect],
+    [targetRect, outletRect],
   );
 
   useEffect(() => {
@@ -83,7 +82,7 @@ function ChatItemMenu({ chatId, target }) {
 
 ChatItemMenu.propTypes = {
   chatId: PropTypes.instanceOf(ChatId).isRequired,
-  target: PropTypes.instanceOf(HTMLButtonElement).isRequired,
+  targetRect: PropTypes.instanceOf(DOMRect).isRequired,
 };
 
 export default ChatItemMenu;
