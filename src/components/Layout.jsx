@@ -87,10 +87,8 @@ function Layout() {
     const chatItem = new ChatItemData(chatItemData);
 
     setChats((prevChats) => {
-      const index = prevChats.findIndex(
-        (chat) =>
-          chat.chatId.id === chatItem.chatId.id &&
-          chat.chatId.isGroup === chatItem.chatId.isGroup,
+      const index = prevChats.findIndex((chat) =>
+        chatItem.chatId.isEqual(chat.chatId),
       );
       if (index !== -1) return prevChats;
 
@@ -105,9 +103,7 @@ function Layout() {
     let find = () => false;
 
     if (identifier instanceof ChatId)
-      find = (chat) =>
-        chat.chatId.id === identifier.id &&
-        chat.chatId.isGroup === identifier.isGroup;
+      find = (chat) => identifier.isEqual(chat.chatId);
     else find = (chat) => chat.user_id === identifier.user_id;
 
     setChats((prevChats) => {
@@ -130,10 +126,8 @@ function Layout() {
     });
 
     setChats((prevChats) => {
-      const index = prevChats.findIndex(
-        (chat) =>
-          chat.chatId.id === newMessage.chatId.id &&
-          chat.chatId.isGroup === newMessage.chatId.isGroup,
+      const index = prevChats.findIndex((chat) =>
+        newMessage.chatId.isEqual(chat.chatId),
       );
       if (index === -1) return prevChats;
 

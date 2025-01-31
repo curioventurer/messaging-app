@@ -92,11 +92,7 @@ function Room({ isGroup = true }) {
         message: new Message(messageData.message),
       });
 
-      if (
-        newMessage.chatId.isGroup === chatId.isGroup &&
-        newMessage.chatId.id === chatId.id
-      )
-        appendMessage(newMessage.message);
+      if (newMessage.chatId.isEqual(chatId)) appendMessage(newMessage.message);
     }
 
     window.socket.on("message", addNewMessage);
