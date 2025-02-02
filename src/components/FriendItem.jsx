@@ -3,9 +3,9 @@ import PropTypes from "prop-types";
 import FriendButtonBar from "./FriendButtonBar";
 import DurationFormat from "../controllers/DurationFormat.js";
 import {
+  User,
   UserFriendship,
   FriendRequest,
-  UserActivity,
 } from "../controllers/chat-data.js";
 
 function FriendItem({ friend = new UserFriendship({}) }) {
@@ -29,7 +29,7 @@ function FriendItem({ friend = new UserFriendship({}) }) {
   }, [time]);
 
   let status;
-  if (activity === UserActivity.OFFLINE) {
+  if (activity === User.ACTIVITY_TYPE.OFFLINE) {
     status = (
       <>
         {"Last seen "}

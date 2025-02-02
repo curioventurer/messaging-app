@@ -7,9 +7,9 @@ import {
   Group,
   Direct,
   Member,
+  User,
   Friendship,
   FriendRequest,
-  UserActivity,
   UserFriendship,
 } from "../../src/controllers/chat-data.js";
 
@@ -18,32 +18,40 @@ async function registerUser(name, password) {
     "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
     [name, password],
   );
-  const user = rows[0];
+  const response = rows[0];
 
-  if (user) {
-    user.friendship = new UserFriendship({
-      user_id: user.id,
-      name: user.name,
-    });
-    return user;
+  if (response) {
+    return new User(response);
   } else return false;
 }
 
+/*Used only for login authentication.
+  Retrieve user info(with password) using username.
+*/
 async function findUser(name) {
   const { rows } = await pool.query(
     "SELECT id, name, password, activity, last_seen, created FROM users WHERE name = $1",
     [name],
   );
-  return rows[0];
+  const response = rows[0];
+
+  if (response) {
+    return new User(response);
+  } else return false;
 }
 
+//Retrieve user info(except password) using user_id.
 async function findUserById(id) {
   try {
     const { rows } = await pool.query(
       "SELECT id, name, activity, last_seen, created FROM users WHERE id = $1",
       [id],
     );
-    return rows[0];
+    const response = rows[0];
+
+    if (response) {
+      return new User(response);
+    } else return false;
   } catch {
     return false;
   }
@@ -61,7 +69,7 @@ async function getUsers(user_id) {
   const friendshipsPromise = getFriendships(user_id);
 
   const values = await Promise.all([usersPromise, friendshipsPromise]);
-  const users = values[0].rows;
+  const users = values[0].rows.map((user) => new User(user));
   const friendshipArr = values[1];
 
   for (const user of users) {
@@ -70,18 +78,12 @@ async function getUsers(user_id) {
     );
 
     if (friendship) user.friendship = friendship;
-    //if no friendship, provide friendship object with mostly default values
-    else
-      user.friendship = new UserFriendship({
-        user_id: user.id,
-        name: user.name,
-      });
   }
 
   return users;
 }
 
-async function putUserActivity(id = 0, activity = UserActivity.OFFLINE) {
+async function putUserActivity(id = 0, activity = User.ACTIVITY_TYPE.OFFLINE) {
   const SQL_PUT_ACTIVITY = `
     UPDATE users
     SET activity = $2
@@ -98,7 +100,7 @@ async function putUserActivity(id = 0, activity = UserActivity.OFFLINE) {
   `;
 
   let sql;
-  if (activity === UserActivity.OFFLINE) sql = SQL_PUT_OFFLINE;
+  if (activity === User.ACTIVITY_TYPE.OFFLINE) sql = SQL_PUT_OFFLINE;
   else sql = SQL_PUT_ACTIVITY;
 
   const { rows } = await pool.query(sql, [id, activity]);

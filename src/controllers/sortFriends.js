@@ -1,4 +1,4 @@
-import { UserActivity, FriendRequest } from "./chat-data.js";
+import { User, FriendRequest } from "./chat-data.js";
 
 //compare by asc friend_request order (state prop).
 function compare_state(a, b) {
@@ -40,8 +40,8 @@ function compare_name(a, b) {
 
 //compare by offline last, all other activity is equal.
 function compare_activity(a, b) {
-  const a_is_offline = a.activity === UserActivity.OFFLINE;
-  const b_is_offline = b.activity === UserActivity.OFFLINE;
+  const a_is_offline = a.activity === User.ACTIVITY_TYPE.OFFLINE;
+  const b_is_offline = b.activity === User.ACTIVITY_TYPE.OFFLINE;
 
   if (a_is_offline && !b_is_offline) return 1;
   else if (!a_is_offline && b_is_offline) return -1;

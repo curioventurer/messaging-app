@@ -54,10 +54,10 @@ function FriendButtonBar({ friend }) {
 
   const buttonArray = [];
 
-  /*If id = 0, default value is used, meaning the friendship relation is absent.
+  /*Default value is used, meaning the friendship relation is absent.
     Thus, provide add friend button.
   */
-  if (friend.id === 0)
+  if (!friend.isDefined())
     buttonArray.push({
       key: "add",
       element: <button onClick={addFriend}>Add</button>,

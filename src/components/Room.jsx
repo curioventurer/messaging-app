@@ -14,8 +14,6 @@ import {
   Direct,
   Member,
 } from "../controllers/chat-data.js";
-import sortMessages from "../controllers/sortMessages.js";
-import sortMembers from "../controllers/sortMembers.js";
 
 const CHAT_CONTEXT_DEFAULT = {
   userData: {
@@ -67,7 +65,7 @@ function Room({ isGroup = true }) {
             messages: data.messages.map((msg) => new Message(msg)),
             group: new Group(data.group),
             direct: new Direct(data.direct),
-            members: sortMembers(
+            members: Member.sortMembers(
               data.members.map((member) => new Member(member)),
               userData.id,
             ),
@@ -123,7 +121,10 @@ function Room({ isGroup = true }) {
 
   function appendMessage(message = new Message({})) {
     setChatData((prevChatData) => {
-      const newMessages = sortMessages([...prevChatData.messages, message]);
+      const newMessages = Message.sortMessages([
+        ...prevChatData.messages,
+        message,
+      ]);
       const newChatData = {
         ...prevChatData,
         messages: newMessages,

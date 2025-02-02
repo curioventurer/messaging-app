@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import FriendButtonBar from "./FriendButtonBar";
-import { FriendRequest } from "../controllers/chat-data";
+import { User, FriendRequest } from "../controllers/chat-data";
 import DurationFormat from "../controllers/DurationFormat";
 
 function UserItem({ user }) {
   const [duration, setDuration] = useState("");
 
-  //if id = 0, indicating defaults, there is no friendship, isFriendship = false
-  const isFriendship = user.friendship.id !== 0;
+  //is defined - non default values.
+  const friendshipIsDefined = user.friendship.isDefined();
 
   const modified = user.friendship.modified;
   useEffect(() => {
-    if (!isFriendship) return; //if there is no friendship, don't set interval;
+    if (!friendshipIsDefined) return; //don't set interval;
 
     function updateDuration() {
       setDuration(DurationFormat.getString(modified));
@@ -24,11 +24,11 @@ function UserItem({ user }) {
     return () => {
       clearInterval(interval);
     };
-  }, [modified, isFriendship]);
+  }, [modified, friendshipIsDefined]);
 
   let friendshipStatus;
 
-  if (!isFriendship) friendshipStatus = "";
+  if (!friendshipIsDefined) friendshipStatus = "";
   else if (user.friendship.state === FriendRequest.ACCEPTED)
     friendshipStatus = "friends";
   else if (user.friendship.state === FriendRequest.PENDING) {
@@ -73,7 +73,7 @@ function UserItem({ user }) {
 }
 
 UserItem.propTypes = {
-  user: PropTypes.object.isRequired,
+  user: PropTypes.instanceOf(User).isRequired,
 };
 
 export default UserItem;

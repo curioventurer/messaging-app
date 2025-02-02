@@ -19,6 +19,7 @@ import {
   ChatId,
   PostMessage,
   Friendship,
+  User,
   UserActivity,
   FriendRequest,
 } from "../src/controllers/chat-data.js";
@@ -48,11 +49,11 @@ async function initializeConnection(socket) {
 }
 
 async function doPostConnect(socket) {
-  await putUserActivity(socket.data.user.id, UserActivity.ONLINE);
+  await putUserActivity(socket.data.user.id, User.ACTIVITY_TYPE.ONLINE);
 
   const activity = new UserActivity({
     user_id: socket.data.user.id,
-    activity: UserActivity.ONLINE,
+    activity: User.ACTIVITY_TYPE.ONLINE,
   });
   socket.to("friend:" + socket.data.user.id).emit("friend", activity);
 
@@ -117,12 +118,12 @@ function comm(server, sessionMiddleware) {
     socket.on("disconnect", async () => {
       const last_seen = await putUserActivity(
         socket.data.user.id,
-        UserActivity.OFFLINE,
+        User.ACTIVITY_TYPE.OFFLINE,
       );
 
       const activity = new UserActivity({
         user_id: socket.data.user.id,
-        activity: UserActivity.OFFLINE,
+        activity: User.ACTIVITY_TYPE.OFFLINE,
         last_seen,
       });
       socket.to("friend:" + socket.data.user.id).emit("friend", activity);

@@ -5,6 +5,7 @@ import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
 import {
   ChatItemData,
+  User,
   UserFriendship,
   FriendRequest,
   UserActivity,
@@ -104,7 +105,7 @@ function FriendOverview() {
       });
 
       //if offline, store last_seen value.
-      if (status.activity === UserActivity.OFFLINE)
+      if (status.activity === User.ACTIVITY_TYPE.OFFLINE)
         friendship.last_seen = status.last_seen;
 
       const newFriends = sortFriends([

@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import UserItem from "./UserItem";
 import { UpdateDirectChatIdContext } from "./FriendButtonBar.jsx";
 import clearSocket from "../controllers/clearSocket.js";
-import sortUsers from "../controllers/sortUsers.js";
-import { UserFriendship, ChatItemData } from "../controllers/chat-data.js";
+import {
+  User,
+  UserFriendship,
+  ChatItemData,
+} from "../controllers/chat-data.js";
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -15,16 +18,7 @@ function UserList() {
 
     fetch(request)
       .then((res) => res.json())
-      .then((arr) =>
-        setUsers(
-          arr.map((user) => {
-            return {
-              ...user,
-              friendship: new UserFriendship(user.friendship),
-            };
-          }),
-        ),
-      )
+      .then((arr) => setUsers(arr.map((user) => new User(user))))
       .catch(() => {});
 
     return () => {
@@ -67,12 +61,14 @@ function UserList() {
 
   useEffect(() => clearSocket, []);
 
-  function addUser(newUser) {
+  function addUser(userData = new User({})) {
+    const newUser = new User(userData);
+
     setUsers((prevUsers) => {
       const index = prevUsers.findIndex((user) => user.id === newUser.id);
       if (index !== -1) return prevUsers;
 
-      const newUsers = sortUsers([...prevUsers, newUser]);
+      const newUsers = User.sortUsers([...prevUsers, newUser]);
 
       return newUsers;
     });
@@ -87,10 +83,10 @@ function UserList() {
       );
       if (index === -1) return prevUsers;
 
-      const updatedUser = {
-        ...prevUsers[index],
+      const updatedUser = new User({
+        ...prevUsers[index].toJSON(),
         friendship,
-      };
+      });
 
       const newUsers = [
         ...prevUsers.slice(0, index),
@@ -102,8 +98,11 @@ function UserList() {
     });
   }
 
-  //reset friendship prop to default values, to indicate removal of the record.
+  /*Reset friendship prop to default values, to indicate removal of the record.
+    Accepts either parameters for find.
+  */
   function clearFriendship({ friendship_id = 0, user_id = 0 }) {
+    //Determine find function to use, based on provided parameters.
     let find = () => false;
     if (user_id !== 0) find = (user) => user.id === user_id;
     else find = (user) => user.friendship.id === friendship_id;
@@ -114,15 +113,13 @@ function UserList() {
 
       const user = prevUsers[index];
 
-      const friendship = new UserFriendship({
-        user_id: user.id,
-        name: user.name,
-      });
+      const friendship = new UserFriendship(user.friendship);
+      friendship.setDefaults();
 
-      const updatedUser = {
-        ...user,
+      const updatedUser = new User({
+        ...user.toJSON(),
         friendship,
-      };
+      });
 
       const newUsers = [
         ...prevUsers.slice(0, index),
@@ -146,10 +143,10 @@ function UserList() {
         direct_chat_id,
       });
 
-      const updatedUser = {
-        ...user,
+      const updatedUser = new User({
+        ...user.toJSON(),
         friendship,
-      };
+      });
 
       const newUsers = [
         ...prevUsers.slice(0, index),

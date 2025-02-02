@@ -26,7 +26,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
   //Show this menu if state is visible, and the menu chatId matches this chatId.
   const isMenuShown = isMenuVisible && menuChatId.isEqual(chat.chatId);
 
-  const hasLastMessage = chat.lastMessage.id !== 0;
+  const hasLastMessage = chat.lastMessage.isDefined();
 
   const date = chat.selectTime();
   const displayDate = DateFormat.timestamp(date, true);

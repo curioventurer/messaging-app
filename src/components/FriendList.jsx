@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import FriendItem from "./FriendItem";
 import { UserFriendship } from "../controllers/chat-data";
 
-function FriendList({ friends }) {
+function FriendList({ friends = [] }) {
   return (
     <ul className="friend-list">
       {friends.map((friend) => (

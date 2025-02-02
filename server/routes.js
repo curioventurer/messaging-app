@@ -69,11 +69,8 @@ function routes(app, ioHandlers) {
     const user = await findUserById(user_id);
     if (!user) return false;
 
-    res.json({
-      id: user.id,
-      name: user.name,
-      created: user.created,
-    });
+    user.clearSensitive();
+    res.json(user);
   });
 
   app.get("/api/users", async (req, res) => {

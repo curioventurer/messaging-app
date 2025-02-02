@@ -1,4 +1,7 @@
-export const PERMISSION_TYPE = ["member", "admin", "owner"];
+/*Some of the classes that use private variables require special handling for data transfers.
+    When stringified for JSON transfer, make sure toJSON method is triggered.
+    When spread operator, destructor syntax, and etc is used; call toJSON method.
+*/
 
 const DEFAULT_TIME = "1970-01-01T00:00:00.000Z";
 
@@ -35,13 +38,9 @@ export class FriendRequest {
   Used in socket io emit "friend" event to provide status updates on friends.
 */
 export class UserActivity {
-  static OFFLINE = "offline";
-  static ONLINE = "online";
-  static TYPING = "typing";
-
   constructor({
     user_id = 0,
-    activity = UserActivity.OFFLINE,
+    activity = User.ACTIVITY_TYPE.OFFLINE,
     last_seen = new Date().toISOString(),
   }) {
     this.user_id = user_id;
@@ -60,6 +59,80 @@ export class ChatId {
   isEqual(chatId = new ChatId({})) {
     if (this.id === chatId.id && this.isGroup === chatId.isGroup) return true;
     else return false;
+  }
+}
+
+export class User {
+  static ACTIVITY_TYPE = {
+    OFFLINE: "offline",
+    ONLINE: "online",
+    TYPING: "typing",
+  };
+
+  #friendship;
+
+  constructor({
+    id = 0,
+    name = DEFAULT_TEXT,
+    password = DEFAULT_TEXT,
+    activity = User.ACTIVITY_TYPE.OFFLINE,
+    last_seen = DEFAULT_TIME,
+    created = DEFAULT_TIME,
+    friendship = new UserFriendship({}),
+  }) {
+    this.id = id;
+    this.name = name;
+    this.password = password;
+    this.activity = activity;
+    this.last_seen = last_seen;
+    this.created = created;
+    this.friendship = friendship;
+
+    this.fillFriendship();
+  }
+
+  set friendship(friendship) {
+    this.#friendship =
+      friendship instanceof UserFriendship
+        ? friendship
+        : new UserFriendship(friendship);
+  }
+  get friendship() {
+    return this.#friendship;
+  }
+
+  //Fill friendship with values, if currently using defaults.
+  fillFriendship() {
+    //If not defined(defaults values are used)
+    if (!this.friendship.isDefined()) {
+      this.friendship.name = this.name;
+      this.friendship.user_id = this.id;
+    }
+  }
+
+  //Clear sensitive data by setting to defaults.
+  clearSensitive() {
+    this.password = DEFAULT_TEXT;
+    this.activity = User.ACTIVITY_TYPE.OFFLINE;
+    this.last_seen = DEFAULT_TIME;
+  }
+
+  //Private variables is hidden from JSON stringify. This exposes it to JSON stringify.
+  toJSON() {
+    return {
+      ...this,
+      friendship: this.friendship,
+    };
+  }
+
+  //users: contain instances of User - chat-data.js
+  static sortUsers(users = []) {
+    const sortedUsers = users.toSorted((a, b) => {
+      if (a.name < b.name) return -1;
+      else return 1;
+    });
+
+    return sortedUsers;
   }
 }
 
@@ -86,11 +159,11 @@ export class Friendship {
     direct_chat_id = 0,
     sender_id = 0,
     sender_name = DEFAULT_TEXT,
-    sender_activity = UserActivity.OFFLINE,
+    sender_activity = User.ACTIVITY_TYPE.OFFLINE,
     sender_last_seen = DEFAULT_TIME,
     receiver_id = 0,
     receiver_name = DEFAULT_TEXT,
-    receiver_activity = UserActivity.OFFLINE,
+    receiver_activity = User.ACTIVITY_TYPE.OFFLINE,
     receiver_last_seen = DEFAULT_TIME,
   }) {
     this.id = id;
@@ -131,9 +204,9 @@ export class Friendship {
 
   //Clear sensitive data(activity and last_seen) for data delivered to non-friends by setting to defaults.
   clearSensitive() {
-    this.sender_activity = UserActivity.OFFLINE;
+    this.sender_activity = User.ACTIVITY_TYPE.OFFLINE;
     this.sender_last_seen = DEFAULT_TIME;
-    this.receiver_activity = UserActivity.OFFLINE;
+    this.receiver_activity = User.ACTIVITY_TYPE.OFFLINE;
     this.receiver_last_seen = DEFAULT_TIME;
   }
 
@@ -181,7 +254,7 @@ export class UserFriendship {
     is_initiator = true,
     user_id = 0,
     name = DEFAULT_TEXT,
-    activity = UserActivity.OFFLINE,
+    activity = User.ACTIVITY_TYPE.OFFLINE,
     last_seen = DEFAULT_TIME,
   }) {
     this.id = id;
@@ -195,9 +268,27 @@ export class UserFriendship {
     this.last_seen = last_seen;
   }
 
+  //Is the instance defined? If id = 0, indicating defaults, false.
+  isDefined() {
+    return this.id !== 0;
+  }
+
+  /*To indicate it is not defined anymore, when friendship record is deleted.
+    Set all properties to defaults except user_id and name.
+  */
+  setDefaults() {
+    this.id = 0;
+    this.state = FriendRequest.PENDING;
+    this.modified = DEFAULT_TIME;
+    this.direct_chat_id = 0;
+    this.is_initiator = true;
+
+    this.clearSensitive();
+  }
+
   //Clear sensitive data(activity and last_seen) for data delivered to non-friends by setting to defaults.
   clearSensitive() {
-    this.activity = UserActivity.OFFLINE;
+    this.activity = User.ACTIVITY_TYPE.OFFLINE;
     this.last_seen = DEFAULT_TIME;
   }
 }
@@ -243,11 +334,13 @@ export class Direct {
 }
 
 export class Member {
+  static PERMISSION_TYPE = ["member", "admin", "owner"];
+
   constructor({
     id = 0,
     user_id = 0,
     name = DEFAULT_TEXT,
-    permission = PERMISSION_TYPE[0],
+    permission = Member.PERMISSION_TYPE[0],
     created = DEFAULT_TIME,
   }) {
     this.id = id;
@@ -255,6 +348,30 @@ export class Member {
     this.name = name;
     this.permission = permission;
     this.created = created;
+  }
+
+  //members: contain instances of Member - chat-data.js
+  static sortMembers(members = [], user_id = 0) {
+    const sortedMembers = members.toSorted((a, b) => {
+      const powerA = this.PERMISSION_TYPE.indexOf(a.permission);
+      const powerB = this.PERMISSION_TYPE.indexOf(b.permission);
+      const powerDiff = powerB - powerA;
+      if (powerDiff !== 0) return powerDiff;
+
+      if (a.name > b.name) return 1;
+      else if (a.name < b.name) return -1;
+      else return 0;
+    });
+
+    const userIndex = sortedMembers.findIndex(
+      (member) => member.user_id === user_id,
+    );
+    if (userIndex !== -1) {
+      const user = sortedMembers.splice(userIndex, 1)[0];
+      sortedMembers.unshift(user);
+    }
+
+    return sortedMembers;
   }
 }
 
@@ -271,6 +388,32 @@ export class Message {
     this.created = created;
     this.user_id = user_id;
     this.name = name;
+  }
+
+  //Is the instance defined? If id = 0, indicating defaults, false.
+  isDefined() {
+    return this.id !== 0;
+  }
+
+  //messages: contain instances of Message - chat-data.js
+  static sortMessages(messages = []) {
+    const sortedMessages = messages.toSorted((a, b) => {
+      //if sorting subjects consists of a message(+id) and a sent message(-id), always place message first.
+      if (a.id < 0 && b.id > 0) return 1;
+      if (a.id > 0 && b.id < 0) return -1;
+
+      /*if sorting same type of message, always place older message first.
+        Older message is identified by create time followed by magnitude of id.
+      */
+      const timeA = new Date(a.created).getTime();
+      const timeB = new Date(b.created).getTime();
+      const timeDiff = timeA - timeB;
+
+      if (timeDiff !== 0) return timeDiff;
+      else return Math.abs(a.id) - Math.abs(b.id);
+    });
+
+    return sortedMessages;
   }
 }
 
@@ -368,7 +511,7 @@ export class ChatItemData {
   */
   selectTime() {
     //if last message is not default, use last message time
-    if (this.lastMessage.id !== 0) return this.lastMessage.created;
+    if (this.lastMessage.isDefined()) return this.lastMessage.created;
 
     if (this.chatId.isGroup) return this.joined;
     else return this.time_shown;
@@ -380,6 +523,7 @@ export class ChatItemData {
     return epoch;
   }
 
+  //Private variables is hidden from JSON stringify. This exposes it to JSON stringify.
   toJSON() {
     return {
       ...this,
