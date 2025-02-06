@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, createContext } from "react";
+import { useState, useEffect, useRef, useCallback, createContext } from "react";
 import { Outlet } from "react-router-dom";
 import Nav from "./Nav";
 import {
@@ -14,18 +14,19 @@ const LAYOUT_CONTEXT_DEFAULT = {
   outletRect: new DOMRect(),
   removeChat: function () {},
   openMenu: function () {},
+  closeMenu: function () {},
 };
 
 //chats: contain instances of ChatItemData - chat-data.js
-const CHAT_CONTEXT_DEFAULT = {
+const CHAT_LIST_CONTEXT_DEFAULT = {
   chats: [],
 };
 
 export const LayoutContext = createContext(LAYOUT_CONTEXT_DEFAULT);
-export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
+export const ChatListContext = createContext(CHAT_LIST_CONTEXT_DEFAULT);
 
 function Layout() {
-  const [chats, setChats] = useState(CHAT_CONTEXT_DEFAULT.chats);
+  const [chats, setChats] = useState(CHAT_LIST_CONTEXT_DEFAULT.chats);
   const [isMenuVisible, setIsMenuVisible] = useState(
     LAYOUT_CONTEXT_DEFAULT.isMenuVisible,
   );
@@ -37,6 +38,45 @@ function Layout() {
   );
 
   const outletRef = useRef(null);
+
+  //accepts either ChatId instance or { user_id } as identifier
+  const removeChat = useCallback(function (identifier) {
+    let find = () => false;
+
+    if (identifier instanceof ChatId)
+      find = (chat) => identifier.isEqual(chat.chatId);
+    else find = (chat) => chat.user_id === identifier.user_id;
+
+    setChats((prevChats) => {
+      const index = prevChats.findIndex(find);
+      if (index === -1) return prevChats;
+
+      const newChats = [
+        ...prevChats.slice(0, index),
+        ...prevChats.slice(index + 1),
+      ];
+
+      return newChats;
+    });
+  }, []);
+
+  const closeMenu = useCallback(function () {
+    setIsMenuVisible(false);
+  }, []);
+
+  const openMenu = useCallback(
+    function (event, chatId = new ChatId({})) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      //close menu instead if the same button is clicked for an already visible menu
+      if (isMenuVisible && menuChatId.isEqual(chatId)) return closeMenu();
+
+      setMenuChatId(chatId);
+      setIsMenuVisible(true);
+    },
+    [isMenuVisible, menuChatId, closeMenu],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -69,7 +109,7 @@ function Layout() {
       window.socket.off("unfriend", removeChat);
       window.socket.off("message", updateLastMsg);
     };
-  }, []);
+  }, [removeChat]);
 
   useEffect(() => {
     updateOutletRect();
@@ -93,27 +133,6 @@ function Layout() {
       if (index !== -1) return prevChats;
 
       const newChats = ChatItemData.sortChats([chatItem, ...prevChats]);
-
-      return newChats;
-    });
-  }
-
-  //accepts either ChatId instance or { user_id } as identifier
-  function removeChat(identifier) {
-    let find = () => false;
-
-    if (identifier instanceof ChatId)
-      find = (chat) => identifier.isEqual(chat.chatId);
-    else find = (chat) => chat.user_id === identifier.user_id;
-
-    setChats((prevChats) => {
-      const index = prevChats.findIndex(find);
-      if (index === -1) return prevChats;
-
-      const newChats = [
-        ...prevChats.slice(0, index),
-        ...prevChats.slice(index + 1),
-      ];
 
       return newChats;
     });
@@ -149,21 +168,6 @@ function Layout() {
     setOutletRect(outletRef.current.getBoundingClientRect());
   }
 
-  function openMenu(event, chatId = new ChatId({})) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    //close menu instead if the same button is clicked for an already visible menu
-    if (isMenuVisible && menuChatId.isEqual(chatId)) return closeMenu();
-
-    setMenuChatId(chatId);
-    setIsMenuVisible(true);
-  }
-
-  function closeMenu() {
-    setIsMenuVisible(false);
-  }
-
   function handleKey(event) {
     if (event.key === "Escape") closeMenu();
   }
@@ -178,13 +182,14 @@ function Layout() {
           outletRect,
           removeChat,
           openMenu,
+          closeMenu,
         }}
       >
-        <ChatContext.Provider value={{ chats }}>
+        <ChatListContext.Provider value={{ chats }}>
           <div ref={outletRef} className="outlet">
             <Outlet />
           </div>
-        </ChatContext.Provider>
+        </ChatListContext.Provider>
       </LayoutContext.Provider>
     </div>
   );

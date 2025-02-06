@@ -1,54 +1,83 @@
-import { useState, useEffect, useRef, useCallback, useContext } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import PropTypes from "prop-types";
 import { LayoutContext } from "./Layout.jsx";
 import { ChatId } from "../controllers/chat-data.js";
 
-function ChatItemMenu({ chatId, targetRect }) {
-  const { outletRect, removeChat } = useContext(LayoutContext);
+function ChatItemMenu({ chatId, containerRect, targetRect }) {
+  const { outletRect, removeChat, closeMenu } = useContext(LayoutContext);
+
+  const [menuRect, setMenuRect] = useState(new DOMRect());
   const [isBottomEdge, setIsBottomEdge] = useState(false);
+
   const menuRef = useRef(null);
 
-  const updatePosition = useCallback(
-    function () {
-      const menuRect = menuRef.current.getBoundingClientRect();
-      const MENU_MARGIN = 5;
+  //Update menu position
+  useEffect(() => {
+    //if target button no longer visible due to scrolling, close menu
+    if (
+      targetRect.top > outletRect.bottom ||
+      targetRect.bottom < outletRect.top
+    )
+      return closeMenu();
 
-      let isBottomEdge = false;
-      let top = targetRect.top;
-      let left = targetRect.right;
-      const yBoundary = outletRect.bottom - MENU_MARGIN;
-      const xBoundary = outletRect.right - MENU_MARGIN;
+    const MENU_MARGIN = 5;
 
-      if (top + menuRect.height > yBoundary) {
-        isBottomEdge = true;
-        top = Math.min(targetRect.bottom, yBoundary) - menuRect.height;
-      }
-      if (left + menuRect.width > xBoundary)
-        left = Math.min(targetRect.left, xBoundary) - menuRect.width;
+    const right = targetRect.left;
+    const yMin = outletRect.top + MENU_MARGIN;
+    const yMax = outletRect.bottom - MENU_MARGIN;
 
-      menuRef.current.style.top = top + "px";
-      menuRef.current.style.left = left + "px";
+    let isBottomEdge;
+    let bottom;
 
-      setIsBottomEdge(isBottomEdge);
-    },
-    [targetRect, outletRect],
-  );
+    if (targetRect.top + menuRect.height > yMax) {
+      isBottomEdge = true;
+      bottom = Math.min(targetRect.bottom, yMax);
+    } else {
+      isBottomEdge = false;
+      bottom = Math.max(targetRect.top, yMin) + menuRect.height;
+    }
+
+    menuRef.current.style.bottom = containerRect.bottom - bottom + "px";
+    menuRef.current.style.right = containerRect.right - right + "px";
+    setIsBottomEdge(isBottomEdge);
+  }, [containerRect, targetRect, outletRect, menuRect, closeMenu]);
+
+  //Only run on mount, display menu after some delay to allow completion of positioning calculations before display.
+  useEffect(() => {
+    const DELAY = 0;
+
+    const timeout = setTimeout(() => {
+      menuRef.current.style.visibility = "visible";
+    }, DELAY);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
 
   useEffect(() => {
-    updatePosition();
-  }, [updatePosition]);
+    updateMenuRect();
+  }, []);
 
-  //update position on font-size setting change, tracked by menu resize observer.
+  //update menuRect on font-size setting change, tracked by menu resize observer.
   useEffect(() => {
     const resizeObserver = new ResizeObserver(() => {
-      updatePosition();
+      updateMenuRect();
     });
     resizeObserver.observe(menuRef.current);
 
     return () => {
       resizeObserver.disconnect();
     };
-  }, [updatePosition]);
+  }, []);
+
+  function updateMenuRect() {
+    /*if set directly, resizeObserver will cause errors on dismount.
+      On dismount, the ref becomes null, followed by the observer triggering, but before the observer is disconnected. Error is thrown on accessing property of null.
+      This prevents it.
+    */
+    setMenuRect(() => menuRef.current.getBoundingClientRect());
+  }
 
   function hideChat() {
     const request = new Request(`/api/chat/${chatId.id}/hide`, {
@@ -63,10 +92,17 @@ function ChatItemMenu({ chatId, targetRect }) {
       .catch(() => {});
   }
 
+  //Prevent default behavior and propagation of click beyond the menu.
+  function captureClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   return (
     <ul
       ref={menuRef}
       className={"chat-item-menu" + (isBottomEdge ? " bottom-edge" : "")}
+      onClick={captureClick}
     >
       {!chatId.isGroup ? (
         <li>
@@ -74,7 +110,7 @@ function ChatItemMenu({ chatId, targetRect }) {
         </li>
       ) : null}
       <li>
-        <button>cancel</button>
+        <button onClick={closeMenu}>cancel</button>
       </li>
     </ul>
   );
@@ -82,6 +118,7 @@ function ChatItemMenu({ chatId, targetRect }) {
 
 ChatItemMenu.propTypes = {
   chatId: PropTypes.instanceOf(ChatId).isRequired,
+  containerRect: PropTypes.instanceOf(DOMRect).isRequired,
   targetRect: PropTypes.instanceOf(DOMRect).isRequired,
 };
 

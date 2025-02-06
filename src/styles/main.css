@@ -348,13 +348,14 @@ section.member {
 
 .chat-item-header-right {
   width: max-content;
+  position: relative;
   flex: none;
 
   display: flex;
   align-items: center;
   column-gap: 5px;
 
-  button {
+  > button {
     background-color: transparent;
     color: white;
     font-size: 1.2rem;
@@ -385,8 +386,16 @@ section.member {
 .chat-item-menu {
   --edge-highlight: 2px solid yellow;
 
-  position: fixed;
+  position: absolute;
   z-index: 1;
+
+  /*Initial position to avoid auto overflow before the actual position is calculated.*/
+  right: 0;
+  bottom: 0;
+
+  /*Starts off hidden so that it is displayed only after position is calculated */
+  visibility: hidden;
+
   width: max-content;
   padding-block: 5px;
 
