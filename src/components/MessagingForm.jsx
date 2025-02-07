@@ -1,10 +1,10 @@
 import { useState, useRef, useContext } from "react";
-import { ChatContext } from "./Room.jsx";
+import { RoomContext } from "./Room.jsx";
 import { Message, PostMessage } from "../controllers/chat-data.js";
 
 function MessagingForm() {
-  const { userData, chatId, appendMessage, deleteSentMsg } =
-    useContext(ChatContext);
+  const { client, chatId, appendMessage, deleteSentMsg } =
+    useContext(RoomContext);
 
   const [message, setMessage] = useState("");
 
@@ -24,8 +24,8 @@ function MessagingForm() {
         id: client_id,
         text: message,
         created: new Date().toISOString(),
-        user_id: userData.id,
-        name: userData.name,
+        user_id: client.id,
+        name: client.name,
       }),
     );
 

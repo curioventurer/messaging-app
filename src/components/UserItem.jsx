@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import PropTypes from "prop-types";
 import FriendButtonBar from "./FriendButtonBar";
 import { User, FriendRequest } from "../controllers/chat-data";
@@ -12,6 +12,8 @@ function UserItem({ user }) {
 
   const modified = user.friendship.modified;
   useEffect(() => {
+    const DELAY = 5000;
+
     if (!friendshipIsDefined) return; //don't set interval;
 
     function updateDuration() {
@@ -19,7 +21,7 @@ function UserItem({ user }) {
     }
     updateDuration();
 
-    const interval = setInterval(updateDuration, 5000);
+    const interval = setInterval(updateDuration, DELAY);
 
     return () => {
       clearInterval(interval);
@@ -76,4 +78,4 @@ UserItem.propTypes = {
   user: PropTypes.instanceOf(User).isRequired,
 };
 
-export default UserItem;
+export default memo(UserItem);

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import UserItem from "./UserItem";
-import { UpdateDirectChatIdContext } from "./FriendButtonBar.jsx";
+import { UpdateDirectIdContext } from "./FriendButtonBar.jsx";
 import clearSocket from "../controllers/clearSocket.js";
 import {
   User,
@@ -10,6 +10,32 @@ import {
 
 function UserList() {
   const [users, setUsers] = useState([]);
+
+  const updateDirectId = useCallback(function (user_id, direct_chat_id) {
+    setUsers((prevUsers) => {
+      const index = prevUsers.findIndex((user) => user.id === user_id);
+      if (index === -1) return prevUsers;
+
+      const user = prevUsers[index];
+
+      const friendship = new UserFriendship({
+        ...user.friendship,
+        direct_chat_id,
+      });
+
+      const updatedUser = new User({
+        ...user.toJSON(),
+        friendship,
+      });
+
+      const newUsers = [
+        ...prevUsers.slice(0, index),
+        updatedUser,
+        ...prevUsers.slice(index + 1),
+      ];
+      return newUsers;
+    });
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -49,7 +75,7 @@ function UserList() {
       const chatItem = new ChatItemData(chatItemData);
       if (chatItem.chatId.isGroup) return;
 
-      updateDirectChatId(chatItem.user_id, chatItem.chatId.id);
+      updateDirectId(chatItem.user_id, chatItem.chatId.id);
     }
 
     window.socket.on("chat item", socketChatItemCB);
@@ -57,7 +83,7 @@ function UserList() {
     return () => {
       window.socket.off("chat item", socketChatItemCB);
     };
-  }, []);
+  }, [updateDirectId]);
 
   useEffect(() => clearSocket, []);
 
@@ -131,32 +157,6 @@ function UserList() {
     });
   }
 
-  function updateDirectChatId(user_id, direct_chat_id) {
-    setUsers((prevUsers) => {
-      const index = prevUsers.findIndex((user) => user.id === user_id);
-      if (index === -1) return prevUsers;
-
-      const user = prevUsers[index];
-
-      const friendship = new UserFriendship({
-        ...user.friendship,
-        direct_chat_id,
-      });
-
-      const updatedUser = new User({
-        ...user.toJSON(),
-        friendship,
-      });
-
-      const newUsers = [
-        ...prevUsers.slice(0, index),
-        updatedUser,
-        ...prevUsers.slice(index + 1),
-      ];
-      return newUsers;
-    });
-  }
-
   return (
     <div className="user-list-page">
       <h1>Users</h1>
@@ -165,7 +165,7 @@ function UserList() {
         for them to accept your request. Your can check your pending request in
         friend page.
       </p>
-      <UpdateDirectChatIdContext.Provider value={{ updateDirectChatId }}>
+      <UpdateDirectIdContext.Provider value={updateDirectId}>
         <table className="user-list">
           <tbody>
             {users.map((user) => (
@@ -173,7 +173,7 @@ function UserList() {
             ))}
           </tbody>
         </table>
-      </UpdateDirectChatIdContext.Provider>
+      </UpdateDirectIdContext.Provider>
     </div>
   );
 }

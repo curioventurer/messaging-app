@@ -1,10 +1,10 @@
 import { useContext } from "react";
 import GroupInfo from "./GroupInfo.jsx";
 import DirectInfo from "./DirectInfo.jsx";
-import { ChatContext } from "./Room.jsx";
+import { RoomContext } from "./Room.jsx";
 
 function RoomInfo() {
-  const { chatId, toggleChatInfo } = useContext(ChatContext);
+  const { chatId, toggleChatInfo } = useContext(RoomContext);
 
   return (
     <div className="room-info narrow-width">

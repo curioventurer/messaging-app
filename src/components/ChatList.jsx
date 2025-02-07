@@ -1,9 +1,9 @@
-import { useContext } from "react";
+import { useContext, memo } from "react";
 import ChatItem from "./ChatItem.jsx";
 import { ChatListContext } from "./Layout.jsx";
 
 function ChatList() {
-  const { chats } = useContext(ChatListContext);
+  const chats = useContext(ChatListContext);
 
   return (
     <ul className="chat-list narrow-width low-priority-display">
@@ -16,4 +16,4 @@ function ChatList() {
   );
 }
 
-export default ChatList;
+export default memo(ChatList);

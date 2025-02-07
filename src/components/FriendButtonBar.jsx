@@ -1,15 +1,13 @@
-import { useContext, createContext } from "react";
+import { useContext, createContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import UnfriendButton from "./UnfriendButton.jsx";
 import { UserFriendship, FriendRequest } from "../controllers/chat-data.js";
 
-export const UpdateDirectChatIdContext = createContext({
-  updateDirectChatId: function () {},
-});
+export const UpdateDirectIdContext = createContext(function () {});
 
 function FriendButtonBar({ friend }) {
-  const { updateDirectChatId } = useContext(UpdateDirectChatIdContext);
+  const updateDirectId = useContext(UpdateDirectIdContext);
 
   function addFriend() {
     window.socket.emit("add friend", {
@@ -44,10 +42,10 @@ function FriendButtonBar({ friend }) {
 
     fetch(request)
       .then((res) => res.json())
-      .then((direct_chat_id) => {
-        if (direct_chat_id === false) return;
+      .then((direct_id) => {
+        if (direct_id === false) return;
 
-        updateDirectChatId(user_id, direct_chat_id);
+        updateDirectId(user_id, direct_id);
       })
       .catch(() => {});
   }
@@ -129,4 +127,4 @@ FriendButtonBar.propTypes = {
   friend: PropTypes.instanceOf(UserFriendship).isRequired,
 };
 
-export default FriendButtonBar;
+export default memo(FriendButtonBar);

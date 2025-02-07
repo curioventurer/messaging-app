@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import PropTypes from "prop-types";
-import { LayoutContext } from "./Layout.jsx";
+import { MenuContext, OutletContext } from "./Layout.jsx";
 import { ChatId } from "../controllers/chat-data.js";
 
 function ChatItemMenu({ chatId, containerRect, targetRect }) {
-  const { outletRect, removeChat, closeMenu } = useContext(LayoutContext);
+  const { removeChat, closeMenu } = useContext(MenuContext);
+  const outletRect = useContext(OutletContext);
 
   const [menuRect, setMenuRect] = useState(new DOMRect());
   const [isBottomEdge, setIsBottomEdge] = useState(false);

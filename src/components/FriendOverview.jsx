@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import FriendList from "./FriendList";
-import { UpdateDirectChatIdContext } from "./FriendButtonBar";
+import { UpdateDirectIdContext } from "./FriendButtonBar";
 import sortFriends from "../controllers/sortFriends.js";
 import clearSocket from "../controllers/clearSocket.js";
 import {
@@ -14,6 +14,27 @@ import {
 function FriendOverview() {
   //[]: contain instances of UserFriendship - chat-data.js
   const [friends, setFriends] = useState([]);
+
+  const updateDirectId = useCallback(function (user_id, direct_chat_id) {
+    setFriends((prevFriends) => {
+      const index = prevFriends.findIndex(
+        (friend) => friend.user_id === user_id,
+      );
+      if (index === -1) return prevFriends;
+
+      const friendship = new UserFriendship({
+        ...prevFriends[index],
+        direct_chat_id,
+      });
+
+      const newFriends = [
+        ...prevFriends.slice(0, index),
+        friendship,
+        ...prevFriends.slice(index + 1),
+      ];
+      return newFriends;
+    });
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -42,7 +63,7 @@ function FriendOverview() {
       const chatItem = new ChatItemData(chatItemData);
       if (chatItem.chatId.isGroup) return;
 
-      updateDirectChatId(chatItem.user_id, chatItem.chatId.id);
+      updateDirectId(chatItem.user_id, chatItem.chatId.id);
     }
 
     window.socket.on("chat item", socketChatItemCB);
@@ -50,7 +71,7 @@ function FriendOverview() {
     return () => {
       window.socket.off("chat item", socketChatItemCB);
     };
-  }, []);
+  }, [updateDirectId]);
 
   useEffect(() => {
     window.socket.on("update friendship", updateFriends);
@@ -117,27 +138,6 @@ function FriendOverview() {
     });
   }
 
-  function updateDirectChatId(user_id, direct_chat_id) {
-    setFriends((prevFriends) => {
-      const index = prevFriends.findIndex(
-        (friend) => friend.user_id === user_id,
-      );
-      if (index === -1) return prevFriends;
-
-      const friendship = new UserFriendship({
-        ...prevFriends[index],
-        direct_chat_id,
-      });
-
-      const newFriends = [
-        ...prevFriends.slice(0, index),
-        friendship,
-        ...prevFriends.slice(index + 1),
-      ];
-      return newFriends;
-    });
-  }
-
   //specify either properties to identify entry
   function removeFriendsEntry({ friendship_id = 0, user_id = 0 }) {
     let find = () => false;
@@ -173,7 +173,7 @@ function FriendOverview() {
   );
 
   return (
-    <UpdateDirectChatIdContext.Provider value={{ updateDirectChatId }}>
+    <UpdateDirectIdContext.Provider value={updateDirectId}>
       <div className="friend-overview">
         <h1>Friend Overview</h1>
         {receivedRequest.length > 0 ? (
@@ -201,7 +201,7 @@ function FriendOverview() {
           </section>
         ) : null}
       </div>
-    </UpdateDirectChatIdContext.Provider>
+    </UpdateDirectIdContext.Provider>
   );
 }
 

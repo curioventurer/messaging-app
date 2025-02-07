@@ -1,8 +1,9 @@
 import { useContext } from "react";
-import { ChatContext } from "./Room.jsx";
+import { RoomContext, ChatContext } from "./Room.jsx";
 
 function RoomHeader() {
-  const { chatData, toggleChatInfo } = useContext(ChatContext);
+  const { toggleChatInfo } = useContext(RoomContext);
+  const { chatData } = useContext(ChatContext);
   const chat = chatData.isGroup ? chatData.group : chatData.direct;
 
   return (

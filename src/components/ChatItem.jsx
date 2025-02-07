@@ -1,15 +1,15 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef, useContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import ChatItemMenu from "./ChatItemMenu";
-import { LayoutContext } from "./Layout.jsx";
-import { ChatContext } from "./Room.jsx";
+import { MenuContext } from "./Layout.jsx";
+import { RoomContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 import { ChatItemData } from "../controllers/chat-data.js";
 
 function ChatItem({ chat = new ChatItemData({}) }) {
-  const { isMenuVisible, menuChatId, openMenu } = useContext(LayoutContext);
-  const { chatId } = useContext(ChatContext);
+  const { isMenuVisible, menuChatId, openMenu } = useContext(MenuContext);
+  const { chatId } = useContext(RoomContext);
 
   /*menuContRect is used to position ChatItemMenu relative to it's containing block.
     menuButtonRect is used to position ChatItemMenu near the button.
@@ -144,4 +144,4 @@ ChatItem.propTypes = {
   chat: PropTypes.instanceOf(ChatItemData).isRequired,
 };
 
-export default ChatItem;
+export default memo(ChatItem);

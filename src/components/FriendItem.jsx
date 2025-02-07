@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import PropTypes from "prop-types";
 import FriendButtonBar from "./FriendButtonBar";
 import DurationFormat from "../controllers/DurationFormat.js";
@@ -16,12 +16,14 @@ function FriendItem({ friend = new UserFriendship({}) }) {
   const time = isFriend ? friend.last_seen : friend.modified;
 
   useEffect(() => {
+    const DELAY = 5000;
+
     function updateDuration() {
       setDuration(DurationFormat.getString(time));
     }
     updateDuration();
 
-    const interval = setInterval(updateDuration, 5000);
+    const interval = setInterval(updateDuration, DELAY);
 
     return () => {
       clearInterval(interval);
@@ -57,4 +59,4 @@ FriendItem.propTypes = {
   friend: PropTypes.instanceOf(UserFriendship).isRequired,
 };
 
-export default FriendItem;
+export default memo(FriendItem);

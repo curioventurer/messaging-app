@@ -1,15 +1,14 @@
-import { useContext } from "react";
+import { useContext, memo } from "react";
 import PropTypes from "prop-types";
-import { ChatContext } from "./Room.jsx";
+import { RoomContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 import { Message as MessageData } from "../controllers/chat-data.js";
 
 const SENT_STATUS_TEXT = "sending";
 
 function Message({ message, isJoined = false }) {
-  const { userData, chatId } = useContext(ChatContext);
-
-  const isUser = userData.id === message.user_id;
+  const { client, chatId } = useContext(RoomContext);
+  const isUser = client.id === message.user_id;
 
   let liClass = "message-box";
   if (isUser) liClass += " user-owned";
@@ -42,4 +41,4 @@ Message.propTypes = {
   isJoined: PropTypes.bool,
 };
 
-export default Message;
+export default memo(Message);

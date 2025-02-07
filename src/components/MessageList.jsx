@@ -1,10 +1,11 @@
 import { useEffect, useRef, useContext } from "react";
 import Message from "./Message";
-import { ChatContext } from "./Room.jsx";
+import { RoomContext, ChatContext } from "./Room.jsx";
 import DateFormat from "../controllers/DateFormat.js";
 
 function MessageList() {
-  const { chatData, chatId } = useContext(ChatContext);
+  const { chatId } = useContext(RoomContext);
+  const { chatData } = useContext(ChatContext);
   const msgListRef = useRef(null);
 
   let previousDate = "";

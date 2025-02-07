@@ -1,4 +1,10 @@
-import { useState, useEffect, useMemo, createContext } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  createContext,
+} from "react";
 import { useParams, useRouteLoaderData } from "react-router-dom";
 import PropTypes from "prop-types";
 import ChatList from "./ChatList.jsx";
@@ -15,19 +21,23 @@ import {
   Member,
 } from "../controllers/chat-data.js";
 
-const CHAT_CONTEXT_DEFAULT = {
-  userData: {
+const ROOM_CONTEXT_DEFAULT = {
+  client: {
     id: 0,
     name: "default_name",
     created: "1970-01-01T00:00:00.000Z",
   },
-  chatData: new ChatData({}),
   chatId: new ChatId({}),
   appendMessage: function () {},
   deleteSentMsg: function () {},
   toggleChatInfo: function () {},
 };
 
+const CHAT_CONTEXT_DEFAULT = {
+  chatData: new ChatData({}),
+};
+
+export const RoomContext = createContext(ROOM_CONTEXT_DEFAULT);
 export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true }) {
@@ -41,10 +51,49 @@ function Room({ isGroup = true }) {
     [chat_id, isGroup],
   );
 
-  const userData = useRouteLoaderData("layout");
+  const client = useRouteLoaderData("layout");
 
   const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
   const [isChatInfoShown, setIsChatInfoShown] = useState(false);
+
+  const appendMessage = useCallback(function (message = new Message({})) {
+    setChatData((prevChatData) => {
+      const newMessages = Message.sortMessages([
+        ...prevChatData.messages,
+        message,
+      ]);
+      const newChatData = {
+        ...prevChatData,
+        messages: newMessages,
+      };
+      return newChatData;
+    });
+  }, []);
+
+  const deleteSentMsg = useCallback(function (clientId) {
+    setChatData((prevChatData) => {
+      const prevMessages = prevChatData.messages;
+      const index = prevMessages.findIndex(
+        (message) => message.id === clientId,
+      );
+      if (index === -1) return prevChatData;
+
+      const newMessages = [
+        ...prevMessages.slice(0, index),
+        ...prevMessages.slice(index + 1),
+      ];
+
+      const newChatData = {
+        ...prevChatData,
+        messages: newMessages,
+      };
+      return newChatData;
+    });
+  }, []);
+
+  const toggleChatInfo = useCallback(function () {
+    setIsChatInfoShown((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -67,7 +116,7 @@ function Room({ isGroup = true }) {
             direct: new Direct(data.direct),
             members: Member.sortMembers(
               data.members.map((member) => new Member(member)),
-              userData.id,
+              client.id,
             ),
           }),
         );
@@ -81,7 +130,7 @@ function Room({ isGroup = true }) {
         ),
       );
     };
-  }, [chatId, userData.id]);
+  }, [chatId, client]);
 
   useEffect(() => {
     function addNewMessage(messageData) {
@@ -98,7 +147,7 @@ function Room({ isGroup = true }) {
     return () => {
       window.socket.off("message", addNewMessage);
     };
-  }, [chatId]);
+  }, [chatId, appendMessage]);
 
   useEffect(() => {
     //if current room shows the direct chat of removed friend, reset room to show default data
@@ -119,60 +168,25 @@ function Room({ isGroup = true }) {
     };
   }, [chatId]);
 
-  function appendMessage(message = new Message({})) {
-    setChatData((prevChatData) => {
-      const newMessages = Message.sortMessages([
-        ...prevChatData.messages,
-        message,
-      ]);
-      const newChatData = {
-        ...prevChatData,
-        messages: newMessages,
-      };
-      return newChatData;
-    });
-  }
-
-  function deleteSentMsg(clientId) {
-    setChatData((prevChatData) => {
-      const prevMessages = prevChatData.messages;
-      const index = prevMessages.findIndex(
-        (message) => message.id === clientId,
-      );
-      if (index === -1) return prevChatData;
-
-      const newMessages = [
-        ...prevMessages.slice(0, index),
-        ...prevMessages.slice(index + 1),
-      ];
-
-      const newChatData = {
-        ...prevChatData,
-        messages: newMessages,
-      };
-      return newChatData;
-    });
-  }
-
-  function toggleChatInfo() {
-    setIsChatInfoShown(!isChatInfoShown);
-  }
-
   return (
     <div className="room">
-      <ChatContext.Provider
-        value={{
-          userData,
-          chatData,
-          chatId,
-          appendMessage,
-          deleteSentMsg,
-          toggleChatInfo,
-        }}
+      <RoomContext.Provider
+        value={useMemo(
+          () => ({
+            client,
+            chatId,
+            appendMessage,
+            deleteSentMsg,
+            toggleChatInfo,
+          }),
+          [client, chatId, appendMessage, deleteSentMsg, toggleChatInfo],
+        )}
       >
-        {isChatInfoShown ? <RoomInfo /> : <ChatList />}
-        <RoomUI isChatInfoShown={isChatInfoShown} />
-      </ChatContext.Provider>
+        <ChatContext.Provider value={useMemo(() => ({ chatData }), [chatData])}>
+          {isChatInfoShown ? <RoomInfo /> : <ChatList />}
+          <RoomUI isChatInfoShown={isChatInfoShown} />
+        </ChatContext.Provider>
+      </RoomContext.Provider>
     </div>
   );
 }

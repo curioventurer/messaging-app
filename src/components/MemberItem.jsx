@@ -1,3 +1,4 @@
+import { memo } from "react";
 import PropTypes from "prop-types";
 import { Member } from "../controllers/chat-data";
 
@@ -14,4 +15,4 @@ MemberItem.propTypes = {
   member: PropTypes.instanceOf(Member).isRequired,
 };
 
-export default MemberItem;
+export default memo(MemberItem);
