@@ -14,15 +14,18 @@ import {
 } from "../../src/controllers/chat-data.js";
 
 async function registerUser(name, password) {
-  const { rows } = await pool.query(
-    "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
-    [name, password],
-  );
-  const response = rows[0];
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
+      [name, password],
+    );
+    const response = rows[0];
 
-  if (response) {
-    return new User(response);
-  } else return false;
+    const user = response ? new User(response) : false;
+    return { user };
+  } catch (err) {
+    return { err };
+  }
 }
 
 /*Used only for login authentication.

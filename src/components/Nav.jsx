@@ -25,16 +25,6 @@ function Nav() {
             Log Out
           </a>
         </li>
-        <li>
-          <Link to="/log-in" className="button-link">
-            Log In
-          </Link>
-        </li>
-        <li>
-          <Link to="/sign-up" className="button-link">
-            Sign Up
-          </Link>
-        </li>
       </ul>
     </nav>
   );

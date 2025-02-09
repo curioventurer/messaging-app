@@ -43,24 +43,37 @@ function routes(app, ioHandlers) {
     });
   });
 
-  app.get("/test-msg", (req, res) => {
+  app.all("/test-msg", (req, res) => {
     res.json("msg");
   });
 
   app.post("/sign-up", async (req, res) => {
-    const user = await registerUser(req.body.name, req.body.password);
-    res.redirect("/");
+    const { err, user, info } = await registerUser(
+      req.body.name,
+      req.body.password,
+    );
+    res.json({ err: err?.toString(), user, info });
 
     //update online users on successful registration of new users
     if (user) ioHandlers.addUser(user);
   });
 
   app.post(
-    "/log-in",
-    passport.authenticate("local", {
-      successRedirect: "/",
-      failureRedirect: "/log-in",
-    }),
+    "/api/log-in",
+    (req, res, next) => {
+      //passport uses username instead of name for authentication.
+      req.body.username = req.body.name;
+      delete req.body.name;
+
+      next();
+    },
+    (req, res, next) => {
+      passport.authenticate("local", function (err, user, info) {
+        req.logIn(user, function () {
+          res.json({ err: err?.toString(), user, info });
+        });
+      })(req, res, next);
+    },
   );
 
   app.get("/api/user/:user_id", async (req, res) => {

@@ -32,6 +32,18 @@ nav ul {
   gap: 10px 20px;
 }
 
+a {
+  color: aqua;
+
+  &:visited {
+    color: #0a0;
+  }
+
+  &:active {
+    color: red;
+  }
+}
+
 .button-link {
   text-decoration: none;
   display: block;
@@ -40,6 +52,10 @@ nav ul {
   border: 1px solid #fff2;
   background: #fff1;
   cursor: pointer;
+
+  &:visited {
+    color: inherit;
+  }
 
   &:hover {
     background: #fff3;
@@ -58,6 +74,17 @@ nav ul {
 
 .bold {
   font-weight: bold;
+}
+
+@keyframes blink {
+  from {
+    background: yellow;
+  }
+}
+
+.blink {
+  animation-name: blink;
+  animation-duration: 1s;
 }
 
 .status {
@@ -108,6 +135,59 @@ nav .button-link {
 
   > p {
     margin-block: 10px;
+  }
+}
+
+.auth-page {
+  h1 + p {
+    margin-bottom: 24px;
+  }
+
+  form {
+    margin-bottom: 20px;
+  }
+}
+
+.auth-page form {
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 24px;
+    row-gap: 8px;
+    align-items: center;
+
+    margin-bottom: 24px;
+
+    li {
+      display: flex;
+      align-items: center;
+      column-gap: 4px;
+
+      min-width: 0;
+    }
+  }
+
+  input {
+    min-width: 0;
+  }
+
+  button {
+    padding: 4px 6px;
+
+    &:hover {
+      filter: brightness(0.8);
+    }
+
+    &:active {
+      filter: brightness(0.7);
+    }
+  }
+
+  output {
+    display: block;
+    padding: 10px;
+
+    background: #0003;
   }
 }
 

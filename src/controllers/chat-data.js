@@ -110,6 +110,11 @@ export class User {
     }
   }
 
+  //Clear password by setting to default.
+  clearPassword() {
+    this.password = DEFAULT_TEXT;
+  }
+
   //Clear sensitive data by setting to defaults.
   clearSensitive() {
     this.password = DEFAULT_TEXT;
