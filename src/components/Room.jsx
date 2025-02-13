@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useRef,
   useCallback,
   useMemo,
   createContext,
@@ -30,7 +31,8 @@ const ROOM_CONTEXT_DEFAULT = {
   chatId: new ChatId({}),
   appendMessage: function () {},
   deleteSentMsg: function () {},
-  toggleChatInfo: function () {},
+  toggleRoomInfo: function () {},
+  storeRoomHeaderRef: function () {},
 };
 
 const CHAT_CONTEXT_DEFAULT = {
@@ -55,6 +57,8 @@ function Room({ isGroup = true }) {
 
   const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
   const [isChatInfoShown, setIsChatInfoShown] = useState(false);
+
+  const roomHeaderRef = useRef(null);
 
   const appendMessage = useCallback(function (message = new Message({})) {
     setChatData((prevChatData) => {
@@ -91,8 +95,17 @@ function Room({ isGroup = true }) {
     });
   }, []);
 
-  const toggleChatInfo = useCallback(function () {
-    setIsChatInfoShown((prev) => !prev);
+  const toggleRoomInfo = useCallback(function () {
+    setIsChatInfoShown((prev) => {
+      //if true, and thus about to hide roomInfo, move focus back to RoomHeader
+      if (prev) roomHeaderRef.current.focus();
+
+      return !prev;
+    });
+  }, []);
+
+  const storeRoomHeaderRef = useCallback(function (element) {
+    roomHeaderRef.current = element;
   }, []);
 
   useEffect(() => {
@@ -177,9 +190,17 @@ function Room({ isGroup = true }) {
             chatId,
             appendMessage,
             deleteSentMsg,
-            toggleChatInfo,
+            toggleRoomInfo,
+            storeRoomHeaderRef,
           }),
-          [client, chatId, appendMessage, deleteSentMsg, toggleChatInfo],
+          [
+            client,
+            chatId,
+            appendMessage,
+            deleteSentMsg,
+            toggleRoomInfo,
+            storeRoomHeaderRef,
+          ],
         )}
       >
         <ChatContext.Provider value={useMemo(() => ({ chatData }), [chatData])}>
