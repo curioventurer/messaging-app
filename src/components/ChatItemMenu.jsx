@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import PropTypes from "prop-types";
 import { MenuContext, OutletContext } from "./Layout.jsx";
-import { ChatId } from "../controllers/chat-data.js";
+import { ChatId } from "../../controllers/chat-data.js";
 
 function ChatItemMenu({ chatId, containerRect, targetRect }) {
   const { removeChat, closeMenu } = useContext(MenuContext);

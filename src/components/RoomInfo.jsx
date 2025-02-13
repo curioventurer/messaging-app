@@ -10,7 +10,13 @@ function RoomInfo() {
     <div className="room-info narrow-width">
       <div className="room-info-header">
         <p>{chatId.isGroup ? "Group Info" : "Direct Chat Info"}</p>
-        <button onClick={toggleChatInfo}>&#x2A2F;</button>
+        <button
+          aria-label="close info"
+          onClick={toggleChatInfo}
+          className="icon"
+        >
+          <span aria-hidden>&#x2A2F;</span>
+        </button>
       </div>
       {chatId.isGroup ? <GroupInfo /> : <DirectInfo />}
     </div>

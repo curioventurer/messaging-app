@@ -10,7 +10,7 @@ import PropTypes from "prop-types";
 import ChatList from "./ChatList.jsx";
 import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
-import clearSocket from "../controllers/clearSocket.js";
+import clearSocket from "../../controllers/clearSocket.js";
 import {
   ChatId,
   ChatData,
@@ -19,7 +19,7 @@ import {
   Group,
   Direct,
   Member,
-} from "../controllers/chat-data.js";
+} from "../../controllers/chat-data.js";
 
 const ROOM_CONTEXT_DEFAULT = {
   client: {

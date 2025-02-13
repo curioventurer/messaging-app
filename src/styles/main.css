@@ -14,6 +14,19 @@
 button {
   cursor: pointer;
   border: none;
+  padding: 0.5em 0.8em;
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+  &:active {
+    filter: brightness(0.7);
+  }
+}
+
+h1 {
+  font-size: 1.5em;
+  margin-block: 0.5em;
 }
 
 p {
@@ -24,12 +37,6 @@ ul {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-nav ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 20px;
 }
 
 a {
@@ -47,11 +54,10 @@ a {
 .button-link {
   text-decoration: none;
   display: block;
-  padding: 0 4px;
+  padding: 0.5em;
   color: inherit;
   border: 1px solid #fff2;
   background: #fff1;
-  cursor: pointer;
 
   &:visited {
     color: inherit;
@@ -59,6 +65,10 @@ a {
 
   &:hover {
     background: #fff3;
+  }
+
+  &:active {
+    background: none;
   }
 
   &.button-highlight {
@@ -74,6 +84,17 @@ a {
 
 .bold {
   font-weight: bold;
+}
+
+.icon {
+  line-height: 1;
+  height: 1em;
+  aspect-ratio: 1;
+  padding: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 @keyframes blink {
@@ -102,10 +123,21 @@ a {
   }
 }
 
+.button-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7em;
+}
+
+nav .button-bar {
+  column-gap: 1.4em;
+}
+
 .layout {
   display: flex;
   flex-direction: column;
-  row-gap: 5px;
+  row-gap: 0.4em;
 
   height: 100%;
 
@@ -119,15 +151,13 @@ a {
     */
     min-height: 0;
 
-    > * {
+    overflow: auto;
+    padding: 5px;
+
+    .room {
       height: 100%;
-      overflow: auto;
     }
   }
-}
-
-nav .button-link {
-  padding: 5px;
 }
 
 .home {
@@ -139,64 +169,76 @@ nav .button-link {
 }
 
 .auth-page {
-  h1 + p {
-    margin-bottom: 24px;
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
-  form {
-    margin-bottom: 20px;
+  form + p {
+    margin-top: 1.5em;
+    font-size: 1.2em;
   }
 }
 
 .auth-page form {
+  max-width: 100%;
+  width: 40ch;
+
   ul {
+    font-size: 1.2em;
+  }
+
+  ul li {
     display: flex;
-    flex-wrap: wrap;
-    column-gap: 24px;
-    row-gap: 8px;
-    align-items: center;
+    flex-direction: column;
+    row-gap: 5px;
 
-    margin-bottom: 24px;
+    position: relative;
+    margin-bottom: 1em;
+  }
 
-    li {
-      display: flex;
-      align-items: center;
-      column-gap: 4px;
+  label {
+    font-weight: bold;
+  }
 
-      min-width: 0;
-    }
+  label::after {
+    content: "";
+    display: block;
+    position: absolute;
+
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
   }
 
   input {
-    min-width: 0;
+    z-index: 0;
+    padding: 0.5em;
   }
 
-  button {
-    padding: 4px 6px;
+  button[type="submit"] {
+    background: #0f0;
+  }
 
-    &:hover {
-      filter: brightness(0.8);
-    }
+  button.show-password {
+    background: transparent;
+    color: #ddd;
+    padding: 0;
 
-    &:active {
-      filter: brightness(0.7);
-    }
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 
   output {
     display: block;
     padding: 10px;
-
     background: #0003;
   }
 }
 
 .friend-overview {
   text-align: center;
-
-  h1 {
-    font-size: 1.5em;
-  }
 
   h2 {
     font-size: 1.3em;
@@ -237,24 +279,6 @@ nav .button-link {
   }
 }
 
-.button-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-
-  button {
-    padding: 0 4px;
-
-    &:hover {
-      filter: brightness(0.8);
-    }
-    &:active {
-      filter: brightness(0.7);
-    }
-  }
-}
-
 .confirmation-dialog {
   .name {
     font-weight: bold;
@@ -263,9 +287,9 @@ nav .button-link {
   ul {
     display: flex;
     justify-content: center;
-    column-gap: 20px;
+    column-gap: 2em;
 
-    margin-top: 10px;
+    margin-top: 1em;
 
     button {
       font-size: 1.2em;
@@ -275,15 +299,11 @@ nav .button-link {
   }
 }
 
-.user-list-page {
-  padding-right: 5px;
-}
-
 .user-list {
   --background: #0005;
 
   width: 100%;
-  margin-top: 10px;
+  margin-top: 1em;
 
   tbody {
     display: grid;
@@ -303,7 +323,7 @@ nav .button-link {
     display: flex;
     align-items: center;
 
-    padding: 5px;
+    padding: 0.4em;
 
     /*Prevent 'flex child overflow failure'.*/
     min-width: 0;
@@ -311,6 +331,7 @@ nav .button-link {
 }
 
 .room-info {
+  padding: 5px;
   padding-right: 10px;
   overflow: auto;
 }
@@ -332,8 +353,7 @@ nav .button-link {
     background: transparent;
     color: yellow;
     font-weight: bold;
-    font-size: 1.5em;
-    aspect-ratio: 1;
+    font-size: 2em;
 
     &:hover {
       background: #fff2;
@@ -392,11 +412,10 @@ section.member {
   font-size: 1rem;
   color: #ccc;
   border: 1px solid white;
+  padding: 5px;
   overflow: auto;
-  scroll-behavior: smooth;
 
   .button-link {
-    padding: 10px;
     cursor: default;
     background: none;
     border: none;
@@ -438,7 +457,7 @@ section.member {
   > button {
     background-color: transparent;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     font-weight: bold;
     padding: 0;
 
@@ -490,12 +509,16 @@ section.member {
   button {
     background-color: inherit;
     color: white;
-    padding: 5px 10px;
     width: 100%;
     text-align: start;
 
     &:hover {
       background-color: #333;
+      filter: none;
+    }
+
+    &:active {
+      filter: brightness(0.8);
     }
   }
 }
@@ -529,9 +552,10 @@ section.member {
   row-gap: 5px;
 }
 
-.room-header {
+button.room-header {
   background: transparent;
   color: inherit;
+  padding-block: 0;
   text-align: center;
 
   &:hover {
@@ -543,7 +567,6 @@ section.member {
 
   h1 {
     margin: 0;
-    font-size: 1.6em;
   }
 
   p {
@@ -672,7 +695,7 @@ section.member {
 
 .messaging-form {
   display: flex;
-  gap: 10px;
+  gap: 1em;
 
   font-size: 1.2em;
 
@@ -699,11 +722,15 @@ section.member {
     background: #0f0;
     font-weight: bold;
 
-    padding: 0.5em 1em;
+    padding-inline: 1em;
     border-radius: 1em;
 
     &:hover {
       filter: brightness(0.7);
+    }
+
+    &:active {
+      filter: brightness(0.6);
     }
   }
 }
@@ -739,9 +766,9 @@ section.member {
     tr {
       display: flex;
       flex-direction: column;
-      row-gap: 2px;
+      row-gap: 0.4em;
 
-      padding: 10px;
+      padding: 0.7em;
       border: 1px solid white;
       border-bottom: none;
 

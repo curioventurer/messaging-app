@@ -1,7 +1,7 @@
 import { useEffect, useRef, useContext } from "react";
 import Message from "./Message";
 import { RoomContext, ChatContext } from "./Room.jsx";
-import DateFormat from "../controllers/DateFormat.js";
+import DateFormat from "../../controllers/DateFormat.js";
 
 function MessageList() {
   const { chatId } = useContext(RoomContext);

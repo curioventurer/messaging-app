@@ -1,6 +1,6 @@
 import { useState, useRef, useContext } from "react";
 import { RoomContext } from "./Room.jsx";
-import { Message, PostMessage } from "../controllers/chat-data.js";
+import { Message, PostMessage } from "../../controllers/chat-data.js";
 
 function MessagingForm() {
   const { client, chatId, appendMessage, deleteSentMsg } =
@@ -40,7 +40,7 @@ function MessagingForm() {
     setMessage("");
   }
 
-  function updateInput(event) {
+  function updateMessage(event) {
     setMessage(event.target.value);
   }
 
@@ -49,10 +49,13 @@ function MessagingForm() {
       <input
         type="text"
         name="message"
-        id="messageInput"
+        id="message"
         placeholder="Message"
+        aria-label="message"
         value={message}
-        onChange={updateInput}
+        onChange={updateMessage}
+        autoComplete="off"
+        required
         autoFocus
       />
       <button>Send</button>

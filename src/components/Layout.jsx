@@ -13,7 +13,8 @@ import {
   ChatId,
   Message,
   NewMessage,
-} from "../controllers/chat-data.js";
+} from "../../controllers/chat-data.js";
+import updateRect from "../../controllers/updateRect.js";
 
 const MENU_CONTEXT_DEFAULT = {
   isMenuVisible: false,
@@ -114,15 +115,19 @@ function Layout() {
     };
   }, [removeChat]);
 
+  //update rect at intervals
   useEffect(() => {
-    updateOutletRect();
-  }, []);
+    const DELAY = 250;
 
-  useEffect(() => {
-    window.addEventListener("resize", updateOutletRect);
+    function updateAllRect() {
+      updateRect(setOutletRect, outletRef.current);
+    }
+    updateAllRect();
+
+    const interval = setInterval(updateAllRect, DELAY);
 
     return () => {
-      window.removeEventListener("resize", updateOutletRect);
+      clearInterval(interval);
     };
   }, []);
 
@@ -165,10 +170,6 @@ function Layout() {
 
       return newChats;
     });
-  }
-
-  function updateOutletRect() {
-    setOutletRect(outletRef.current.getBoundingClientRect());
   }
 
   function handleKey(event) {

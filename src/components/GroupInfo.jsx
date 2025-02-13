@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import MemberItem from "./MemberItem.jsx";
 import { ChatContext } from "./Room.jsx";
-import DateFormat from "../controllers/DateFormat.js";
+import DateFormat from "../../controllers/DateFormat.js";
 
 function GroupInfo() {
   const { chatData } = useContext(ChatContext);

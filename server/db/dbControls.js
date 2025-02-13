@@ -2,7 +2,7 @@ import {
   ChatId,
   ChatItemData,
   FriendRequest,
-} from "../../src/controllers/chat-data.js";
+} from "../../controllers/chat-data.js";
 import {
   findFriendshipById,
   setFriendshipStateById,

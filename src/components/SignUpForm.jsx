@@ -1,43 +1,67 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 function SignUpForm() {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [output, setOutput] = useState(
-    "Enter a name and password to create an account",
-  );
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [output, setOutput] = useState("Tip: Fill in the form.");
+  const [passwordIsShown, setPasswordIsShown] = useState(false);
   const [isBlink, setIsBlink] = useState(false);
+
+  const outputRef = useRef(null);
 
   const navigate = useNavigate();
 
-  function updateName(event) {
-    setName(event.target.value);
+  function updateUsername(event) {
+    setUsername(event.target.value);
   }
 
   function updatePassword(event) {
     setPassword(event.target.value);
   }
 
-  function updateOutput(info) {
+  function updateConfirmPassword(event) {
+    setConfirmPassword(event.target.value);
+  }
+
+  function updateOutput(err, info) {
     let message;
 
-    message = info;
+    if (err) message = "Database error";
+    else message = info.message;
 
-    setOutput("Signup failure: " + message);
+    setOutput("Error: " + message + ".");
     blink();
   }
 
+  function showPassword() {
+    if (passwordIsShown) {
+      setPasswordIsShown(false);
+    } else {
+      setPasswordIsShown(true);
+    }
+  }
+
   function blink() {
-    if (isBlink) {
-      //if already true, switch it off and on again to replay the animation.
-      setIsBlink(false);
-      setTimeout(() => setIsBlink(true), 0);
-    } else setIsBlink(true);
+    outputRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+
+    //Only blink if not currently blinking
+    if (!isBlink) {
+      setIsBlink(true);
+
+      //switch off blink after some duration
+      setTimeout(() => setIsBlink(false), 1000);
+    }
   }
 
   function signup(event) {
     event.preventDefault();
+
+    if (password !== confirmPassword) {
+      updateOutput(null, { message: "Password not equal confirm password" });
+      return;
+    }
 
     const headers = new Headers({
       "Content-Type": "application/json",
@@ -45,7 +69,7 @@ function SignUpForm() {
 
     const request = new Request("/api/sign-up", {
       method: "POST",
-      body: JSON.stringify({ name, password }),
+      body: JSON.stringify({ username, password }),
       headers,
     });
 
@@ -54,7 +78,7 @@ function SignUpForm() {
       .then(({ err, user, info }) => {
         if (user) navigate("/log-in");
         else if (err) updateOutput(err);
-        else updateOutput(info);
+        else updateOutput(null, info);
       })
       .catch(() => {});
   }
@@ -62,44 +86,73 @@ function SignUpForm() {
   return (
     <div className="auth-page sign-up-page">
       <h1>Sign Up</h1>
-      <p>
-        {
-          "Signup to create an account to access the site. If you already have an account, "
-        }
-        <Link to="/log-in">login</Link>
-        {" instead."}
-      </p>
       <form onSubmit={signup}>
         <ul>
           <li>
-            <label htmlFor="name">Name:</label>
+            <label htmlFor="username">Username</label>
             <input
               type="text"
-              name="name"
-              id="name"
-              placeholder="name"
-              value={name}
-              onChange={updateName}
+              name="username"
+              id="username"
+              aria-describedby="username-hint"
+              value={username}
+              onChange={updateUsername}
+              autoComplete="off"
+              required
+              autoFocus
             />
+            <p id="username-hint">test description</p>
           </li>
           <li>
-            <label htmlFor="password">Password:</label>
+            <label htmlFor="new-password">Password</label>
+            <button
+              type="button"
+              className="show-password"
+              aria-label={
+                passwordIsShown
+                  ? "hide password"
+                  : "warning: this will display your password on the screen as plain text"
+              }
+              onClick={showPassword}
+            >
+              {passwordIsShown ? "Hide password" : "Show password"}
+            </button>
             <input
-              type="password"
+              type={passwordIsShown ? "text" : "password"}
               name="password"
-              id="password"
-              placeholder="password"
+              id="new-password"
+              aria-describedby="password-hint"
               value={password}
               onChange={updatePassword}
+              autoComplete="new-password"
+              required
+            />
+            <p id="password-hint">test description</p>
+          </li>
+          <li>
+            <label htmlFor="confirm-password">Confirm Password</label>
+            <input
+              type={passwordIsShown ? "text" : "password"}
+              name="password"
+              id="confirm-password"
+              value={confirmPassword}
+              onChange={updateConfirmPassword}
+              autoComplete="new-password"
+              required
             />
           </li>
           <li>
-            <button>Sign Up</button>
+            <button type="submit">Sign Up</button>
           </li>
         </ul>
-        <output className={isBlink ? "blink" : ""}>{output}</output>
+        <output ref={outputRef} className={isBlink ? "blink" : ""}>
+          {output}
+        </output>
       </form>
-      <Link to="/log-in">Log In</Link>
+      <p>
+        <Link to="/log-in">Login</Link>
+        {" to enter your account."}
+      </p>
     </div>
   );
 }

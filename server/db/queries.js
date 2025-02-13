@@ -11,7 +11,7 @@ import {
   Friendship,
   FriendRequest,
   UserFriendship,
-} from "../../src/controllers/chat-data.js";
+} from "../../controllers/chat-data.js";
 
 async function registerUser(name, password) {
   try {
@@ -21,8 +21,11 @@ async function registerUser(name, password) {
     );
     const response = rows[0];
 
-    const user = response ? new User(response) : false;
-    return { user };
+    if (response) {
+      return { user: new User(response) };
+    } else {
+      return { info: { message: "Database returning failed" } };
+    }
   } catch (err) {
     return { err };
   }

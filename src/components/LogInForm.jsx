@@ -1,39 +1,57 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 function LogInForm() {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [output, setOutput] = useState("Enter your name and password to login");
+  const [output, setOutput] = useState(
+    "Tip: Enter username and password to login.",
+  );
+  const [passwordIsShown, setPasswordIsShown] = useState(false);
   const [isBlink, setIsBlink] = useState(false);
+
+  const outputRef = useRef(null);
 
   const navigate = useNavigate();
 
-  function updateName(event) {
-    setName(event.target.value);
+  function updateUsername(event) {
+    setUsername(event.target.value);
   }
 
   function updatePassword(event) {
     setPassword(event.target.value);
   }
 
-  function updateOutput(info) {
+  function updateOutput(err, info) {
     let message;
 
-    if (info === "name") message = "Name not found";
-    else if (info === "password") message = "Wrong password";
-    else message = info;
+    if (err) message = "Database error";
+    else if (info.message === "username") message = "Username not found";
+    else if (info.message === "password") message = "Wrong password";
+    else message = info.message;
 
-    setOutput("Login failure: " + message);
+    setOutput("Error: " + message + ".");
     blink();
   }
 
+  function showPassword() {
+    if (passwordIsShown) {
+      setPasswordIsShown(false);
+    } else {
+      setPasswordIsShown(true);
+    }
+  }
+
   function blink() {
-    if (isBlink) {
-      //if already true, switch it off and on again to replay the animation.
-      setIsBlink(false);
-      setTimeout(() => setIsBlink(true), 0);
-    } else setIsBlink(true);
+    outputRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+
+    //Only blink if not currently blinking
+    if (!isBlink) {
+      setIsBlink(true);
+
+      //switch off blink after some duration
+      setTimeout(() => setIsBlink(false), 1000);
+    }
   }
 
   function login(event) {
@@ -45,7 +63,7 @@ function LogInForm() {
 
     const request = new Request("/api/log-in", {
       method: "POST",
-      body: JSON.stringify({ name, password }),
+      body: JSON.stringify({ username, password }),
       headers,
     });
 
@@ -54,7 +72,7 @@ function LogInForm() {
       .then(({ err, user, info }) => {
         if (user) navigate("/");
         else if (err) updateOutput(err);
-        else updateOutput(info);
+        else updateOutput(null, info);
       })
       .catch(() => {});
   }
@@ -62,42 +80,58 @@ function LogInForm() {
   return (
     <div className="auth-page log-in-page">
       <h1>Log In</h1>
-      <p>
-        {"Please login to access the site. If you don't have an account, "}
-        <Link to="/sign-up">sign up</Link>
-        {" now."}
-      </p>
       <form onSubmit={login}>
         <ul>
           <li>
-            <label htmlFor="name">Name:</label>
+            <label htmlFor="username">Username</label>
             <input
               type="text"
-              name="name"
-              id="name"
-              placeholder="name"
-              value={name}
-              onChange={updateName}
+              name="username"
+              id="username"
+              value={username}
+              onChange={updateUsername}
+              autoComplete="username"
+              required
             />
           </li>
           <li>
-            <label htmlFor="password">Password:</label>
+            <label htmlFor="current-password">Password</label>
+            <button
+              type="button"
+              className="show-password"
+              aria-label={
+                passwordIsShown
+                  ? "hide password"
+                  : "warning: this will display your password on the screen as plain text"
+              }
+              onClick={showPassword}
+            >
+              {passwordIsShown ? "Hide password" : "Show password"}
+            </button>
             <input
-              type="password"
+              type={passwordIsShown ? "text" : "password"}
               name="password"
-              id="password"
-              placeholder="password"
+              id="current-password"
               value={password}
               onChange={updatePassword}
+              autoComplete="current-password"
+              required
             />
           </li>
           <li>
-            <button>Log In</button>
+            <button type="submit" autoFocus>
+              Log In
+            </button>
           </li>
         </ul>
-        <output className={isBlink ? "blink" : ""}>{output}</output>
+        <output ref={outputRef} className={isBlink ? "blink" : ""}>
+          {output}
+        </output>
       </form>
-      <Link to="/sign-up">Sign Up</Link>
+      <p>
+        <Link to="/sign-up">Sign up</Link>
+        {" to create an account."}
+      </p>
     </div>
   );
 }

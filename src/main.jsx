@@ -16,14 +16,18 @@ import "/node_modules/socket.io/client-dist/socket.io.js";
 import "normalize.css";
 import "./styles/main.css";
 
-window.socket = window.io();
-
 async function ensureAuthenticated() {
   const res = await fetch("/api/auth-status");
   const userInfo = await res.json();
 
-  if (userInfo) return userInfo;
-  else return redirect("/log-in");
+  if (userInfo) {
+    //try socket io connect after login
+    window.socket = window.io();
+
+    return userInfo;
+  } else {
+    return redirect("/log-in");
+  }
 }
 
 const router = createBrowserRouter([

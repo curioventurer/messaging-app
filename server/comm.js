@@ -22,10 +22,10 @@ import {
   User,
   UserActivity,
   FriendRequest,
-} from "../src/controllers/chat-data.js";
+} from "../controllers/chat-data.js";
 
 async function initializeConnection(socket) {
-  socket.data.user = await (socket.request.user ? socket.request.user() : null);
+  socket.data.user = await socket.request.user();
   if (!socket.data.user) return false;
 
   socket.join("user:" + socket.data.user.id);

@@ -4,8 +4,9 @@ import PropTypes from "prop-types";
 import ChatItemMenu from "./ChatItemMenu";
 import { MenuContext } from "./Layout.jsx";
 import { RoomContext } from "./Room.jsx";
-import DateFormat from "../controllers/DateFormat.js";
-import { ChatItemData } from "../controllers/chat-data.js";
+import DateFormat from "../../controllers/DateFormat.js";
+import { ChatItemData } from "../../controllers/chat-data.js";
+import updateRect from "../../controllers/updateRect.js";
 
 function ChatItem({ chat = new ChatItemData({}) }) {
   const { isMenuVisible, menuChatId, openMenu } = useContext(MenuContext);
@@ -26,9 +27,9 @@ function ChatItem({ chat = new ChatItemData({}) }) {
   useEffect(() => {
     if (isMenuVisible && menuChatId.isEqual(chat.chatId)) {
       const DELAY = 0;
-      updateRect();
+      updateAllRect();
 
-      //Delay showing the menu, to wait for updateRect() to finish updating the state, so that the menu is rendered with updated states.
+      //Delay showing the menu, to wait for updateAllRect() to finish updating the state, so that the menu is rendered with updated states.
       const timeout = setTimeout(() => {
         setIsMenuShown(true);
       }, DELAY);
@@ -45,38 +46,18 @@ function ChatItem({ chat = new ChatItemData({}) }) {
 
     if (!isMenuShown) return;
 
-    updateRect();
+    updateAllRect();
 
-    const interval = setInterval(() => {
-      updateRect();
-    }, DELAY);
+    const interval = setInterval(updateAllRect, DELAY);
 
     return () => {
       clearInterval(interval);
     };
   }, [isMenuShown]);
 
-  function updateRect() {
-    function rectIsEqual(rect1, rect2) {
-      const keys = Object.keys(rect1.toJSON());
-      return keys.every((key) => rect1[key] === rect2[key]);
-    }
-
-    setMenuContRect((prev) => {
-      const current = menuContRef.current.getBoundingClientRect();
-
-      //Return previous value if the object value is unchanged.
-      if (rectIsEqual(prev, current)) return prev;
-      else return current;
-    });
-
-    setMenuButtonRect((prev) => {
-      const current = menuButtonRef.current.getBoundingClientRect();
-
-      //Return previous value if the object value is unchanged.
-      if (rectIsEqual(prev, current)) return prev;
-      else return current;
-    });
+  function updateAllRect() {
+    updateRect(setMenuContRect, menuContRef.current);
+    updateRect(setMenuButtonRect, menuButtonRef.current);
   }
 
   const hasLastMessage = chat.lastMessage.isDefined();
@@ -119,12 +100,14 @@ function ChatItem({ chat = new ChatItemData({}) }) {
         <div ref={menuContRef} className="chat-item-header-right">
           <time dateTime={date}>{displayDate}</time>
           <button
+            aria-label="menu"
+            className="icon"
             ref={menuButtonRef}
             onClick={(event) => {
               openMenu(event, chat.chatId);
             }}
           >
-            ⋮
+            <span aria-hidden>⋮</span>
           </button>
           {isMenuShown ? (
             <ChatItemMenu

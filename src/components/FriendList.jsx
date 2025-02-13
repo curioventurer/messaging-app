@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import FriendItem from "./FriendItem";
-import { UserFriendship } from "../controllers/chat-data";
+import { UserFriendship } from "../../controllers/chat-data";
 
 function FriendList({ friends = [] }) {
   return (

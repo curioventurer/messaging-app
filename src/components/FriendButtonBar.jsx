@@ -2,7 +2,7 @@ import { useContext, createContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import UnfriendButton from "./UnfriendButton.jsx";
-import { UserFriendship, FriendRequest } from "../controllers/chat-data.js";
+import { UserFriendship, FriendRequest } from "../../controllers/chat-data.js";
 
 export const UpdateDirectIdContext = createContext(function () {});
 

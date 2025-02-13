@@ -20,9 +20,9 @@ function auth(app) {
       try {
         const user = await findUser(username);
 
-        if (!user) return done(null, false, "name");
+        if (!user) return done(null, false, { message: "username" });
         else if (user.password !== password)
-          return done(null, false, "password");
+          return done(null, false, { message: "password" });
         else {
           user.clearPassword();
           return done(null, user);

@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import UserItem from "./UserItem";
 import { UpdateDirectIdContext } from "./FriendButtonBar.jsx";
-import clearSocket from "../controllers/clearSocket.js";
+import clearSocket from "../../controllers/clearSocket.js";
 import {
   User,
   UserFriendship,
   ChatItemData,
-} from "../controllers/chat-data.js";
+} from "../../controllers/chat-data.js";
 
 function UserList() {
   const [users, setUsers] = useState([]);
