@@ -145,7 +145,12 @@ function SignUpForm() {
             <button type="submit">Sign Up</button>
           </li>
         </ul>
-        <output ref={outputRef} className={isBlink ? "blink" : ""}>
+        <output
+          name="signup result"
+          htmlFor="username new-password confirm-password"
+          ref={outputRef}
+          className={isBlink ? "blink" : ""}
+        >
           {output}
         </output>
       </form>

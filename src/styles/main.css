@@ -531,6 +531,7 @@ section.member {
     --width: 40ch;
 
     box-sizing: border-box;
+    font-size: 1rem;
     width: var(--width);
     flex: none;
 
@@ -584,7 +585,7 @@ button.room-header {
   scroll-behavior: smooth;
 
   /*create gap between scrollbar and contents*/
-  padding-right: var(--screen-padding);
+  padding-right: 5px;
 
   & > * {
     overflow-anchor: none;
@@ -610,7 +611,7 @@ button.room-header {
 }
 
 .message-box {
-  --min-width: 20ch;
+  --min-width: 12ch;
   --margin-inline-large: 7ch;
   --margin-inline-small: 10px;
   --border-radius: 15px;
@@ -620,6 +621,7 @@ button.room-header {
   background: var(--background);
   font-size: var(--font-size);
 
+  box-sizing: border-box;
   max-width: max-content;
   min-width: var(--min-width);
   padding: 10px;
@@ -658,7 +660,7 @@ button.room-header {
 
   & > div {
     display: flex;
-    column-gap: 0.8em;
+    column-gap: 0.5em;
     justify-content: space-between;
   }
 
@@ -736,16 +738,14 @@ button.room-header {
 }
 
 /*Switch layout for .room when width decreases.
-  Breakpoint is the minimum width plus some margins.
+  Breakpoint is the sum of the width of all major fixed-width items, plus appropriate width for all major flexible-width items.
+  Minor widths are ignored for simplicity.
 
   Breakpoint:
-    room-first-child-width
-    + (message-min-width + message-margin-inline-large) * message-font-size
-    + all-remaining-spaces
-    + message-list-scrollbar-width
-    + some-margins
+    + room-first-child-width
+    + (appropriate-message-width + message-margin-inline-large) * message-font-size
 */
-@media (max-width: calc(40ch + (20ch + 7ch)*1.2 + 50px + 16px + 10ch)) {
+@media (max-width: calc(40ch + (40ch + 7ch) * 1.2)) {
   .room {
     > .low-priority-display {
       display: none;

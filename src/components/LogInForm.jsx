@@ -124,7 +124,12 @@ function LogInForm() {
             </button>
           </li>
         </ul>
-        <output ref={outputRef} className={isBlink ? "blink" : ""}>
+        <output
+          name="login result"
+          htmlFor="username current-password"
+          ref={outputRef}
+          className={isBlink ? "blink" : ""}
+        >
           {output}
         </output>
       </form>
