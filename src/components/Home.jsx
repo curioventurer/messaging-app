@@ -6,7 +6,10 @@ function Home() {
 
   return (
     <div className="home">
-      <p>Welcome {client.name}, to our messaging app!</p>
+      <p>
+        Welcome <span className="bold">{client.name}</span>, to our messaging
+        app!
+      </p>
       <ChatList />
     </div>
   );

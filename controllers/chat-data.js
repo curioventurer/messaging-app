@@ -29,7 +29,7 @@ export class FriendRequest {
     }
   }
 
-  static isRequestValid(request) {
+  static isValidRequest(request) {
     return [this.PENDING, this.ACCEPTED, this.REJECTED].includes(request);
   }
 }
@@ -138,6 +138,22 @@ export class User {
     });
 
     return sortedUsers;
+  }
+
+  static isValidUsername(username) {
+    //1-50 word characters (a-z, A-Z, 0-9, _)
+    if (username.length < 1 || username.length > 50) return false;
+
+    if (!username.match(/^\w+$/)) return false;
+
+    return true;
+  }
+
+  static isValidPassword(password) {
+    //6-30 characters
+    if (password.length < 6 || password.length > 30) return false;
+
+    return true;
   }
 }
 

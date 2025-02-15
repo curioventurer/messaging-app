@@ -1,6 +1,7 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { findUserById, findUser } from "./db/dbControls.js";
+import { User } from "../controllers/chat-data.js";
 
 function auth(app) {
   app.use(passport.session());
@@ -18,11 +19,17 @@ function auth(app) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
+        if (!User.isValidUsername(username))
+          return done(null, false, { message: "invalid username" });
+
+        if (!User.isValidPassword(password))
+          return done(null, false, { message: "invalid password" });
+
         const user = await findUser(username);
 
-        if (!user) return done(null, false, { message: "username" });
+        if (!user) return done(null, false, { message: "wrong username" });
         else if (user.password !== password)
-          return done(null, false, { message: "password" });
+          return done(null, false, { message: "wrong password" });
         else {
           user.clearPassword();
           return done(null, user);

@@ -5,7 +5,7 @@ function SignUpForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [output, setOutput] = useState("Tip: Fill in the form.");
+  const [output, setOutput] = useState("Tip: fill in the form");
   const [passwordIsShown, setPasswordIsShown] = useState(false);
   const [isBlink, setIsBlink] = useState(false);
 
@@ -28,10 +28,10 @@ function SignUpForm() {
   function updateOutput(err, info) {
     let message;
 
-    if (err) message = "Database error";
+    if (err) message = "database error";
     else message = info.message;
 
-    setOutput("Error: " + message + ".");
+    setOutput("Error: " + message);
     blink();
   }
 
@@ -59,7 +59,7 @@ function SignUpForm() {
     event.preventDefault();
 
     if (password !== confirmPassword) {
-      updateOutput(null, { message: "Password not equal confirm password" });
+      updateOutput(null, { message: "password does not match" });
       return;
     }
 
@@ -95,13 +95,15 @@ function SignUpForm() {
               name="username"
               id="username"
               aria-describedby="username-hint"
+              maxLength="50"
+              pattern="\w+"
               value={username}
               onChange={updateUsername}
               autoComplete="off"
               required
               autoFocus
             />
-            <p id="username-hint">test description</p>
+            <p id="username-hint">1-50 word characters (a-z, A-Z, 0-9, _).</p>
           </li>
           <li>
             <label htmlFor="new-password">Password</label>
@@ -122,12 +124,14 @@ function SignUpForm() {
               name="password"
               id="new-password"
               aria-describedby="password-hint"
+              minLength="6"
+              maxLength="30"
               value={password}
               onChange={updatePassword}
               autoComplete="new-password"
               required
             />
-            <p id="password-hint">test description</p>
+            <p id="password-hint">6-30 characters.</p>
           </li>
           <li>
             <label htmlFor="confirm-password">Confirm Password</label>

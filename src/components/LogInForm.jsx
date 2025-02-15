@@ -8,8 +8,8 @@ function LogInForm() {
   const [password, setPassword] = useState("");
   const [output, setOutput] = useState(
     searchParams.has("logout")
-      ? "Result: Successful logout."
-      : "Tip: Enter username and password to login.",
+      ? "Result: logout successful"
+      : "Tip: enter username and password to login",
   );
   const [passwordIsShown, setPasswordIsShown] = useState(false);
   const [isBlink, setIsBlink] = useState(false);
@@ -33,12 +33,10 @@ function LogInForm() {
   function updateOutput(err, info) {
     let message;
 
-    if (err) message = "Database error";
-    else if (info.message === "username") message = "Username not found";
-    else if (info.message === "password") message = "Wrong password";
+    if (err) message = "database error";
     else message = info.message;
 
-    setOutput("Error: " + message + ".");
+    setOutput("Error: " + message);
     blink();
   }
 
@@ -96,6 +94,8 @@ function LogInForm() {
               type="text"
               name="username"
               id="username"
+              maxLength="50"
+              pattern="\w+"
               value={username}
               onChange={updateUsername}
               autoComplete="username"
@@ -120,6 +120,8 @@ function LogInForm() {
               type={passwordIsShown ? "text" : "password"}
               name="password"
               id="current-password"
+              minLength="6"
+              maxLength="30"
               value={password}
               onChange={updatePassword}
               autoComplete="current-password"

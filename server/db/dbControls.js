@@ -17,7 +17,7 @@ import {
 
 async function updateFriendRequest(id, user_id, state) {
   //check validity of state, abort if invalid
-  if (!FriendRequest.isRequestValid(state)) return false;
+  if (!FriendRequest.isValidRequest(state)) return false;
   if (state === FriendRequest.PENDING) return false;
 
   //search for id, abort if not found

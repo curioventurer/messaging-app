@@ -15,6 +15,9 @@ import {
 
 async function registerUser(name, password) {
   try {
+    const existingUser = await findUser(name);
+    if (existingUser) return { info: { message: "username taken" } };
+
     const { rows } = await pool.query(
       "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
       [name, password],
@@ -24,14 +27,14 @@ async function registerUser(name, password) {
     if (response) {
       return { user: new User(response) };
     } else {
-      return { info: { message: "Database returning failed" } };
+      return { info: { message: "database returning failure" } };
     }
   } catch (err) {
     return { err };
   }
 }
 
-/*Used only for login authentication.
+/*Used only for login authentication, and user registration.
   Retrieve user info(with password) using username.
 */
 async function findUser(name) {
