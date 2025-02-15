@@ -8,7 +8,7 @@ CREATE TABLE users (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name VARCHAR ( 255 ) NOT NULL,
   password VARCHAR ( 255 ) NOT NULL,
-  activity user_activity_type DEFAULT 'online',
+  activity user_activity_type DEFAULT 'offline',
   last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

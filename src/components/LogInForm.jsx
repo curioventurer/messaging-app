@@ -1,11 +1,15 @@
-import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 function LogInForm() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [output, setOutput] = useState(
-    "Tip: Enter username and password to login.",
+    searchParams.has("logout")
+      ? "Result: Successful logout."
+      : "Tip: Enter username and password to login.",
   );
   const [passwordIsShown, setPasswordIsShown] = useState(false);
   const [isBlink, setIsBlink] = useState(false);
@@ -13,6 +17,10 @@ function LogInForm() {
   const outputRef = useRef(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setSearchParams({});
+  }, [setSearchParams]);
 
   function updateUsername(event) {
     setUsername(event.target.value);

@@ -134,6 +134,16 @@ nav .button-bar {
   column-gap: 1.4em;
 }
 
+.error-page {
+  h1 {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  p {
+    margin: 10px;
+  }
+}
+
 .layout {
   display: flex;
   flex-direction: column;
@@ -414,6 +424,10 @@ section.member {
   border: 1px solid white;
   padding: 5px;
   overflow: auto;
+
+  &:empty {
+    display: none;
+  }
 
   .button-link {
     cursor: default;

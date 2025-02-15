@@ -21,9 +21,9 @@ function Nav() {
           </Link>
         </li>
         <li>
-          <a href="/log-out" className="button-link">
-            Log Out
-          </a>
+          <Link to="/logout" className="button-link">
+            Logout
+          </Link>
         </li>
       </ul>
     </nav>

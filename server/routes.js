@@ -34,12 +34,10 @@ function routes(app, ioHandlers) {
     } else res.json(false);
   });
 
-  app.get("/log-out", (req, res, next) => {
+  app.get("/api/logout", (req, res) => {
     req.logout((err) => {
-      if (err) {
-        return next(err);
-      }
-      res.redirect("/log-in");
+      if (err) res.json(false);
+      else res.json(true);
     });
   });
 
@@ -52,10 +50,18 @@ function routes(app, ioHandlers) {
       req.body.username,
       req.body.password,
     );
-    res.json({ err, user, info });
 
-    //update online users on successful registration of new users
-    if (user) ioHandlers.addUser(user);
+    if (user) {
+      //perform login for the user after successful registration, before responding.
+      req.logIn(user, function () {
+        res.json({ err, user, info });
+      });
+
+      //inform online users about the new user by socket io.
+      ioHandlers.addUser(user);
+    }
+    //on failure, respond with information
+    else res.json({ err, user, info });
   });
 
   app.post("/api/log-in", (req, res, next) => {

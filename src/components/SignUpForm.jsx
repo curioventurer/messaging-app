@@ -76,7 +76,7 @@ function SignUpForm() {
     fetch(request)
       .then((res) => res.json())
       .then(({ err, user, info }) => {
-        if (user) navigate("/log-in");
+        if (user) navigate("/");
         else if (err) updateOutput(err);
         else updateOutput(null, info);
       })
