@@ -5,11 +5,14 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
-import Layout from "./components/Layout";
+import PublicInterface from "./components/PublicInterface";
+import PrivateInterface from "./components/PrivateInterface";
 import Home from "./components/Home";
 import Room from "./components/Room";
 import FriendOverview from "./components/FriendOverview";
 import UserList from "./components/UserList";
+import Intro from "./components/Intro";
+import About from "./components/About";
 import SignUpForm from "./components/SignUpForm";
 import LogInForm from "./components/LogInForm";
 import AppError from "./components/AppError";
@@ -39,11 +42,11 @@ async function ensureLoggedIn() {
   } else return redirect("/log-in");
 }
 
-//Only proceed with routing if logged out, else redirect to "/".
+//Only proceed with routing if logged out, else redirect to "/home".
 async function ensureLoggedOut() {
   const user = await getUser();
 
-  if (user) return redirect("/");
+  if (user) return redirect("/home");
   else return null;
 }
 
@@ -60,12 +63,12 @@ async function logout() {
 
 const router = createBrowserRouter([
   {
-    element: <Layout />,
-    id: "layout",
+    element: <PrivateInterface />,
+    id: "interface",
     loader: ensureLoggedIn,
     children: [
       {
-        index: true,
+        path: "/home",
         element: <Home />,
       },
       {
@@ -83,6 +86,19 @@ const router = createBrowserRouter([
       {
         path: "/users",
         element: <UserList />,
+      },
+    ],
+  },
+  {
+    element: <PublicInterface />,
+    children: [
+      {
+        index: true,
+        element: <Intro />,
+      },
+      {
+        path: "/about",
+        element: <About />,
       },
     ],
   },

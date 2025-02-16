@@ -2,7 +2,7 @@ import { useRouteLoaderData } from "react-router-dom";
 import ChatList from "./ChatList";
 
 function Home() {
-  const client = useRouteLoaderData("layout");
+  const client = useRouteLoaderData("interface");
 
   return (
     <div className="home">

@@ -7,7 +7,7 @@ import {
   createContext,
 } from "react";
 import { Outlet } from "react-router-dom";
-import Nav from "./Nav";
+import Nav from "./Nav.jsx";
 import {
   ChatItemData,
   ChatId,
@@ -33,7 +33,7 @@ export const MenuContext = createContext(MENU_CONTEXT_DEFAULT);
 export const OutletContext = createContext(OUTLET_CONTEXT_DEFAULT);
 export const ChatListContext = createContext(CHAT_LIST_CONTEXT_DEFAULT);
 
-function Layout() {
+function PrivateInterface() {
   const [chats, setChats] = useState(CHAT_LIST_CONTEXT_DEFAULT);
   const [isMenuVisible, setIsMenuVisible] = useState(
     MENU_CONTEXT_DEFAULT.isMenuVisible,
@@ -177,7 +177,7 @@ function Layout() {
   }
 
   return (
-    <div className="layout" onClick={closeMenu} onKeyDown={handleKey}>
+    <div className="interface" onClick={closeMenu} onKeyDown={handleKey}>
       <Nav />
       <MenuContext.Provider
         value={useMemo(
@@ -203,4 +203,4 @@ function Layout() {
   );
 }
 
-export default Layout;
+export default PrivateInterface;

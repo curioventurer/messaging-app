@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import ChatItemMenu from "./ChatItemMenu";
-import { MenuContext } from "./Layout.jsx";
+import { MenuContext } from "./PrivateInterface.jsx";
 import { RoomContext } from "./Room.jsx";
 import DateFormat from "../../controllers/DateFormat.js";
 import { ChatItemData } from "../../controllers/chat-data.js";

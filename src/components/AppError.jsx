@@ -8,8 +8,8 @@ function AppError() {
       <h1>Application Error</h1>
       <p>Error with {searchParams.get("error")}.</p>
       <p>
-        Please reload the application. Click <a href="/">home</a> to reload and
-        return to home.
+        Please reload the application. Click <a href="/">intro</a> to reload and
+        return to introduction page.
       </p>
     </div>
   );

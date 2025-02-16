@@ -76,7 +76,7 @@ function SignUpForm() {
     fetch(request)
       .then((res) => res.json())
       .then(({ err, user, info }) => {
-        if (user) navigate("/");
+        if (user) navigate("/home");
         else if (err) updateOutput(err);
         else updateOutput(null, info);
       })
@@ -158,10 +158,16 @@ function SignUpForm() {
           {output}
         </output>
       </form>
-      <p>
-        <Link to="/log-in">Login</Link>
-        {" to enter your account."}
-      </p>
+      <ul>
+        <li>
+          <Link to="/log-in">Login</Link>
+          {" to enter your account."}
+        </li>
+        <li>
+          <Link to="/">Intro</Link>
+          {" to see introduction."}
+        </li>
+      </ul>
     </div>
   );
 }

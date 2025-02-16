@@ -53,7 +53,7 @@ function Room({ isGroup = true }) {
     [chat_id, isGroup],
   );
 
-  const client = useRouteLoaderData("layout");
+  const client = useRouteLoaderData("interface");
 
   const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
   const [isChatInfoShown, setIsChatInfoShown] = useState(false);

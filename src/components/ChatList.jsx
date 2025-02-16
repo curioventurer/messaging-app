@@ -1,6 +1,6 @@
 import { useContext, memo } from "react";
 import ChatItem from "./ChatItem.jsx";
-import { ChatListContext } from "./Layout.jsx";
+import { ChatListContext } from "./PrivateInterface.jsx";
 
 function ChatList() {
   const chats = useContext(ChatListContext);

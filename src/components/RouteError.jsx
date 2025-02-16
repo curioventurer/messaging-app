@@ -6,7 +6,7 @@ function RouteError() {
       <h1>Routing Error</h1>
       <p>
         {"The url is invalid, go back to "}
-        <Link to="/">Home</Link>
+        <Link to="/">Intro</Link>
         {"."}
       </p>
     </div>

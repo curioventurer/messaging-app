@@ -76,7 +76,7 @@ function LogInForm() {
     fetch(request)
       .then((res) => res.json())
       .then(({ err, user, info }) => {
-        if (user) navigate("/");
+        if (user) navigate("/home");
         else if (err) updateOutput(err);
         else updateOutput(null, info);
       })
@@ -143,10 +143,16 @@ function LogInForm() {
           {output}
         </output>
       </form>
-      <p>
-        <Link to="/sign-up">Sign up</Link>
-        {" to create an account."}
-      </p>
+      <ul>
+        <li>
+          <Link to="/sign-up">Sign up</Link>
+          {" to create an account."}
+        </li>
+        <li>
+          <Link to="/">Intro</Link>
+          {" to see introduction."}
+        </li>
+      </ul>
     </div>
   );
 }
