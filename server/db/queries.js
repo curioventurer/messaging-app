@@ -1,4 +1,5 @@
 import pool from "./pool.js";
+import bcrypt from "bcrypt";
 import {
   ChatId,
   Message,
@@ -14,13 +15,23 @@ import {
 } from "../../controllers/chat-data.js";
 
 async function registerUser(name, password) {
+  const saltRounds = 12;
+
   try {
+    if (!User.isValidUsername(name))
+      return { info: { message: "invalid username" } };
+
+    if (!User.isValidPassword(password))
+      return { info: { message: "invalid password" } };
+
     const existingUser = await findUser(name);
     if (existingUser) return { info: { message: "username taken" } };
 
+    const hash = bcrypt.hashSync(password, saltRounds);
+
     const { rows } = await pool.query(
       "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
-      [name, password],
+      [name, hash],
     );
     const response = rows[0];
 

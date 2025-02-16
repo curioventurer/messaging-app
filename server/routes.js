@@ -12,7 +12,7 @@ import {
   getMembersByGroupId,
   getMessagesByChatId,
 } from "./db/dbControls.js";
-import { User, ChatId, ChatData } from "../controllers/chat-data.js";
+import { ChatId, ChatData } from "../controllers/chat-data.js";
 
 async function getUserInfo(req) {
   const userInfo = await (req.user ? req.user() : null);
@@ -48,12 +48,6 @@ function routes(app, ioHandlers) {
   app.post("/api/sign-up", async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
-
-    if (!User.isValidUsername(username))
-      return res.json({ info: { message: "invalid username" } });
-
-    if (!User.isValidPassword(password))
-      return res.json({ info: { message: "invalid password" } });
 
     const { err, user, info } = await registerUser(username, password);
 

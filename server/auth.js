@@ -1,5 +1,6 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import bcrypt from "bcrypt";
 import { findUserById, findUser } from "./db/dbControls.js";
 import { User } from "../controllers/chat-data.js";
 
@@ -28,7 +29,7 @@ function auth(app) {
         const user = await findUser(username);
 
         if (!user) return done(null, false, { message: "wrong username" });
-        else if (user.password !== password)
+        else if (!bcrypt.compareSync(password, user.password))
           return done(null, false, { message: "wrong password" });
         else {
           user.clearPassword();
