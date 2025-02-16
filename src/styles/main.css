@@ -31,6 +31,8 @@ h1 {
 
 p {
   margin: 0;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 ul {
@@ -672,24 +674,25 @@ button.room-header {
     }
   }
 
-  & > div {
-    display: flex;
-    column-gap: 0.5em;
-    justify-content: space-between;
-  }
-
   .message-sender {
     color: orange;
     margin-block-end: 5px;
   }
 
-  .message-footer {
-    color: #aaa;
-    font-size: 0.8em;
+  .message-body {
+    display: flex;
+    column-gap: 0.5em;
+    flex-wrap: wrap;
 
-    align-self: end;
-    position: relative;
-    top: 5px;
+    .message-footer {
+      color: #aaa;
+      font-size: 0.8em;
+
+      margin-left: auto;
+      align-self: end;
+      position: relative;
+      top: 5px;
+    }
   }
 }
 

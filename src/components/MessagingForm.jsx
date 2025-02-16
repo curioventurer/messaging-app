@@ -52,6 +52,7 @@ function MessagingForm() {
         id="message"
         placeholder="Message"
         aria-label="message"
+        maxLength="300"
         value={message}
         onChange={updateMessage}
         autoComplete="off"

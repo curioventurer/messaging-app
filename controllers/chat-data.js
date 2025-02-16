@@ -439,6 +439,8 @@ export class Message {
 }
 
 export class PostMessage {
+  static maxLength = 300; //max length of message
+
   constructor({
     client_id = 0,
     chatId = new ChatId({}),
@@ -446,7 +448,7 @@ export class PostMessage {
   }) {
     this.client_id = client_id;
     this.chatId = chatId;
-    this.message = message;
+    this.message = message.slice(0, PostMessage.maxLength); //clip it to max length
   }
 
   static isValid(data) {

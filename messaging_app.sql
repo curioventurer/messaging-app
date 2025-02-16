@@ -62,7 +62,7 @@ CREATE TABLE memberships (
 
 create table messages (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  text VARCHAR ( 255 ) NOT NULL,
+  text TEXT NOT NULL,
   group_id INT REFERENCES groups ( id ),
   direct_chat_id INT REFERENCES direct_chats ( id ),
   user_id INT NOT NULL REFERENCES users ( id ),
@@ -79,16 +79,16 @@ CREATE TABLE direct_chat_agents (
 );
 
 INSERT INTO users ( name, password, activity, created ) VALUES
-  ( 'windseeker', 'alpha', 'offline', '2020-02-29 18:52:12+06' ),
-  ( 'obb', 'run', 'offline', '2023-09-30 09:07:00+07' ),
-  ( 'hill', 'bee', 'offline', '2024-09-01 22:57:22+04' ),
-  ( 'gin', 'yoyo', 'offline', '2024-10-13 09:07:00-01' ),
-  ( 'hue', 'loop', 'offline', '2024-10-14 10:07:00-03' ),
-  ( 'alex', 'rain', 'offline', '2024-10-15 10:07:00+08' ),
-  ( 'john lock door', 'pin', 'offline', '2024-10-16 10:07:00+08' ),
-  ( 'bob train', 'keg', 'offline', '2024-10-17 10:07:00+08' ),
-  ( 'lock', 'bun', 'offline', '2024-10-18 10:07:00+08' ),
-  ( 'orange', 'sweet', 'offline', '2024-10-19 10:07:00+08' );
+  ( 'windseeker', 'alpha59', 'offline', '2020-02-29 18:52:12+06' ),
+  ( 'obb', 'run381', 'offline', '2023-09-30 09:07:00+07' ),
+  ( 'hill', 'bee290', 'offline', '2024-09-01 22:57:22+04' ),
+  ( 'gin', 'yoyo31', 'offline', '2024-10-13 09:07:00-01' ),
+  ( 'hue', 'loop48', 'offline', '2024-10-14 10:07:00-03' ),
+  ( 'alex', 'rain61', 'offline', '2024-10-15 10:07:00+08' ),
+  ( 'john_lock_door', 'pin141', 'offline', '2024-10-16 10:07:00+08' ),
+  ( 'bob_train', 'keg590', 'offline', '2024-10-17 10:07:00+08' ),
+  ( 'lock', 'bun390', 'offline', '2024-10-18 10:07:00+08' ),
+  ( 'orange', 'sweet20', 'offline', '2024-10-19 10:07:00+08' );
 
 INSERT INTO friendships ( state, modified ) VALUES
   ( 'accepted', '2023-10-13 09:07:00+07' ),
@@ -128,8 +128,8 @@ INSERT INTO direct_chats VALUES
   ( DEFAULT );
 
 INSERT INTO groups ( name, created ) VALUES
-  ( 'comics galore', '2020-08-31 13:07:30+06' ),
-  ( 'Fruit Pavilion', '2020-10-01 14:07:35+07' ),
+  ( 'comics_galore', '2020-08-31 13:07:30+06' ),
+  ( 'Fruit_Pavilion', '2020-10-01 14:07:35+07' ),
   ( 'bro', '2024-09-06 7:57:58+04' ),
   ( 'ender', '2024-10-02 8:00:00-01' );
 

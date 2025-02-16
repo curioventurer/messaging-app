@@ -23,8 +23,8 @@ function Message({ message, isJoined = false }) {
       {isNameShown ? (
         <p className="message-sender clipped-text">{message.name}</p>
       ) : null}
-      <div>
-        <p>{message.text}</p>
+      <div className="message-body">
+        <p className="message-text pre-wrap">{message.text}</p>
         <p className="message-footer">
           <time dateTime={message.created}>
             {DateFormat.time(message.created)}
