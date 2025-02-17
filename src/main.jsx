@@ -14,8 +14,8 @@ import FriendOverview from "./components/FriendOverview";
 import UserList from "./components/UserList";
 import Intro from "./components/Intro";
 import About from "./components/About";
-import SignUpForm from "./components/SignUpForm";
-import LogInForm from "./components/LogInForm";
+import RegisterForm from "./components/RegisterForm";
+import LoginForm from "./components/LoginForm";
 import AppError from "./components/AppError";
 import RouteError from "./components/RouteError";
 import "/node_modules/socket.io/client-dist/socket.io.js";
@@ -40,7 +40,7 @@ async function ensureLoggedIn() {
     window.socket = window.io();
 
     return user;
-  } else return redirect("/log-in");
+  } else return redirect("/login");
 }
 
 //Only proceed with routing if logged out, else redirect to "/home".
@@ -58,7 +58,7 @@ async function logout() {
   const res = await fetch("/api/logout");
   const isSuccess = await res.json();
 
-  if (isSuccess) return redirect("/log-in?msg=successful+logout");
+  if (isSuccess) return redirect("/login?msg=successful+logout");
   else return redirect("/error?err=logout");
 }
 
@@ -124,19 +124,19 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/sign-up",
+    path: "/register",
     element: (
-      <Title title="Signup">
-        <SignUpForm />
+      <Title title="Register">
+        <RegisterForm />
       </Title>
     ),
     loader: ensureLoggedOut,
   },
   {
-    path: "/log-in",
+    path: "/login",
     element: (
       <Title title="Login">
-        <LogInForm />
+        <LoginForm />
       </Title>
     ),
     loader: ensureLoggedOut,

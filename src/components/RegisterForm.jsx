@@ -1,16 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-function LogInForm() {
-  const [searchParams, setSearchParams] = useSearchParams();
-
+function RegisterForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [output, setOutput] = useState(
-    searchParams.has("msg")
-      ? "Result: " + searchParams.get("msg")
-      : "Tip: enter username and password to login",
-  );
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [output, setOutput] = useState("Tip: fill in the form");
   const [passwordIsShown, setPasswordIsShown] = useState(false);
   const [isBlink, setIsBlink] = useState(false);
 
@@ -18,23 +13,16 @@ function LogInForm() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const current = new URLSearchParams(prev);
-        current.delete("msg");
-        return current;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
-
   function updateUsername(event) {
     setUsername(event.target.value);
   }
 
   function updatePassword(event) {
     setPassword(event.target.value);
+  }
+
+  function updateConfirmPassword(event) {
+    setConfirmPassword(event.target.value);
   }
 
   function updateOutput(err, info) {
@@ -67,14 +55,19 @@ function LogInForm() {
     }
   }
 
-  function login(event) {
+  function register(event) {
     event.preventDefault();
+
+    if (password !== confirmPassword) {
+      updateOutput(null, { message: "password does not match" });
+      return;
+    }
 
     const headers = new Headers({
       "Content-Type": "application/json",
     });
 
-    const request = new Request("/api/log-in", {
+    const request = new Request("/api/register", {
       method: "POST",
       body: JSON.stringify({ username, password }),
       headers,
@@ -91,9 +84,9 @@ function LogInForm() {
   }
 
   return (
-    <div className="auth-page log-in-page">
-      <h1>Log In</h1>
-      <form onSubmit={login}>
+    <div className="auth-page">
+      <h1>Register</h1>
+      <form onSubmit={register}>
         <ul>
           <li>
             <label htmlFor="username">Username</label>
@@ -101,16 +94,19 @@ function LogInForm() {
               type="text"
               name="username"
               id="username"
+              aria-describedby="username-hint"
               maxLength="50"
               pattern="\w+"
               value={username}
               onChange={updateUsername}
-              autoComplete="username"
+              autoComplete="off"
               required
+              autoFocus
             />
+            <p id="username-hint">1-50 word characters (a-z, A-Z, 0-9, _).</p>
           </li>
           <li>
-            <label htmlFor="current-password">Password</label>
+            <label htmlFor="new-password">Password</label>
             <button
               type="button"
               className="show-password"
@@ -126,24 +122,36 @@ function LogInForm() {
             <input
               type={passwordIsShown ? "text" : "password"}
               name="password"
-              id="current-password"
+              id="new-password"
+              aria-describedby="password-hint"
               minLength="6"
               maxLength="30"
               value={password}
               onChange={updatePassword}
-              autoComplete="current-password"
+              autoComplete="new-password"
+              required
+            />
+            <p id="password-hint">6-30 characters.</p>
+          </li>
+          <li>
+            <label htmlFor="confirm-password">Confirm Password</label>
+            <input
+              type={passwordIsShown ? "text" : "password"}
+              name="password"
+              id="confirm-password"
+              value={confirmPassword}
+              onChange={updateConfirmPassword}
+              autoComplete="new-password"
               required
             />
           </li>
           <li>
-            <button type="submit" autoFocus>
-              Log In
-            </button>
+            <button type="submit">Register</button>
           </li>
         </ul>
         <output
-          name="login result"
-          htmlFor="username current-password"
+          name="registration result"
+          htmlFor="username new-password confirm-password"
           ref={outputRef}
           className={isBlink ? "blink" : ""}
         >
@@ -152,8 +160,8 @@ function LogInForm() {
       </form>
       <ul>
         <li>
-          <Link to="/sign-up">Sign up</Link>
-          {" to create an account."}
+          <Link to="/login">Login</Link>
+          {" to enter your account."}
         </li>
         <li>
           <Link to="/">Intro</Link>
@@ -164,4 +172,4 @@ function LogInForm() {
   );
 }
 
-export default LogInForm;
+export default RegisterForm;

@@ -45,7 +45,7 @@ function routes(app, ioHandlers) {
     res.json("msg");
   });
 
-  app.post("/api/sign-up", async (req, res) => {
+  app.post("/api/register", async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
 
@@ -64,7 +64,7 @@ function routes(app, ioHandlers) {
     else res.json({ err, user, info });
   });
 
-  app.post("/api/log-in", (req, res, next) => {
+  app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", function (err, user, info) {
       req.logIn(user, function () {
         res.json({ err, user, info });

@@ -16,8 +16,8 @@ const privateLinks = [
 const publicLinks = [
   { href: "/", name: "Intro", classes: ["public-link"] },
   { href: "/about", name: "About", classes: ["public-link"] },
-  { href: "/log-in", name: "Login", classes: ["important-link"] },
-  { href: "/sign-up", name: "Signup", classes: ["important-link"] },
+  { href: "/login", name: "Login", classes: ["important-link"] },
+  { href: "/register", name: "Register", classes: ["important-link"] },
 ];
 
 function Nav({ isPublic = false }) {
