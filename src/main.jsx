@@ -5,6 +5,7 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
+import Title from "./components/Title";
 import PublicInterface from "./components/PublicInterface";
 import PrivateInterface from "./components/PrivateInterface";
 import Home from "./components/Home";
@@ -57,8 +58,8 @@ async function logout() {
   const res = await fetch("/api/logout");
   const isSuccess = await res.json();
 
-  if (isSuccess) return redirect("/log-in?logout");
-  else return redirect("/error?error=logout");
+  if (isSuccess) return redirect("/log-in?msg=successful+logout");
+  else return redirect("/error?err=logout");
 }
 
 const router = createBrowserRouter([
@@ -69,23 +70,35 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/home",
-        element: <Home />,
+        element: (
+          <Title title="Home">
+            <Home />
+          </Title>
+        ),
       },
       {
         path: "/group/:chat_id",
-        element: <Room />,
+        element: <Room isGroup={true} title />,
       },
       {
         path: "/chat/:chat_id",
-        element: <Room isGroup={false} />,
+        element: <Room isGroup={false} title />,
       },
       {
         path: "/friend",
-        element: <FriendOverview />,
+        element: (
+          <Title title="Friend">
+            <FriendOverview />
+          </Title>
+        ),
       },
       {
         path: "/users",
-        element: <UserList />,
+        element: (
+          <Title title="Users">
+            <UserList />
+          </Title>
+        ),
       },
     ],
   },
@@ -94,22 +107,38 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Intro />,
+        element: (
+          <Title title="Intro">
+            <Intro />
+          </Title>
+        ),
       },
       {
         path: "/about",
-        element: <About />,
+        element: (
+          <Title title="About">
+            <About />
+          </Title>
+        ),
       },
     ],
   },
   {
     path: "/sign-up",
-    element: <SignUpForm />,
+    element: (
+      <Title title="Signup">
+        <SignUpForm />
+      </Title>
+    ),
     loader: ensureLoggedOut,
   },
   {
     path: "/log-in",
-    element: <LogInForm />,
+    element: (
+      <Title title="Login">
+        <LogInForm />
+      </Title>
+    ),
     loader: ensureLoggedOut,
   },
   {
@@ -118,11 +147,19 @@ const router = createBrowserRouter([
   },
   {
     path: "/error",
-    element: <AppError />,
+    element: (
+      <Title title="App Error">
+        <AppError />
+      </Title>
+    ),
   },
   {
     path: "*",
-    element: <RouteError />,
+    element: (
+      <Title title="Route Error">
+        <RouteError />
+      </Title>
+    ),
   },
 ]);
 

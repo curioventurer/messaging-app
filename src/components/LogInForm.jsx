@@ -7,8 +7,8 @@ function LogInForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [output, setOutput] = useState(
-    searchParams.has("logout")
-      ? "Result: logout successful"
+    searchParams.has("msg")
+      ? "Result: " + searchParams.get("msg")
       : "Tip: enter username and password to login",
   );
   const [passwordIsShown, setPasswordIsShown] = useState(false);
@@ -19,7 +19,14 @@ function LogInForm() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setSearchParams({});
+    setSearchParams(
+      (prev) => {
+        const current = new URLSearchParams(prev);
+        current.delete("msg");
+        return current;
+      },
+      { replace: true },
+    );
   }, [setSearchParams]);
 
   function updateUsername(event) {

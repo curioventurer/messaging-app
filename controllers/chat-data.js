@@ -330,6 +330,10 @@ export class ChatData {
     this.direct = direct;
     this.members = members;
   }
+
+  get name() {
+    return this.isGroup ? this.group.name : this.direct.name;
+  }
 }
 
 export class Group {

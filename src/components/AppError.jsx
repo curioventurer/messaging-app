@@ -6,7 +6,7 @@ function AppError() {
   return (
     <div className="error-page">
       <h1>Application Error</h1>
-      <p>Error with {searchParams.get("error")}.</p>
+      <p>Error with {searchParams.get("err")}.</p>
       <p>
         Please reload the application. Click <a href="/">intro</a> to reload and
         return to introduction page.

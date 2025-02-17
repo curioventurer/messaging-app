@@ -8,6 +8,7 @@ import {
 } from "react";
 import { useParams, useRouteLoaderData } from "react-router-dom";
 import PropTypes from "prop-types";
+import useTitle from "../hooks/useTitle.jsx";
 import ChatList from "./ChatList.jsx";
 import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
@@ -42,7 +43,7 @@ const CHAT_CONTEXT_DEFAULT = {
 export const RoomContext = createContext(ROOM_CONTEXT_DEFAULT);
 export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 
-function Room({ isGroup = true }) {
+function Room({ isGroup = true, title = false }) {
   const { chat_id } = useParams();
   const chatId = useMemo(
     () =>
@@ -59,6 +60,8 @@ function Room({ isGroup = true }) {
   const [isChatInfoShown, setIsChatInfoShown] = useState(false);
 
   const roomHeaderRef = useRef(null);
+
+  useTitle((isGroup ? "Group" : "Chat") + " - " + chatData.name, !title);
 
   const appendMessage = useCallback(function (message = new Message({})) {
     setChatData((prevChatData) => {
@@ -214,6 +217,7 @@ function Room({ isGroup = true }) {
 
 Room.propTypes = {
   isGroup: PropTypes.bool,
+  title: PropTypes.bool,
 };
 
 export default Room;
