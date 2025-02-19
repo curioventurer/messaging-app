@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 function RegisterForm() {
+  const [searchParams] = useSearchParams();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -12,6 +14,15 @@ function RegisterForm() {
   const outputRef = useRef(null);
 
   const navigate = useNavigate();
+
+  const redirectPath = searchParams.get("rdr");
+  let authRedirectPath = "/home";
+  let otherPath = "/login";
+
+  if (redirectPath) {
+    authRedirectPath = redirectPath;
+    otherPath = otherPath += "?rdr=" + encodeURIComponent(redirectPath);
+  }
 
   function updateUsername(event) {
     setUsername(event.target.value);
@@ -76,7 +87,7 @@ function RegisterForm() {
     fetch(request)
       .then((res) => res.json())
       .then(({ err, user, info }) => {
-        if (user) navigate("/home");
+        if (user) navigate(authRedirectPath);
         else if (err) updateOutput(err);
         else updateOutput(null, info);
       })
@@ -160,7 +171,7 @@ function RegisterForm() {
       </form>
       <ul>
         <li>
-          <Link to="/login">Login</Link>
+          <Link to={otherPath}>Login</Link>
           {" to enter your account."}
         </li>
         <li>

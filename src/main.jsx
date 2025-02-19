@@ -32,7 +32,7 @@ async function getUser() {
 /*Only proceed with routing if logged in, else redirect to login page.
   Also returns user as loader data.
 */
-async function ensureLoggedIn() {
+async function ensureLoggedIn({ request }) {
   const user = await getUser();
 
   if (user) {
@@ -40,7 +40,12 @@ async function ensureLoggedIn() {
     window.socket = window.io();
 
     return user;
-  } else return redirect("/login");
+  } else {
+    const url = new URL(request.url);
+    const redirectPath = url.pathname + url.search;
+
+    return redirect("/login?rdr=" + encodeURIComponent(redirectPath));
+  }
 }
 
 //Only proceed with routing if logged out, else redirect to "/home".

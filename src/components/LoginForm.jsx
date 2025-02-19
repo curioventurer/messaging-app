@@ -18,6 +18,15 @@ function LoginForm() {
 
   const navigate = useNavigate();
 
+  const redirectPath = searchParams.get("rdr");
+  let authRedirectPath = "/home";
+  let otherPath = "/register";
+
+  if (redirectPath) {
+    authRedirectPath = redirectPath;
+    otherPath = otherPath += "?rdr=" + encodeURIComponent(redirectPath);
+  }
+
   useEffect(() => {
     setSearchParams(
       (prev) => {
@@ -83,7 +92,7 @@ function LoginForm() {
     fetch(request)
       .then((res) => res.json())
       .then(({ err, user, info }) => {
-        if (user) navigate("/home");
+        if (user) navigate(authRedirectPath);
         else if (err) updateOutput(err);
         else updateOutput(null, info);
       })
@@ -152,7 +161,7 @@ function LoginForm() {
       </form>
       <ul>
         <li>
-          <Link to="/register">Register</Link>
+          <Link to={otherPath}>Register</Link>
           {" to create an account."}
         </li>
         <li>
