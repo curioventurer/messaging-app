@@ -26,11 +26,7 @@ function routes(app, ioHandlers) {
       const userInfo = await getUserInfo(req);
       if (!userInfo) return res.json(false);
 
-      res.json({
-        id: userInfo.id,
-        name: userInfo.name,
-        created: userInfo.created,
-      });
+      res.json(userInfo);
     } else res.json(false);
   });
 
