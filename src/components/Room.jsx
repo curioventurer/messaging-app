@@ -2,16 +2,18 @@ import {
   useState,
   useEffect,
   useRef,
+  useContext,
   useCallback,
   useMemo,
   createContext,
 } from "react";
-import { useParams, useRouteLoaderData } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import useTitle from "../hooks/useTitle.jsx";
 import ChatList from "./ChatList.jsx";
 import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
+import { InterfaceContext } from "./PrivateInterface.jsx";
 import clearSocket from "../../controllers/clearSocket.js";
 import {
   ChatId,
@@ -54,7 +56,7 @@ function Room({ isGroup = true, title = false }) {
     [chat_id, isGroup],
   );
 
-  const client = useRouteLoaderData("interface");
+  const client = useContext(InterfaceContext);
 
   const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
   const [isChatInfoShown, setIsChatInfoShown] = useState(false);

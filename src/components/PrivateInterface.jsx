@@ -6,15 +6,18 @@ import {
   useMemo,
   createContext,
 } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLoaderData } from "react-router-dom";
 import Nav from "./Nav.jsx";
 import {
+  User,
   ChatItemData,
   ChatId,
   Message,
   NewMessage,
 } from "../../controllers/chat-data.js";
 import updateRect from "../../controllers/updateRect.js";
+
+const INTERFACE_CONTEXT_DEFAULT = new User({});
 
 const MENU_CONTEXT_DEFAULT = {
   isMenuVisible: false,
@@ -29,11 +32,14 @@ const OUTLET_CONTEXT_DEFAULT = new DOMRect();
 //contain instances of ChatItemData - chat-data.js
 const CHAT_LIST_CONTEXT_DEFAULT = [];
 
+export const InterfaceContext = createContext(INTERFACE_CONTEXT_DEFAULT);
 export const MenuContext = createContext(MENU_CONTEXT_DEFAULT);
 export const OutletContext = createContext(OUTLET_CONTEXT_DEFAULT);
 export const ChatListContext = createContext(CHAT_LIST_CONTEXT_DEFAULT);
 
 function PrivateInterface() {
+  const client = useLoaderData();
+
   const [chats, setChats] = useState(CHAT_LIST_CONTEXT_DEFAULT);
   const [isMenuVisible, setIsMenuVisible] = useState(
     MENU_CONTEXT_DEFAULT.isMenuVisible,
@@ -178,27 +184,29 @@ function PrivateInterface() {
 
   return (
     <div className="interface" onClick={closeMenu} onKeyDown={handleKey}>
-      <Nav />
-      <MenuContext.Provider
-        value={useMemo(
-          () => ({
-            isMenuVisible,
-            menuChatId,
-            removeChat,
-            openMenu,
-            closeMenu,
-          }),
-          [isMenuVisible, menuChatId, removeChat, openMenu, closeMenu],
-        )}
-      >
-        <OutletContext.Provider value={outletRect}>
-          <ChatListContext.Provider value={chats}>
-            <div ref={outletRef} className="outlet">
-              <Outlet />
-            </div>
-          </ChatListContext.Provider>
-        </OutletContext.Provider>
-      </MenuContext.Provider>
+      <InterfaceContext.Provider value={client}>
+        <Nav />
+        <MenuContext.Provider
+          value={useMemo(
+            () => ({
+              isMenuVisible,
+              menuChatId,
+              removeChat,
+              openMenu,
+              closeMenu,
+            }),
+            [isMenuVisible, menuChatId, removeChat, openMenu, closeMenu],
+          )}
+        >
+          <OutletContext.Provider value={outletRect}>
+            <ChatListContext.Provider value={chats}>
+              <div ref={outletRef} className="outlet">
+                <Outlet />
+              </div>
+            </ChatListContext.Provider>
+          </OutletContext.Provider>
+        </MenuContext.Provider>
+      </InterfaceContext.Provider>
     </div>
   );
 }

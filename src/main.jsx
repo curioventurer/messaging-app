@@ -5,6 +5,8 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
+import { User } from "../controllers/chat-data.js";
+
 import Title from "./components/Title";
 import PublicInterface from "./components/PublicInterface";
 import PrivateInterface from "./components/PrivateInterface";
@@ -18,15 +20,18 @@ import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import AppError from "./components/AppError";
 import RouteError from "./components/RouteError";
+
 import "/node_modules/socket.io/client-dist/socket.io.js";
 import "normalize.css";
 import "./styles/main.css";
 
-//Fetch user, returns an object if logged in, else returns false.
+//Fetch user, the fetch returns an object if logged in, else returns false.
 async function getUser() {
   const res = await fetch("/api/auth-status");
   const user = await res.json();
-  return user;
+
+  if (user) return new User(user);
+  else return false;
 }
 
 /*Only proceed with routing if logged in, else redirect to login page.
@@ -70,7 +75,6 @@ async function logout() {
 const router = createBrowserRouter([
   {
     element: <PrivateInterface />,
-    id: "interface",
     loader: ensureLoggedIn,
     children: [
       {
@@ -109,6 +113,7 @@ const router = createBrowserRouter([
   },
   {
     element: <PublicInterface />,
+    loader: getUser,
     children: [
       {
         index: true,
