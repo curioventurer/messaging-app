@@ -92,7 +92,7 @@ function LoginForm() {
     fetch(request)
       .then((res) => res.json())
       .then(({ err, user, info }) => {
-        if (user) navigate(authRedirectPath);
+        if (user) navigate(authRedirectPath, { replace: true });
         else if (err) updateOutput(err);
         else updateOutput(null, info);
       })
