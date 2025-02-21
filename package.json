@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "start": "NODE_ENV=production node ./server/server.js",
     "dev": "node ./server/server.js",
     "build": "vite build",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "preview": "NODE_ENV=production node ./server/server.js",
     "reset-data": "psql -X -f ./messaging_app.sql",
     "test": "node ./test.js"
   },

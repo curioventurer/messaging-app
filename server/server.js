@@ -6,11 +6,11 @@ import http from "http";
 import ViteExpress from "vite-express";
 import session from "express-session";
 import bodyParser from "body-parser";
-import fs from "fs";
 import comm from "./comm.js";
 import auth from "./auth.js";
 import routes from "./routes.js";
 
+const port = process.env.PORT || 3000;
 const app = express();
 const server = http.createServer(app);
 ViteExpress.bind(app, server);
@@ -46,14 +46,13 @@ app.use(function (req, _, next) {
   requestCount++;
   const requestLog =
     timestamp +
-    "  " +
-    requestCount.toString().padStart(4, " ") +
-    "  " +
+    " " +
+    requestCount.toString() +
+    " " +
     req.method.padEnd(6, " ") +
     " " +
     url;
 
-  fs.appendFile("./request.log", requestLog + "\n", () => {});
   console.log(requestLog);
 
   next();
@@ -61,10 +60,8 @@ app.use(function (req, _, next) {
 
 routes(app, ioHandlers);
 
-const PORT = 3000;
-server.listen(PORT, function () {
+server.listen(port, function () {
   const timestamp = getTimestamp();
-  const serverStartLog = `${timestamp} - Server is listening on http://localhost:${server.address().port}`;
-  fs.appendFile("./request.log", "\n" + serverStartLog + "\n", () => {});
+  const serverStartLog = `${timestamp} - Server is listening on http://localhost:${port}`;
   console.log(serverStartLog);
 });
