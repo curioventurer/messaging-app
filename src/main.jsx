@@ -5,6 +5,7 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
+import { io } from "socket.io-client";
 import { User } from "../controllers/chat-data.js";
 
 import Title from "./components/Title";
@@ -21,7 +22,6 @@ import LoginForm from "./components/LoginForm";
 import AppError from "./components/AppError";
 import RouteError from "./components/RouteError";
 
-import "/node_modules/socket.io/client-dist/socket.io.js";
 import "normalize.css";
 import "./styles/main.css";
 
@@ -42,7 +42,7 @@ async function ensureLoggedIn({ request }) {
 
   if (user) {
     //try socket io connect after login
-    window.socket = window.io();
+    window.socket = io();
 
     return user;
   } else {
