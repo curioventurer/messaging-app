@@ -113,6 +113,11 @@ function Room({ isGroup = true, title = false }) {
     roomHeaderRef.current = element;
   }, []);
 
+  useEffect(() => clearSocket, [chatId]);
+
+  //on room change, clear display to avoid showing old data, while waiting for fetch of new data.
+  useEffect(() => clearChatData, [chatId]);
+
   useEffect(() => {
     const controller = new AbortController();
 
@@ -167,10 +172,11 @@ function Room({ isGroup = true, title = false }) {
     };
   }, [chatId, appendMessage]);
 
+  //if current room shows the direct chat of removed friend, clear display
+  const directChatUserId = chatData.direct.user_id;
   useEffect(() => {
-    //if current room shows the direct chat of removed friend, reset room to show default data
     function handleUnfriend({ user_id }) {
-      if (chatData.direct.user_id === user_id) setChatData(new ChatData({}));
+      if (directChatUserId === user_id) clearChatData();
     }
 
     window.socket.on("unfriend", handleUnfriend);
@@ -178,13 +184,11 @@ function Room({ isGroup = true, title = false }) {
     return () => {
       window.socket.off("unfriend", handleUnfriend);
     };
-  }, [chatData]);
+  }, [directChatUserId]);
 
-  useEffect(() => {
-    return () => {
-      clearSocket();
-    };
-  }, [chatId]);
+  function clearChatData() {
+    setChatData(CHAT_CONTEXT_DEFAULT.chatData);
+  }
 
   return (
     <div className="room">

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import AuthForm from "./AuthForm";
 
 function RegisterForm() {
   const [searchParams] = useSearchParams();
@@ -7,21 +8,19 @@ function RegisterForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [output, setOutput] = useState("Tip: fill in the form");
   const [passwordIsShown, setPasswordIsShown] = useState(false);
-  const [isBlink, setIsBlink] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const outputRef = useRef(null);
-
-  const navigate = useNavigate();
+  const usernameInput = useRef(null);
+  const submitButton = useRef(null);
 
   const redirectPath = searchParams.get("rdr");
-  let authRedirectPath = "/home";
   let otherPath = "/login";
 
-  if (redirectPath) {
-    authRedirectPath = redirectPath;
-    otherPath = otherPath += "?rdr=" + encodeURIComponent(redirectPath);
+  if (redirectPath) otherPath += "?rdr=" + encodeURIComponent(redirectPath);
+
+  function updateSubmitting(bool) {
+    setSubmitting(bool);
   }
 
   function updateUsername(event) {
@@ -36,16 +35,6 @@ function RegisterForm() {
     setConfirmPassword(event.target.value);
   }
 
-  function updateOutput(err, info) {
-    let message;
-
-    if (err) message = "database error";
-    else message = info.message;
-
-    setOutput("Error: " + message);
-    blink();
-  }
-
   function showPassword() {
     if (passwordIsShown) {
       setPasswordIsShown(false);
@@ -54,54 +43,49 @@ function RegisterForm() {
     }
   }
 
-  function blink() {
-    outputRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  function validateInputs() {
+    if (password === confirmPassword) return true;
 
-    //Only blink if not currently blinking
-    if (!isBlink) {
-      setIsBlink(true);
-
-      //switch off blink after some duration
-      setTimeout(() => setIsBlink(false), 1000);
-    }
+    return {
+      message: "password does not match",
+    };
   }
 
-  function register(event) {
-    event.preventDefault();
+  function parseSubmitRes(err, info) {
+    let message, focusTarget;
 
-    if (password !== confirmPassword) {
-      updateOutput(null, { message: "password does not match" });
-      return;
-    }
+    if (err) message = "database error";
+    else message = info.message;
 
-    const headers = new Headers({
-      "Content-Type": "application/json",
-    });
+    if (message === "username taken") focusTarget = usernameInput;
+    else focusTarget = usernameInput;
 
-    const request = new Request("/api/register", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-      headers,
-    });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then(({ err, user, info }) => {
-        if (user) navigate(authRedirectPath, { replace: true });
-        else if (err) updateOutput(err);
-        else updateOutput(null, info);
-      })
-      .catch(() => {});
+    return {
+      message,
+      focusTarget,
+    };
   }
+
+  const formInfo = {
+    register: true,
+    outputFor: "username new-password confirm-password",
+    submitButton,
+    data: { username, password },
+    submitting,
+    updateSubmitting,
+    validateInputs,
+    parseSubmitRes,
+  };
 
   return (
     <div className="auth-page">
       <h1>Register</h1>
-      <form onSubmit={register}>
+      <AuthForm formInfo={formInfo}>
         <ul>
           <li>
             <label htmlFor="username">Username</label>
             <input
+              ref={usernameInput}
               type="text"
               name="username"
               id="username"
@@ -111,6 +95,7 @@ function RegisterForm() {
               value={username}
               onChange={updateUsername}
               autoComplete="off"
+              disabled={submitting}
               required
               autoFocus
             />
@@ -140,6 +125,7 @@ function RegisterForm() {
               value={password}
               onChange={updatePassword}
               autoComplete="new-password"
+              disabled={submitting}
               required
             />
             <p id="password-hint">6-30 characters.</p>
@@ -153,22 +139,17 @@ function RegisterForm() {
               value={confirmPassword}
               onChange={updateConfirmPassword}
               autoComplete="new-password"
+              disabled={submitting}
               required
             />
           </li>
           <li>
-            <button type="submit">Register</button>
+            <button ref={submitButton} type="submit" disabled={submitting}>
+              {submitting ? "Waiting..." : "Register"}
+            </button>
           </li>
         </ul>
-        <output
-          name="registration result"
-          htmlFor="username new-password confirm-password"
-          ref={outputRef}
-          className={isBlink ? "blink" : ""}
-        >
-          {output}
-        </output>
-      </form>
+      </AuthForm>
       <ul>
         <li>
           <Link to={otherPath}>Login</Link>

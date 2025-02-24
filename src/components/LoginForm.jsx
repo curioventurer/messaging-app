@@ -1,42 +1,27 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useRef } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import AuthForm from "./AuthForm";
 
 function LoginForm() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
+  const [submitting, setSubmitting] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [output, setOutput] = useState(
-    searchParams.has("msg")
-      ? "Result: " + searchParams.get("msg")
-      : "Tip: enter username and password to login",
-  );
   const [passwordIsShown, setPasswordIsShown] = useState(false);
-  const [isBlink, setIsBlink] = useState(false);
 
-  const outputRef = useRef(null);
-
-  const navigate = useNavigate();
+  const usernameInput = useRef(null);
+  const passwordInput = useRef(null);
+  const submitButton = useRef(null);
 
   const redirectPath = searchParams.get("rdr");
-  let authRedirectPath = "/home";
   let otherPath = "/register";
 
-  if (redirectPath) {
-    authRedirectPath = redirectPath;
-    otherPath = otherPath += "?rdr=" + encodeURIComponent(redirectPath);
-  }
+  if (redirectPath) otherPath += "?rdr=" + encodeURIComponent(redirectPath);
 
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const current = new URLSearchParams(prev);
-        current.delete("msg");
-        return current;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
+  function updateSubmitting(bool) {
+    setSubmitting(bool);
+  }
 
   function updateUsername(event) {
     setUsername(event.target.value);
@@ -44,16 +29,6 @@ function LoginForm() {
 
   function updatePassword(event) {
     setPassword(event.target.value);
-  }
-
-  function updateOutput(err, info) {
-    let message;
-
-    if (err) message = "database error";
-    else message = info.message;
-
-    setOutput("Error: " + message);
-    blink();
   }
 
   function showPassword() {
@@ -64,49 +39,42 @@ function LoginForm() {
     }
   }
 
-  function blink() {
-    outputRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  function parseSubmitRes(err, info) {
+    let message, focusTarget;
 
-    //Only blink if not currently blinking
-    if (!isBlink) {
-      setIsBlink(true);
+    if (err) message = "database error";
+    else message = info.message;
 
-      //switch off blink after some duration
-      setTimeout(() => setIsBlink(false), 1000);
-    }
+    if (message === "wrong username") focusTarget = usernameInput;
+    else if (message == "wrong password") focusTarget = passwordInput;
+    else focusTarget = usernameInput;
+
+    return {
+      message,
+      focusTarget,
+    };
   }
 
-  function login(event) {
-    event.preventDefault();
-
-    const headers = new Headers({
-      "Content-Type": "application/json",
-    });
-
-    const request = new Request("/api/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-      headers,
-    });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then(({ err, user, info }) => {
-        if (user) navigate(authRedirectPath, { replace: true });
-        else if (err) updateOutput(err);
-        else updateOutput(null, info);
-      })
-      .catch(() => {});
-  }
+  const formInfo = {
+    register: false,
+    outputFor: "username current-password",
+    submitButton,
+    data: { username, password },
+    submitting,
+    updateSubmitting,
+    validateInputs: () => true,
+    parseSubmitRes,
+  };
 
   return (
     <div className="auth-page">
       <h1>Login</h1>
-      <form onSubmit={login}>
+      <AuthForm formInfo={formInfo}>
         <ul>
           <li>
             <label htmlFor="username">Username</label>
             <input
+              ref={usernameInput}
               type="text"
               name="username"
               id="username"
@@ -115,6 +83,7 @@ function LoginForm() {
               value={username}
               onChange={updateUsername}
               autoComplete="username"
+              disabled={submitting}
               required
             />
           </li>
@@ -133,6 +102,7 @@ function LoginForm() {
               {passwordIsShown ? "Hide password" : "Show password"}
             </button>
             <input
+              ref={passwordInput}
               type={passwordIsShown ? "text" : "password"}
               name="password"
               id="current-password"
@@ -141,24 +111,22 @@ function LoginForm() {
               value={password}
               onChange={updatePassword}
               autoComplete="current-password"
+              disabled={submitting}
               required
             />
           </li>
           <li>
-            <button type="submit" autoFocus>
-              Login
+            <button
+              ref={submitButton}
+              type="submit"
+              disabled={submitting}
+              autoFocus
+            >
+              {submitting ? "Waiting..." : "Login"}
             </button>
           </li>
         </ul>
-        <output
-          name="login result"
-          htmlFor="username current-password"
-          ref={outputRef}
-          className={isBlink ? "blink" : ""}
-        >
-          {output}
-        </output>
-      </form>
+      </AuthForm>
       <ul>
         <li>
           <Link to={otherPath}>Register</Link>

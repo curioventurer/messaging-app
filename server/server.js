@@ -9,8 +9,11 @@ import bodyParser from "body-parser";
 import comm from "./comm.js";
 import auth from "./auth.js";
 import routes from "./routes.js";
+import { getTimestamp, waitDuration } from "../controllers/test-tools.js";
 
 const port = process.env.PORT || 3000;
+const testLatency = process.env.TEST_LATENCY || 0;
+
 const app = express();
 const server = http.createServer(app);
 ViteExpress.bind(app, server);
@@ -21,21 +24,10 @@ const sessionMiddleware = session({
   saveUninitialized: false,
 });
 app.use(sessionMiddleware);
-const ioHandlers = comm(server, sessionMiddleware);
+const ioHandlers = comm(server, sessionMiddleware, testLatency);
 auth(app);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-function getTimestamp() {
-  const time = new Date();
-  return (
-    time.getMinutes().toString().padStart(2, " ") +
-    ":" +
-    time.getSeconds().toString().padStart(2, "0") +
-    "." +
-    time.getMilliseconds().toString().padStart(3, "0")
-  );
-}
 
 //Log server request
 let requestCount = 0;
@@ -55,6 +47,12 @@ app.use(function (req, _, next) {
 
   console.log(requestLog);
 
+  next();
+});
+
+//test code - wait for a duration to simulate server latency for routing.
+app.use(async function (req, res, next) {
+  await waitDuration(testLatency);
   next();
 });
 

@@ -20,6 +20,11 @@ async function getUserInfo(req) {
 }
 
 function routes(app, ioHandlers) {
+  //test code - api for testing.
+  app.all("/api/test", (req, res) => {
+    res.json(true);
+  });
+
   //get logged in status. return userInfo if logged in, false if logged out.
   app.get("/api/auth-status", async (req, res) => {
     if (req.isAuthenticated()) {
@@ -35,10 +40,6 @@ function routes(app, ioHandlers) {
       if (err) res.json(false);
       else res.json(true);
     });
-  });
-
-  app.all("/test-msg", (req, res) => {
-    res.json("msg");
   });
 
   app.post("/api/register", async (req, res) => {

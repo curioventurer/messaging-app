@@ -23,6 +23,7 @@ import {
   UserActivity,
   FriendRequest,
 } from "../controllers/chat-data.js";
+import { getTimestamp, waitDuration } from "../controllers/test-tools.js";
 
 async function initializeConnection(socket) {
   socket.data.user = await socket.request.user();
@@ -57,7 +58,7 @@ async function doPostConnect(socket) {
   });
   socket.to("friend:" + socket.data.user.id).emit("friend", activity);
 
-  console.log("*socket: " + socket.data.user.name + " connected");
+  console.log(getTimestamp() + " connected: " + socket.data.user.name);
 }
 
 function emitUpdateFriendship(io, friendship = new Friendship({})) {
@@ -103,16 +104,31 @@ function setupSocketIOPassport(io, sessionMiddleware) {
   );
 }
 
-function comm(server, sessionMiddleware) {
+function comm(server, sessionMiddleware, testLatency) {
   const io = new Server(server);
   setupSocketIOPassport(io, sessionMiddleware);
 
   io.on("connection", async (socket) => {
+    //test code - wait for a duration to simulate server latency for socket io connection.
+    await waitDuration(testLatency);
+
     const initializeStatus = await initializeConnection(socket);
     if (!initializeStatus) return socket.disconnect(true);
 
+    //test code - wait for a duration to simulate server latency for socket io data.
+    socket.use(async (_, next) => {
+      await waitDuration(testLatency);
+      next();
+    });
+
+    //prevent error by making sure the first argument is an object.
     socket.use(([, arg1], next) => {
       if (arg1 instanceof Object) next();
+    });
+
+    //test code - socket event for testing
+    socket.on("test", async () => {
+      socket.emit("test", true);
     });
 
     socket.on("disconnect", async () => {
@@ -128,7 +144,7 @@ function comm(server, sessionMiddleware) {
       });
       socket.to("friend:" + socket.data.user.id).emit("friend", activity);
 
-      console.log("*socket: " + socket.data.user.name + " disconnected");
+      console.log(getTimestamp() + " disconnected: " + socket.data.user.name);
     });
 
     socket.on("add friend", async (data) => {

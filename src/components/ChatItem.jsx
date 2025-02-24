@@ -74,7 +74,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
         </span>,
       );
       shownMessage.push(
-        <span key="separator" className="chat-item-separator">
+        <span key="separator" className="chat-item-separator pre-wrap">
           :{" "}
         </span>,
       );
