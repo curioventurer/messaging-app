@@ -7,6 +7,7 @@ import {
   createContext,
 } from "react";
 import { Outlet, useLoaderData } from "react-router-dom";
+import useFetch from "../hooks/useFetch";
 import Nav from "./Nav.jsx";
 import {
   User,
@@ -29,8 +30,10 @@ const MENU_CONTEXT_DEFAULT = {
 
 const OUTLET_CONTEXT_DEFAULT = new DOMRect();
 
-//contain instances of ChatItemData - chat-data.js
-const CHAT_LIST_CONTEXT_DEFAULT = [];
+/*Array containing instances of ChatItemData - chat-data.js
+  Initialized with undefined to indicate data not yet fetched.
+*/
+const CHAT_LIST_CONTEXT_DEFAULT = undefined;
 
 export const InterfaceContext = createContext(INTERFACE_CONTEXT_DEFAULT);
 export const MenuContext = createContext(MENU_CONTEXT_DEFAULT);
@@ -58,6 +61,8 @@ function PrivateInterface() {
     else find = (chat) => chat.user_id === identifier.user_id;
 
     setChats((prevChats) => {
+      if (!prevChats) return prevChats;
+
       const index = prevChats.findIndex(find);
       if (index === -1) return prevChats;
 
@@ -88,26 +93,20 @@ function PrivateInterface() {
     [isMenuVisible, menuChatId, closeMenu],
   );
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const request = new Request("/api/chats", { signal: controller.signal });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((data) => {
-        data = data.map((item) => new ChatItemData(item));
-        setChats(ChatItemData.sortChats(data));
-      })
-      .catch(() => {});
-
-    return () => {
-      controller.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
-    };
+  const parseChats = useCallback(function (array) {
+    const objectArray = array.map((item) => new ChatItemData(item));
+    setChats(ChatItemData.sortChats(objectArray));
   }, []);
+
+  const isExpired = useFetch(parseChats, "/api/chats");
+
+  /*If fetch timeouts(expires), set chats to null to indicate fetch failure.
+    Else, initialize chats to undefined to indicate fetch in progress.
+  */
+  useEffect(() => {
+    if (isExpired) setChats(null);
+    else setChats(undefined);
+  }, [isExpired]);
 
   useEffect(() => {
     window.socket.on("chat item", addChat);
@@ -141,6 +140,8 @@ function PrivateInterface() {
     const chatItem = new ChatItemData(chatItemData);
 
     setChats((prevChats) => {
+      if (!prevChats) return prevChats;
+
       const index = prevChats.findIndex((chat) =>
         chatItem.chatId.isEqual(chat.chatId),
       );
@@ -159,6 +160,8 @@ function PrivateInterface() {
     });
 
     setChats((prevChats) => {
+      if (!prevChats) return prevChats;
+
       const index = prevChats.findIndex((chat) =>
         newMessage.chatId.isEqual(chat.chatId),
       );

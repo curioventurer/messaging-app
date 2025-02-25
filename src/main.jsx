@@ -21,6 +21,7 @@ import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import AppError from "./components/AppError";
 import RouteError from "./components/RouteError";
+import Test from "./components/Test";
 
 import "normalize.css";
 import "./styles/main.css";
@@ -160,6 +161,15 @@ const router = createBrowserRouter([
     element: (
       <Title title="App Error">
         <AppError />
+      </Title>
+    ),
+  },
+  {
+    //test code - load react component used for testing
+    path: "/test",
+    element: (
+      <Title title="Test">
+        <Test />
       </Title>
     ),
   },

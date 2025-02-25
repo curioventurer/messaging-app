@@ -12,6 +12,44 @@
   padding: var(--screen-padding);
 }
 
+@keyframes blink {
+  from {
+    background: yellow;
+  }
+}
+
+.blink {
+  animation-name: blink;
+  animation-duration: 500ms;
+}
+
+@keyframes loading-ellipsis {
+  from {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+  to {
+    content: "";
+  }
+}
+
+.loading-ellipsis::after {
+  content: "...";
+
+  animation-name: loading-ellipsis;
+  animation-duration: 3s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
 button {
   cursor: pointer;
   border: none;
@@ -106,17 +144,6 @@ a {
   align-items: center;
 }
 
-@keyframes blink {
-  from {
-    background: yellow;
-  }
-}
-
-.blink {
-  animation-name: blink;
-  animation-duration: 500ms;
-}
-
 .status {
   &::before {
     content: "●";
@@ -138,6 +165,18 @@ a {
 
 .important-link {
   background: #f003;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: white;
+}
+
+.load-fail-text {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: red;
 }
 
 .button-bar {
@@ -446,10 +485,6 @@ section.member {
   border: 1px solid white;
   padding: 5px;
   overflow: auto;
-
-  &:empty {
-    display: none;
-  }
 
   .button-link {
     cursor: default;
@@ -831,5 +866,11 @@ button.room-header {
     td {
       padding: 0;
     }
+  }
+}
+
+@media (prefers-reduced-motion) {
+  .loading-ellipsis::after {
+    animation-name: none;
   }
 }
