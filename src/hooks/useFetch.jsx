@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 
+const FETCH_ABORT = "FetchAbort";
+
 function useFetch(
   callback = function () {},
   path = "/api/test",
@@ -23,19 +25,13 @@ function useFetch(
         return res.json();
       })
       .then(callback)
-      .catch(() => {
+      .catch((err) => {
         clearTimeout(timeout);
-        expire();
+        if (err.message !== FETCH_ABORT) expire();
       });
 
     return () => {
-      clearTimeout(timeout);
-
-      controller.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
+      controller.abort(new Error(FETCH_ABORT));
     };
   }, [path, callback, timeoutDuration]);
 

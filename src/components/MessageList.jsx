@@ -1,6 +1,9 @@
 import { useEffect, useRef, useContext } from "react";
+import Loading from "./Loading";
+import LoadFail from "./LoadFail";
+import LoadError from "./LoadError";
 import Message from "./Message";
-import { RoomContext, ChatContext } from "./Room.jsx";
+import { RoomContext, ChatContext } from "./Room";
 import DateFormat from "../../controllers/DateFormat.js";
 
 function MessageList() {
@@ -32,7 +35,8 @@ function MessageList() {
     };
   }, [chatId]);
 
-  for (const msg of chatData.messages) {
+  const messages = chatData ? chatData.messages : [];
+  for (const msg of messages) {
     const timestamp = new Date(msg.created);
     const msgDate = timestamp.toLocaleDateString();
 
@@ -58,9 +62,20 @@ function MessageList() {
 
   itemsArray.push(<div key="anchor" className="anchor"></div>);
 
+  let content;
+  if (chatData === undefined)
+    content = <Loading name="messages" className="text-center" />;
+  else if (chatData === null)
+    content = <LoadFail name="messages" className="text-center" />;
+  else if (chatData === false)
+    content = <LoadError name="messages" className="text-center" />;
+  else if (itemsArray.length === 1)
+    content = <p className="no-message">no message</p>;
+  else content = itemsArray;
+
   return (
     <ul ref={msgListRef} className="message-list">
-      {itemsArray}
+      {content}
     </ul>
   );
 }

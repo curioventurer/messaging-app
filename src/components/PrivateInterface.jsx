@@ -94,6 +94,8 @@ function PrivateInterface() {
   );
 
   const parseChats = useCallback(function (array) {
+    if (array === false) return setChats(array);
+
     const objectArray = array.map((item) => new ChatItemData(item));
     setChats(ChatItemData.sortChats(objectArray));
   }, []);

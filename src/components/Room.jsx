@@ -7,9 +7,10 @@ import {
   useMemo,
   createContext,
 } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import useTitle from "../hooks/useTitle.jsx";
+import useFetch from "../hooks/useFetch";
 import ChatList from "./ChatList.jsx";
 import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
@@ -38,8 +39,11 @@ const ROOM_CONTEXT_DEFAULT = {
   storeRoomHeaderRef: function () {},
 };
 
+/*Instance of ChatData - chat-data.js
+  Initialized with undefined to indicate data not yet fetched.
+*/
 const CHAT_CONTEXT_DEFAULT = {
-  chatData: new ChatData({}),
+  chatData: undefined,
 };
 
 export const RoomContext = createContext(ROOM_CONTEXT_DEFAULT);
@@ -47,26 +51,48 @@ export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true, title = false }) {
   const { chat_id } = useParams();
-  const chatId = useMemo(
-    () =>
-      new ChatId({
-        id: Number(chat_id),
-        isGroup: isGroup,
-      }),
-    [chat_id, isGroup],
-  );
-
   const client = useContext(InterfaceContext);
 
   const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
   const [isChatInfoShown, setIsChatInfoShown] = useState(false);
 
   const roomHeaderRef = useRef(null);
+  const navigate = useNavigate();
 
-  useTitle((isGroup ? "Group" : "Chat") + " - " + chatData.name, !title);
+  const chatId = useMemo(
+    () =>
+      new ChatId({
+        id: Number(chat_id),
+        isGroup,
+      }),
+    [chat_id, isGroup],
+  );
+  const apiPath = (chatId.isGroup ? "/api/group/" : "/api/chat/") + chatId.id;
+
+  const parseChatData = useCallback(
+    function (data) {
+      if (data === false) return setChatData(data);
+
+      setChatData(
+        new ChatData({
+          isGroup: data.isGroup,
+          messages: data.messages.map((msg) => new Message(msg)),
+          group: new Group(data.group),
+          direct: new Direct(data.direct),
+          members: Member.sortMembers(
+            data.members.map((member) => new Member(member)),
+            client.id,
+          ),
+        }),
+      );
+    },
+    [client],
+  );
 
   const appendMessage = useCallback(function (message = new Message({})) {
     setChatData((prevChatData) => {
+      if (!prevChatData) return prevChatData;
+
       const newMessages = Message.sortMessages([
         ...prevChatData.messages,
         message,
@@ -81,6 +107,8 @@ function Room({ isGroup = true, title = false }) {
 
   const deleteSentMsg = useCallback(function (clientId) {
     setChatData((prevChatData) => {
+      if (!prevChatData) return prevChatData;
+
       const prevMessages = prevChatData.messages;
       const index = prevMessages.findIndex(
         (message) => message.id === clientId,
@@ -113,47 +141,23 @@ function Room({ isGroup = true, title = false }) {
     roomHeaderRef.current = element;
   }, []);
 
+  const roomName = chatData ? chatData.name : "\u200B";
+  useTitle((isGroup ? "Group" : "Chat") + " - " + roomName, !title);
+
   useEffect(() => clearSocket, [chatId]);
 
-  //on room change, clear display to avoid showing old data, while waiting for fetch of new data.
-  useEffect(() => clearChatData, [chatId]);
+  //On room change, reset chatData to default to clear display to avoid showing old data, also used to indicate the display of loading text.
+  useEffect(() => resetChatData, [chatId]);
 
+  const isExpired = useFetch(parseChatData, apiPath);
+
+  /*If fetch timeouts(expires), set null to indicate fetch failure.
+    Else, initialize to undefined to indicate fetch in progress.
+  */
   useEffect(() => {
-    const controller = new AbortController();
-
-    const request = new Request(
-      (chatId.isGroup ? "/api/group/" : "/api/chat/") + chatId.id,
-      {
-        signal: controller.signal,
-      },
-    );
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((data) => {
-        setChatData(
-          new ChatData({
-            isGroup: data.isGroup,
-            messages: data.messages.map((msg) => new Message(msg)),
-            group: new Group(data.group),
-            direct: new Direct(data.direct),
-            members: Member.sortMembers(
-              data.members.map((member) => new Member(member)),
-              client.id,
-            ),
-          }),
-        );
-      })
-      .catch(() => {});
-
-    return () => {
-      controller.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
-    };
-  }, [chatId, client]);
+    if (isExpired) setChatData(null);
+    else setChatData(undefined);
+  }, [isExpired]);
 
   useEffect(() => {
     function addNewMessage(messageData) {
@@ -172,11 +176,14 @@ function Room({ isGroup = true, title = false }) {
     };
   }, [chatId, appendMessage]);
 
-  //if current room shows the direct chat of removed friend, clear display
-  const directChatUserId = chatData.direct.user_id;
+  //if current room shows the direct chat of removed friend, redirect to home
+  const directChatUserId = chatData?.direct?.user_id;
   useEffect(() => {
     function handleUnfriend({ user_id }) {
-      if (directChatUserId === user_id) clearChatData();
+      if (directChatUserId === user_id)
+        navigate("/home", {
+          replace: true,
+        });
     }
 
     window.socket.on("unfriend", handleUnfriend);
@@ -184,9 +191,9 @@ function Room({ isGroup = true, title = false }) {
     return () => {
       window.socket.off("unfriend", handleUnfriend);
     };
-  }, [directChatUserId]);
+  }, [navigate, directChatUserId]);
 
-  function clearChatData() {
+  function resetChatData() {
     setChatData(CHAT_CONTEXT_DEFAULT.chatData);
   }
 

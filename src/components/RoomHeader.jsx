@@ -10,11 +10,14 @@ function RoomHeader() {
     storeRoomHeaderRef(buttonRef.current);
   }, [storeRoomHeaderRef]);
 
-  const chat = chatData.isGroup ? chatData.group : chatData.direct;
+  let name;
+  if (chatData)
+    name = (chatData.isGroup ? chatData.group : chatData.direct).name;
+  else name = "\u200B";
 
   return (
     <button className="room-header" ref={buttonRef} onClick={toggleRoomInfo}>
-      <h1 className="clipped-text">{chat.name}</h1>
+      <h1 className="clipped-text">{name}</h1>
       <p>click for info</p>
     </button>
   );

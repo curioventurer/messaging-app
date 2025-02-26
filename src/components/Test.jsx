@@ -6,6 +6,8 @@ import LoadFail from "./LoadFail";
 
 function Test() {
   const [i, setI] = useState(0);
+  const [t, setT] = useState(false);
+  console.log(i, t);
 
   return (
     <>
@@ -18,6 +20,8 @@ function Test() {
       >
         click
       </button>
+      <button onClick={() => setT(false)}>False</button>
+      <button onClick={() => setT(true)}>True</button>
       <Loading />
       <LoadFail />
     </>

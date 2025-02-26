@@ -1,18 +1,17 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
 
-function LoadFail({ name = "", className = "" }) {
-  let text = "Failed to load";
-  if (name) text += " " + name;
+function LoadError({ name = "data", className = "" }) {
+  const text = "Error when retrieving " + name;
 
   const classes = "load-fail-text " + className;
 
   return <p className={classes}>{text}</p>;
 }
 
-LoadFail.propTypes = {
+LoadError.propTypes = {
   name: PropTypes.string,
   className: PropTypes.string,
 };
 
-export default memo(LoadFail);
+export default memo(LoadError);

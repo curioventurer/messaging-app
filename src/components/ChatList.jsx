@@ -1,8 +1,9 @@
 import { useContext, memo } from "react";
-import ChatItem from "./ChatItem.jsx";
-import Loading from "./Loading.jsx";
-import LoadFail from "./LoadFail.jsx";
-import { ChatListContext } from "./PrivateInterface.jsx";
+import ChatItem from "./ChatItem";
+import Loading from "./Loading";
+import LoadFail from "./LoadFail";
+import LoadError from "./LoadError";
+import { ChatListContext } from "./PrivateInterface";
 
 function ChatList() {
   const chats = useContext(ChatListContext);
@@ -10,6 +11,7 @@ function ChatList() {
 
   if (chats === undefined) content = <Loading name="chat list" />;
   else if (chats === null) content = <LoadFail name="chat list" />;
+  else if (chats === false) content = <LoadError name="chat list" />;
   else if (chats.length === 0) content = "no content";
   else
     content = chats.map((chat) => (
