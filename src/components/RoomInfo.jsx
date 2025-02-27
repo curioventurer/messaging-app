@@ -1,7 +1,7 @@
 import { useContext } from "react";
-import GroupInfo from "./GroupInfo.jsx";
-import DirectInfo from "./DirectInfo.jsx";
-import { RoomContext } from "./Room.jsx";
+import GroupInfo from "./GroupInfo";
+import DirectInfo from "./DirectInfo";
+import { RoomContext } from "./Room";
 
 function RoomInfo() {
   const { chatId, toggleRoomInfo } = useContext(RoomContext);

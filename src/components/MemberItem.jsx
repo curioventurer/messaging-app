@@ -1,6 +1,6 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
-import { Member } from "../../controllers/chat-data";
+import { Member } from "../../js/chat-data.js";
 
 function MemberItem({ member }) {
   return (

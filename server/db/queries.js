@@ -12,7 +12,7 @@ import {
   Friendship,
   FriendRequest,
   UserFriendship,
-} from "../../controllers/chat-data.js";
+} from "../../js/chat-data.js";
 
 async function registerUser(name, password) {
   const saltRounds = 12;

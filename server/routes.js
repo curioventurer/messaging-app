@@ -12,7 +12,7 @@ import {
   getMembersByGroupId,
   getMessagesByChatId,
 } from "./db/dbControls.js";
-import { ChatId, ChatData } from "../controllers/chat-data.js";
+import { ChatId, ChatData } from "../js/chat-data.js";
 
 async function getUserInfo(req) {
   const userInfo = await (req.user ? req.user() : null);

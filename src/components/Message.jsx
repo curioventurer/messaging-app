@@ -1,8 +1,8 @@
 import { useContext, memo } from "react";
 import PropTypes from "prop-types";
-import { RoomContext } from "./Room.jsx";
-import DateFormat from "../../controllers/DateFormat.js";
-import { Message as MessageData } from "../../controllers/chat-data.js";
+import { RoomContext } from "./Room";
+import DateFormat from "../controllers/DateFormat.js";
+import { Message as MessageData } from "../../js/chat-data.js";
 
 const SENT_STATUS_TEXT = "sending";
 

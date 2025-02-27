@@ -6,7 +6,7 @@ import {
   redirect,
 } from "react-router-dom";
 import { io } from "socket.io-client";
-import { User } from "../controllers/chat-data.js";
+import { User } from "../js/chat-data.js";
 
 import Title from "./components/Title";
 import PublicInterface from "./components/PublicInterface";

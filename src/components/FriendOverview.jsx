@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from "react";
 import FriendList from "./FriendList";
 import { UpdateDirectIdContext } from "./FriendButtonBar";
-import sortFriends from "../../controllers/sortFriends.js";
-import clearSocket from "../../controllers/clearSocket.js";
+import sortFriends from "../controllers/sortFriends.js";
+import clearSocket from "../controllers/clearSocket.js";
 import {
   ChatItemData,
   User,
   UserFriendship,
   FriendRequest,
   UserActivity,
-} from "../../controllers/chat-data.js";
+} from "../../js/chat-data.js";
 
 function FriendOverview() {
   //[]: contain instances of UserFriendship - chat-data.js

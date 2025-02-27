@@ -8,15 +8,15 @@ import {
 } from "react";
 import { Outlet, useLoaderData } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
-import Nav from "./Nav.jsx";
+import Nav from "./Nav";
+import updateRect from "../controllers/updateRect.js";
 import {
   User,
   ChatItemData,
   ChatId,
   Message,
   NewMessage,
-} from "../../controllers/chat-data.js";
-import updateRect from "../../controllers/updateRect.js";
+} from "../../js/chat-data.js";
 
 const INTERFACE_CONTEXT_DEFAULT = new User({});
 

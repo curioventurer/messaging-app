@@ -2,7 +2,7 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
 import { findUserById, findUser } from "./db/dbControls.js";
-import { User } from "../controllers/chat-data.js";
+import { User } from "../js/chat-data.js";
 
 function auth(app) {
   app.use(passport.session());

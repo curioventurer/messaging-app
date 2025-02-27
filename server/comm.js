@@ -22,8 +22,8 @@ import {
   User,
   UserActivity,
   FriendRequest,
-} from "../controllers/chat-data.js";
-import { getTimestamp, waitDuration } from "../controllers/test-tools.js";
+} from "../js/chat-data.js";
+import { getTimestamp, waitDuration } from "./test-tools.js";
 
 async function initializeConnection(socket) {
   socket.data.user = await socket.request.user();

@@ -3,7 +3,7 @@ import Loading from "./Loading";
 import LoadFail from "./LoadFail";
 import MemberItem from "./MemberItem";
 import { ChatContext } from "./Room";
-import DateFormat from "../../controllers/DateFormat.js";
+import DateFormat from "../controllers/DateFormat.js";
 
 function GroupInfo() {
   const { chatData } = useContext(ChatContext);

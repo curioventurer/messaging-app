@@ -4,7 +4,7 @@ import LoadFail from "./LoadFail";
 import LoadError from "./LoadError";
 import Message from "./Message";
 import { RoomContext, ChatContext } from "./Room";
-import DateFormat from "../../controllers/DateFormat.js";
+import DateFormat from "../controllers/DateFormat.js";
 
 function MessageList() {
   const { chatId } = useContext(RoomContext);

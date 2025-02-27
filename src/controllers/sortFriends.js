@@ -1,4 +1,4 @@
-import { User, FriendRequest } from "./chat-data.js";
+import { User, FriendRequest } from "../../js/chat-data.js";
 
 //compare by asc friend_request order (state prop).
 function compare_state(a, b) {

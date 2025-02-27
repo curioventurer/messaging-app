@@ -1,6 +1,6 @@
 import { useEffect, useRef, useContext } from "react";
-import { RoomContext, ChatContext } from "./Room.jsx";
-import { DEFAULT_TEXT } from "../../controllers/chat-data.js";
+import { RoomContext, ChatContext } from "./Room";
+import { DEFAULT_TEXT } from "../../js/chat-data.js";
 
 function RoomHeader() {
   const { toggleRoomInfo, storeRoomHeaderRef } = useContext(RoomContext);

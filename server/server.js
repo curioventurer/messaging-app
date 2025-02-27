@@ -9,7 +9,7 @@ import bodyParser from "body-parser";
 import comm from "./comm.js";
 import auth from "./auth.js";
 import routes from "./routes.js";
-import { getTimestamp, waitDuration } from "../controllers/test-tools.js";
+import { getTimestamp, waitDuration } from "./test-tools.js";
 
 const port = process.env.PORT || 3000;
 const testLatency = process.env.TEST_LATENCY || 0;

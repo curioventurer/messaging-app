@@ -1,8 +1,8 @@
 import { useEffect, useState, memo } from "react";
 import PropTypes from "prop-types";
 import FriendButtonBar from "./FriendButtonBar";
-import { User, FriendRequest } from "../../controllers/chat-data";
-import DurationFormat from "../../controllers/DurationFormat";
+import DurationFormat from "../controllers/DurationFormat.js";
+import { User, FriendRequest } from "../../js/chat-data.js";
 
 function UserItem({ user }) {
   const [duration, setDuration] = useState("");
