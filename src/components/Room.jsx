@@ -17,6 +17,7 @@ import RoomUI from "./RoomUI.jsx";
 import { InterfaceContext } from "./PrivateInterface.jsx";
 import clearSocket from "../../controllers/clearSocket.js";
 import {
+  DEFAULT_TEXT,
   ChatId,
   ChatData,
   Message,
@@ -141,7 +142,7 @@ function Room({ isGroup = true, title = false }) {
     roomHeaderRef.current = element;
   }, []);
 
-  const roomName = chatData ? chatData.name : "\u200B";
+  const roomName = chatData ? chatData.name : DEFAULT_TEXT;
   useTitle((isGroup ? "Group" : "Chat") + " - " + roomName, !title);
 
   useEffect(() => clearSocket, [chatId]);

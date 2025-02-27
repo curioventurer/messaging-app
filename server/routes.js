@@ -25,6 +25,20 @@ function routes(app, ioHandlers) {
     res.json(true);
   });
 
+  /*test code - api for testing request latency.
+    Duration is time to respond.
+    If duration not a number, no response. It is intended to produce timeout on client.
+  */
+  app.all("/api/delay/:duration", (req, res) => {
+    const duration = parseInt(req.params.duration);
+
+    if (Number.isNaN(duration)) return;
+
+    setTimeout(() => {
+      res.json(true);
+    }, duration);
+  });
+
   //get logged in status. return userInfo if logged in, false if logged out.
   app.get("/api/auth-status", async (req, res) => {
     if (req.isAuthenticated()) {

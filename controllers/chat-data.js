@@ -9,7 +9,7 @@ const DEFAULT_TIME = "1970-01-01T00:00:00.000Z";
   Used to prevent display of visible or selectable default text when text is not yet loaded.
   Also prevent the text container from collapsing due to white space collapse.
 */
-const DEFAULT_TEXT = "\u200B";
+export const DEFAULT_TEXT = "\u200B";
 
 export class FriendRequest {
   static PENDING = "pending";
