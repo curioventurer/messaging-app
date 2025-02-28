@@ -1,14 +1,20 @@
 import { useEffect, useState, useCallback } from "react";
+import useFetch from "../hooks/useFetch";
+import Loading from "./Loading";
+import LoadFail from "./LoadFail";
+import LoadError from "./LoadError";
 import UserItem from "./UserItem";
 import { UpdateDirectIdContext } from "./FriendButtonBar";
 import clearSocket from "../controllers/clearSocket.js";
 import { User, UserFriendship, ChatItemData } from "../../js/chat-data.js";
 
 function UserList() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(undefined);
 
   const updateDirectId = useCallback(function (user_id, direct_chat_id) {
     setUsers((prevUsers) => {
+      if (!prevUsers) return prevUsers;
+
       const index = prevUsers.findIndex((user) => user.id === user_id);
       if (index === -1) return prevUsers;
 
@@ -33,24 +39,21 @@ function UserList() {
     });
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const parseChats = useCallback(function (array) {
+    if (array === false) return setUsers(array);
 
-    const request = new Request("/api/users", { signal: controller.signal });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((arr) => setUsers(arr.map((user) => new User(user))))
-      .catch(() => {});
-
-    return () => {
-      controller.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
-    };
+    setUsers(array.map((user) => new User(user)));
   }, []);
+
+  const isExpired = useFetch(parseChats, "/api/users");
+
+  /*If fetch timeouts(expires), set state to null to indicate fetch failure.
+    Else, initialize state to undefined to indicate fetch in progress.
+  */
+  useEffect(() => {
+    if (isExpired) setUsers(null);
+    else setUsers(undefined);
+  }, [isExpired]);
 
   useEffect(() => {
     window.socket.on("add user", addUser);
@@ -87,6 +90,8 @@ function UserList() {
     const newUser = new User(userData);
 
     setUsers((prevUsers) => {
+      if (!prevUsers) return prevUsers;
+
       const index = prevUsers.findIndex((user) => user.id === newUser.id);
       if (index !== -1) return prevUsers;
 
@@ -100,6 +105,8 @@ function UserList() {
     const friendship = new UserFriendship(friendshipData);
 
     setUsers((prevUsers) => {
+      if (!prevUsers) return prevUsers;
+
       const index = prevUsers.findIndex(
         (user) => user.id === friendship.user_id,
       );
@@ -130,6 +137,8 @@ function UserList() {
     else find = (user) => user.friendship.id === friendship_id;
 
     setUsers((prevUsers) => {
+      if (!prevUsers) return prevUsers;
+
       const index = prevUsers.findIndex(find);
       if (index === -1) return prevUsers;
 
@@ -153,14 +162,14 @@ function UserList() {
     });
   }
 
-  return (
-    <div className="user-list-page">
-      <h1>Users</h1>
-      <p>
-        You can add friends from the list of users. But you will have to wait
-        for them to accept your request. Your can check your pending request in
-        friend page.
-      </p>
+  let content;
+
+  if (users === undefined) content = <Loading name="user list" />;
+  else if (users === null) content = <LoadFail name="user list" />;
+  else if (users === false) content = <LoadError name="user list" />;
+  else if (users.length === 0) content = <p>User list is empty.</p>;
+  else
+    content = (
       <UpdateDirectIdContext.Provider value={updateDirectId}>
         <table className="user-list">
           <tbody>
@@ -170,6 +179,17 @@ function UserList() {
           </tbody>
         </table>
       </UpdateDirectIdContext.Provider>
+    );
+
+  return (
+    <div className="user-list-page">
+      <h1>Users</h1>
+      <p>
+        You can add friends from the list of users. But you will have to wait
+        for them to accept your request. Your can check your pending request in
+        friend page.
+      </p>
+      {content}
     </div>
   );
 }

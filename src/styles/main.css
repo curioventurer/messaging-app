@@ -375,11 +375,16 @@ nav .button-bar {
   }
 }
 
+.user-list-page {
+  > p {
+    margin-bottom: 1em;
+  }
+}
+
 .user-list {
   --background: #0005;
 
   width: 100%;
-  margin-top: 1em;
 
   tbody {
     display: grid;
