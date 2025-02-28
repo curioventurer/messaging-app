@@ -1,4 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
+import useFetch from "../hooks/useFetch";
+import Loading from "./Loading";
+import LoadFail from "./LoadFail";
+import LoadError from "./LoadError";
 import FriendList from "./FriendList";
 import { UpdateDirectIdContext } from "./FriendButtonBar";
 import sortFriends from "../controllers/sortFriends.js";
@@ -12,11 +16,13 @@ import {
 } from "../../js/chat-data.js";
 
 function FriendOverview() {
-  //[]: contain instances of UserFriendship - chat-data.js
-  const [friends, setFriends] = useState([]);
+  //contain instances of UserFriendship - chat-data.js
+  const [friends, setFriends] = useState(undefined);
 
   const updateDirectId = useCallback(function (user_id, direct_chat_id) {
     setFriends((prevFriends) => {
+      if (!prevFriends) return prevFriends;
+
       const index = prevFriends.findIndex(
         (friend) => friend.user_id === user_id,
       );
@@ -36,25 +42,22 @@ function FriendOverview() {
     });
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const parseFriends = useCallback(function (array) {
+    if (array === false) return setFriends(array);
 
-    const request = new Request("/api/friends", { signal: controller.signal });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((array) => array.map((friend) => new UserFriendship(friend)))
-      .then((array) => setFriends(sortFriends(array)))
-      .catch(() => {});
-
-    return () => {
-      controller.abort(
-        new Error(
-          "FetchAbortError - Fetch request is aborted on component dismount.",
-        ),
-      );
-    };
+    const objectArray = array.map((friend) => new UserFriendship(friend));
+    setFriends(sortFriends(objectArray));
   }, []);
+
+  const isExpired = useFetch(parseFriends, "/api/friends");
+
+  /*If fetch timeouts(expires), set state to null to indicate fetch failure.
+    Else, initialize state to undefined to indicate fetch in progress.
+  */
+  useEffect(() => {
+    if (isExpired) setFriends(null);
+    else setFriends(undefined);
+  }, [isExpired]);
 
   useEffect(() => clearSocket, []);
 
@@ -91,6 +94,8 @@ function FriendOverview() {
     const friendship = new UserFriendship(friendshipData);
 
     setFriends((prevFriends) => {
+      if (!prevFriends) return prevFriends;
+
       const index = prevFriends.findIndex(
         (friend) => friend.id === friendship.id,
       );
@@ -115,6 +120,8 @@ function FriendOverview() {
     const status = new UserActivity(statusData);
 
     setFriends((prevFriends) => {
+      if (!prevFriends) return prevFriends;
+
       const index = prevFriends.findIndex(
         (friend) => friend.user_id === status.user_id,
       );
@@ -148,6 +155,8 @@ function FriendOverview() {
     else find = (friend) => friend.user_id === user_id;
 
     setFriends((prevFriends) => {
+      if (!prevFriends) return prevFriends;
+
       const index = prevFriends.findIndex(find);
       if (index === -1) return prevFriends;
 
@@ -159,23 +168,30 @@ function FriendOverview() {
     });
   }
 
-  const acceptedRequest = friends.filter(
-    (friend) => friend.state === FriendRequest.ACCEPTED,
-  );
-  const sentRequest = friends.filter(
-    (friend) => friend.state === FriendRequest.PENDING && !friend.is_initiator,
-  );
-  const receivedRequest = friends.filter(
-    (friend) => friend.state === FriendRequest.PENDING && friend.is_initiator,
-  );
-  const rejectedRequest = friends.filter(
-    (friend) => friend.state === FriendRequest.REJECTED && !friend.is_initiator,
-  );
+  let content;
 
-  return (
-    <UpdateDirectIdContext.Provider value={updateDirectId}>
-      <div className="friend-overview">
-        <h1>Friend Overview</h1>
+  if (friends === undefined) content = <Loading name="friend list" />;
+  else if (friends === null) content = <LoadFail name="friend list" />;
+  else if (friends === false) content = <LoadError name="friend list" />;
+  else if (friends.length === 0) content = <p>Friend list is empty.</p>;
+  else {
+    const acceptedRequest = friends.filter(
+      (friend) => friend.state === FriendRequest.ACCEPTED,
+    );
+    const sentRequest = friends.filter(
+      (friend) =>
+        friend.state === FriendRequest.PENDING && !friend.is_initiator,
+    );
+    const receivedRequest = friends.filter(
+      (friend) => friend.state === FriendRequest.PENDING && friend.is_initiator,
+    );
+    const rejectedRequest = friends.filter(
+      (friend) =>
+        friend.state === FriendRequest.REJECTED && !friend.is_initiator,
+    );
+
+    content = (
+      <UpdateDirectIdContext.Provider value={updateDirectId}>
         {receivedRequest.length > 0 ? (
           <section>
             <h2>Received Request</h2>
@@ -200,8 +216,15 @@ function FriendOverview() {
             <FriendList friends={rejectedRequest} />
           </section>
         ) : null}
-      </div>
-    </UpdateDirectIdContext.Provider>
+      </UpdateDirectIdContext.Provider>
+    );
+  }
+
+  return (
+    <div className="friend-overview">
+      <h1>Friend Overview</h1>
+      {content}
+    </div>
   );
 }
 

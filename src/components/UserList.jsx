@@ -9,6 +9,7 @@ import clearSocket from "../controllers/clearSocket.js";
 import { User, UserFriendship, ChatItemData } from "../../js/chat-data.js";
 
 function UserList() {
+  //contain instances of User - chat-data.js
   const [users, setUsers] = useState(undefined);
 
   const updateDirectId = useCallback(function (user_id, direct_chat_id) {
@@ -39,13 +40,13 @@ function UserList() {
     });
   }, []);
 
-  const parseChats = useCallback(function (array) {
+  const parseUsers = useCallback(function (array) {
     if (array === false) return setUsers(array);
 
     setUsers(array.map((user) => new User(user)));
   }, []);
 
-  const isExpired = useFetch(parseChats, "/api/users");
+  const isExpired = useFetch(parseUsers, "/api/users");
 
   /*If fetch timeouts(expires), set state to null to indicate fetch failure.
     Else, initialize state to undefined to indicate fetch in progress.
