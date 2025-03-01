@@ -150,7 +150,7 @@ function Room({ isGroup = true, title = false }) {
   //On room change, reset chatData to default to clear display to avoid showing old data, also used to indicate the display of loading text.
   useEffect(() => resetChatData, [chatId]);
 
-  const isExpired = useFetch(parseChatData, apiPath);
+  const isExpired = useFetch({ callback: parseChatData, path: apiPath });
 
   /*If fetch timeouts(expires), set null to indicate fetch failure.
     Else, initialize to undefined to indicate fetch in progress.

@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 
 const FETCH_ABORT = "FetchAbort";
 
-function useFetch(
-  callback = function () {},
+function useFetch({
+  callback = null,
   path = "/api/test",
+  options = null,
   timeoutDuration = 5000,
-) {
+}) {
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
@@ -17,7 +18,10 @@ function useFetch(
     const timeout = setTimeout(expire, timeoutDuration);
 
     const controller = new AbortController();
-    const request = new Request(path, { signal: controller.signal });
+    const request = new Request(path, {
+      signal: controller.signal,
+      ...options,
+    });
 
     fetch(request)
       .then((res) => {
@@ -33,7 +37,7 @@ function useFetch(
     return () => {
       controller.abort(new Error(FETCH_ABORT));
     };
-  }, [path, callback, timeoutDuration]);
+  }, [callback, path, options, timeoutDuration]);
 
   return isExpired;
 }

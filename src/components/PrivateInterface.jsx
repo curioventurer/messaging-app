@@ -100,7 +100,7 @@ function PrivateInterface() {
     setChats(ChatItemData.sortChats(objectArray));
   }, []);
 
-  const isExpired = useFetch(parseChats, "/api/chats");
+  const isExpired = useFetch({ callback: parseChats, path: "/api/chats" });
 
   /*If fetch timeouts(expires), set chats to null to indicate fetch failure.
     Else, initialize chats to undefined to indicate fetch in progress.

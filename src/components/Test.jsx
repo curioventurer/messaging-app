@@ -1,6 +1,7 @@
 //test code - react component used for testing
 
 import { useState, memo } from "react";
+import useFetch from "../hooks/useFetch";
 import Loading from "./Loading";
 import LoadFail from "./LoadFail";
 
@@ -8,6 +9,8 @@ function Test() {
   const [i, setI] = useState(0);
   const [t, setT] = useState(false);
   console.log(i, t);
+
+  useFetch({});
 
   return (
     <>

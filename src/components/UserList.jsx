@@ -46,7 +46,7 @@ function UserList() {
     setUsers(array.map((user) => new User(user)));
   }, []);
 
-  const isExpired = useFetch(parseUsers, "/api/users");
+  const isExpired = useFetch({ callback: parseUsers, path: "/api/users" });
 
   /*If fetch timeouts(expires), set state to null to indicate fetch failure.
     Else, initialize state to undefined to indicate fetch in progress.

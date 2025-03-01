@@ -49,7 +49,7 @@ function FriendOverview() {
     setFriends(sortFriends(objectArray));
   }, []);
 
-  const isExpired = useFetch(parseFriends, "/api/friends");
+  const isExpired = useFetch({ callback: parseFriends, path: "/api/friends" });
 
   /*If fetch timeouts(expires), set state to null to indicate fetch failure.
     Else, initialize state to undefined to indicate fetch in progress.
