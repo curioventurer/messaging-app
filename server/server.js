@@ -4,7 +4,7 @@ import "dotenv/config";
 import express from "express";
 import http from "http";
 import ViteExpress from "vite-express";
-import session from "express-session";
+import session from "cookie-session";
 import bodyParser from "body-parser";
 import comm from "./comm.js";
 import auth from "./auth.js";
@@ -19,11 +19,28 @@ const server = http.createServer(app);
 ViteExpress.bind(app, server);
 
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
+  keys: [process.env.SESSION_KEY],
+  maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
 });
 app.use(sessionMiddleware);
+
+/*Register regenerate & save after the cookieSession middleware initialization.
+  Passport.js requires it, it is present in express session but absent here, and thus have to be added.
+*/
+app.use(function (req, _, next) {
+  if (req.session && !req.session.regenerate) {
+    req.session.regenerate = (cb) => {
+      cb();
+    };
+  }
+  if (req.session && !req.session.save) {
+    req.session.save = (cb) => {
+      cb();
+    };
+  }
+  next();
+});
+
 const ioHandlers = comm(server, sessionMiddleware, testLatency);
 auth(app);
 app.use(bodyParser.urlencoded({ extended: false }));

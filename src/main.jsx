@@ -26,11 +26,9 @@ import Test from "./components/Test";
 import "normalize.css";
 import "./styles/main.css";
 
-//Fetch user, the fetch returns an object if logged in, else returns false.
+//Fetch user from localStorage. If found, user is logged in, return user. Else, return false to indicate logged out.
 async function getUser() {
-  const res = await fetch("/api/auth-status");
-  const user = await res.json();
-
+  const user = JSON.parse(localStorage.getItem("user"));
   if (user) return new User(user);
   else return false;
 }
@@ -65,6 +63,7 @@ async function ensureLoggedOut() {
 //Perform logout and if successful, redirect to login page, else error page.
 async function logout() {
   if (window.socket) window.socket.disconnect();
+  localStorage.removeItem("user");
 
   const res = await fetch("/api/logout");
   const isSuccess = await res.json();

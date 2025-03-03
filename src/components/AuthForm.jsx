@@ -105,10 +105,13 @@ function AuthForm({ children, formInfo }) {
         return res.json();
       })
       .then(({ err, user, info }) => {
-        if (user)
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+
           return navigate(searchParams.get("rdr") ?? "/home", {
             replace: true,
           });
+        }
 
         updateOutput(formInfo.parseSubmitRes(err, info));
         formInfo.updateSubmitting(false);

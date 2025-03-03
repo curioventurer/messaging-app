@@ -1,19 +1,27 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import bcrypt from "bcrypt";
-import { findUserById, findUser } from "./db/dbControls.js";
+import { findUser } from "./db/dbControls.js";
 import { User } from "../js/chat-data.js";
 
 function auth(app) {
   app.use(passport.session());
 
+  /*id is the only data required to identify user.
+    name is common info added to reduce need to fetch from database.
+  */
   passport.serializeUser((user, done) => {
-    done(null, user.id);
+    done(null, {
+      id: user.id,
+      name: user.name,
+    });
   });
 
-  passport.deserializeUser((id, done) => {
-    //returns a function that fetches data instead of data, so that data is only fetched when called and not fetched when it isn't required.
-    const user = () => findUserById(id);
+  /*Simply return the parameter without any changes.
+    The parameter contents is all the server needs to know most of the time.
+    A database fetch for other user info is an unnecessary cost, that should be done only when needed.
+  */
+  passport.deserializeUser((user, done) => {
     done(null, user);
   });
 

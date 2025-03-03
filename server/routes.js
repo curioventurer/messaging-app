@@ -14,11 +14,6 @@ import {
 } from "./db/dbControls.js";
 import { ChatId, ChatData } from "../js/chat-data.js";
 
-async function getUserInfo(req) {
-  const userInfo = await (req.user ? req.user() : null);
-  return userInfo;
-}
-
 function routes(app, ioHandlers) {
   //test code - api for testing.
   app.all("/api/test", (req, res) => {
@@ -39,14 +34,20 @@ function routes(app, ioHandlers) {
     }, duration);
   });
 
-  //get logged in status. return userInfo if logged in, false if logged out.
+  /*Get logged in status. Return false if logged out, else return data.
+    If data query specified, return user info, else return true.
+  */
   app.get("/api/auth-status", async (req, res) => {
-    if (req.isAuthenticated()) {
-      const userInfo = await getUserInfo(req);
-      if (!userInfo) return res.json(false);
+    let data;
 
-      res.json(userInfo);
-    } else res.json(false);
+    if (req.user) {
+      if (req.query.data === "") {
+        const userInfo = await findUserById(req.user.id);
+        data = userInfo;
+      } else data = true;
+    } else data = false;
+
+    res.json(data);
   });
 
   app.get("/api/logout", (req, res) => {
@@ -94,26 +95,23 @@ function routes(app, ioHandlers) {
   });
 
   app.get("/api/users", async (req, res) => {
-    const userInfo = await getUserInfo(req);
-    if (!userInfo) return res.json(false);
+    if (!req.user) return res.json(false);
 
-    const users = await getUsers(userInfo.id);
+    const users = await getUsers(req.user.id);
     res.json(users);
   });
 
   app.get("/api/friends", async (req, res) => {
-    const userInfo = await getUserInfo(req);
-    if (!userInfo) return res.json(false);
+    if (!req.user) return res.json(false);
 
-    const friends = await getFriendships(userInfo.id);
+    const friends = await getFriendships(req.user.id);
     res.json(friends);
   });
 
   app.get("/api/chats", async (req, res) => {
-    const userInfo = await getUserInfo(req);
-    if (!userInfo) return res.json(false);
+    if (!req.user) return res.json(false);
 
-    const chatList = await getChatList(userInfo.id);
+    const chatList = await getChatList(req.user.id);
     res.json(chatList);
   });
 
@@ -123,44 +121,34 @@ function routes(app, ioHandlers) {
 
     if (!req.user) return res.json(false);
 
-    const userInfoPromise = req.user();
-    const groupMembersPromise = getMembersByGroupId(groupId);
-    const [userInfo, groupMembers] = await Promise.all([
-      userInfoPromise,
-      groupMembersPromise,
-    ]);
+    const members = await getMembersByGroupId(groupId);
+    if (!members) return res.json(false);
 
-    if (!userInfo || !groupMembers) return res.json(false);
-
-    const membership = groupMembers.find(
-      (member) => member.user_id === userInfo.id,
-    );
+    const membership = members.find((member) => member.user_id === req.user.id);
     if (!membership) return res.json(false);
 
     const group = findGroupById(groupId);
-    const members = getMembersByGroupId(groupId);
     const messages = getMessagesByChatId(new ChatId({ id: groupId }));
-    const results = await Promise.all([group, members, messages]);
+    const results = await Promise.all([group, messages]);
 
     const chatData = new ChatData({
       group: results[0],
-      members: results[1],
-      messages: results[2],
+      members,
+      messages: results[1],
     });
     res.json(chatData);
   });
 
   //get direct chat messages
   app.get("/api/chat/:direct_chat_id", async (req, res) => {
-    const userInfo = await getUserInfo(req);
-    if (!userInfo) return res.json(false);
+    if (!req.user) return res.json(false);
 
     const chatId = new ChatId({
       id: req.params.direct_chat_id,
       isGroup: false,
     });
 
-    const direct = await findDirectChat(chatId, userInfo.id);
+    const direct = await findDirectChat(chatId, req.user.id);
     if (!direct) return res.json(false);
 
     const messages = await getMessagesByChatId(chatId);
@@ -174,29 +162,26 @@ function routes(app, ioHandlers) {
   });
 
   app.post("/api/open_chat/:other_id", async (req, res) => {
-    const userInfo = await getUserInfo(req);
-    if (!userInfo) return res.json(false);
+    if (!req.user) return res.json(false);
 
     const direct_chat_id = await openDirectChat(
-      userInfo.id,
+      req.user.id,
       req.params.other_id,
     );
     res.json(direct_chat_id);
 
-    if (direct_chat_id === false) return;
-
-    ioHandlers.addDirectChatItem(userInfo.id, direct_chat_id);
+    if (direct_chat_id !== false)
+      ioHandlers.addDirectChatItem(req.user.id, direct_chat_id);
   });
 
   app.put("/api/chat/:direct_chat_id/hide", async (req, res) => {
-    const userInfo = await getUserInfo(req);
-    if (!userInfo) return res.json(false);
+    if (!req.user) return res.json(false);
 
     const chatId = new ChatId({
       id: req.params.direct_chat_id,
       isGroup: false,
     });
-    const isValid = await hideDirectChat(chatId, userInfo.id);
+    const isValid = await hideDirectChat(chatId, req.user.id);
     res.json(isValid);
   });
 }
