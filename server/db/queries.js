@@ -8,6 +8,7 @@ import {
   Group,
   Direct,
   Member,
+  ChatItemData,
   User,
   Friendship,
   FriendRequest,
@@ -482,28 +483,137 @@ async function findDirectChatShown(chatId = new ChatId({}), user_id) {
   return rows[0]?.is_shown;
 }
 
-async function getGroupsByUserId(userId) {
+/*Used only by Socket.IO to join group rooms for user.
+  Get id of groups the user joined.
+*/
+async function getUserGroupIds(user_id) {
   const SQL_GET_GROUPS = `
-    SELECT groups.id, groups.name, memberships.created AS joined
+    SELECT groups.id
     FROM groups
     INNER JOIN memberships
     ON groups.id = memberships.group_id
     WHERE memberships.user_id = $1
-    ORDER BY groups.name
+    ORDER BY groups.id
   `;
-  const { rows } = await pool.query(SQL_GET_GROUPS, [userId]);
+  const { rows } = await pool.query(SQL_GET_GROUPS, [user_id]);
   return rows;
+}
+
+/*I call it summaries to distinguish it from other group queries,
+  as it generates list of user's groups with last message appended
+*/
+async function getGroupSummaries(user_id) {
+  const SQL_GET_GROUPS = `
+    SELECT DISTINCT ON (groups.id)
+    
+    groups.id, groups.name, memberships.created AS joined,
+
+    messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.msg_user_id, users.name AS msg_name
+    
+    FROM groups
+    
+    INNER JOIN memberships
+    ON groups.id = memberships.group_id
+    
+    INNER JOIN messages
+    ON groups.id = messages.group_id
+    
+    INNER JOIN users
+    ON messages.user_id = users.id
+
+    WHERE memberships.user_id = $1
+    ORDER BY groups.id, messages.created DESC, messages.id DESC;
+  `;
+  const { rows } = await pool.query(SQL_GET_GROUPS, [user_id]);
+
+  const groups = rows.map((group) =>
+    ChatItemData.createGroup({
+      chatId: new ChatId({
+        id: group.id,
+        isGroup: true,
+      }),
+      name: group.name,
+      joined: group.joined,
+      lastMessage: new Message({
+        id: group.msg_id,
+        text: group.msg_text,
+        created: group.msg_created,
+        user_id: group.msg_user_id,
+        name: group.msg_name,
+      }),
+    }),
+  );
+
+  return groups;
+}
+
+async function getDirectSummaries(user_id) {
+  const SQL_GET_DIRECT_CHATS = `
+    SELECT DISTINCT ON (agent1.direct_chat_id)
+    
+    agent1.direct_chat_id AS id, users.name, users.id AS user_id, agent1.time_shown,
+
+    messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.user_id AS msg_user_id, msg_user.name AS msg_name
+    
+    FROM direct_chat_agents AS agent1
+    
+    INNER JOIN direct_chat_agents AS agent2
+    ON agent1.direct_chat_id = agent2.direct_chat_id
+    
+    INNER JOIN users
+    ON agent2.user_id = users.id
+
+    INNER JOIN messages
+    ON agent1.direct_chat_id = messages.direct_chat_id
+    
+    INNER JOIN users AS msg_user
+    ON messages.user_id = msg_user.id
+    
+    WHERE agent1.user_id = $1
+    AND agent2.user_id != $1
+    AND agent1.is_shown = TRUE
+    
+    ORDER BY agent1.direct_chat_id, messages.created DESC, messages.id DESC;
+  `;
+  const { rows } = await pool.query(SQL_GET_DIRECT_CHATS, [user_id]);
+
+  const directs = rows.map((direct) =>
+    ChatItemData.createDirect({
+      chatId: new ChatId({
+        id: direct.id,
+        isGroup: false,
+      }),
+      name: direct.name,
+      user_id: direct.user_id,
+      time_shown: direct.time_shown,
+      lastMessage: new Message({
+        id: direct.msg_id,
+        text: direct.msg_text,
+        created: direct.msg_created,
+        user_id: direct.msg_user_id,
+        name: direct.msg_name,
+      }),
+    }),
+  );
+
+  return directs;
 }
 
 async function getDirectChats(user_id) {
   const SQL_GET_DIRECT_CHATS = `
     SELECT agent1.direct_chat_id AS id, users.name, users.id AS user_id, agent1.time_shown
+    
     FROM direct_chat_agents AS agent1
-    INNER JOIN direct_chat_agents AS agent2 ON agent1.direct_chat_id = agent2.direct_chat_id
-    INNER JOIN users ON agent2.user_id = users.id
+    
+    INNER JOIN direct_chat_agents AS agent2
+    ON agent1.direct_chat_id = agent2.direct_chat_id
+    
+    INNER JOIN users
+    ON agent2.user_id = users.id
+    
     WHERE agent1.user_id = $1
     AND agent1.is_shown = TRUE
-    AND agent2.user_id != $1
+    AND agent2.user_id != $1;
   `;
 
   const { rows } = await pool.query(SQL_GET_DIRECT_CHATS, [user_id]);
@@ -593,12 +703,20 @@ async function getMessagesByChatId(chatId = new ChatId({}), limit = -1) {
   return messages;
 }
 
+/*Returns chat, if direct chat exists and you have access.
+  Else returns false.
+*/
 async function findDirectChat(chatId = new ChatId({}), user_id) {
   const SQL_FIND_DIRECT_CHAT = `
     SELECT agent1.direct_chat_id AS id, users.name, users.id AS user_id, agent1.time_shown
     FROM direct_chat_agents AS agent1
-    INNER JOIN direct_chat_agents AS agent2 ON agent1.direct_chat_id = agent2.direct_chat_id
-    INNER JOIN users ON agent2.user_id = users.id
+    
+    INNER JOIN direct_chat_agents AS agent2
+    ON agent1.direct_chat_id = agent2.direct_chat_id
+    
+    INNER JOIN users
+    ON agent2.user_id = users.id
+    
     WHERE agent1.direct_chat_id = $1
     AND agent1.user_id = $2
     AND agent2.user_id != $2
@@ -629,7 +747,7 @@ export {
   showDirectChat,
   hideDirectChat,
   findDirectChatShown,
-  getGroupsByUserId,
+  getUserGroupIds,
   findGroupById,
   getMembersByGroupId,
   postMessage,
@@ -642,7 +760,8 @@ export {
   findFriendshipById,
   setFriendshipStateById,
   deleteFriendship,
-  getDirectChats,
+  getGroupSummaries,
+  getDirectSummaries,
   findDirectChatByUserId,
   deleteDirectChat,
 };

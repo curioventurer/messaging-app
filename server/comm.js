@@ -12,7 +12,7 @@ import {
   findDirectChat,
   findDirectChatShown,
   findDirectChatSummary,
-  getGroupsByUserId,
+  getUserGroupIds,
   postMessageDB,
 } from "./db/dbControls.js";
 import {
@@ -29,7 +29,7 @@ async function initializeConnection(socket) {
   socket.join("user:" + socket.request.user.id);
 
   async function joinGroupRooms(socket, user_id) {
-    const groups = await getGroupsByUserId(user_id);
+    const groups = await getUserGroupIds(user_id);
     const group_ids = groups.map((group) => "group:" + group.id);
     socket.join(group_ids);
   }

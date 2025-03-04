@@ -3,11 +3,11 @@ import {
   findFriendshipById,
   setFriendshipStateById,
   deleteFriendship,
-  getDirectChats,
+  getGroupSummaries,
+  getDirectSummaries,
   findDirectChat,
   findDirectChatByUserId,
   deleteDirectChat,
-  getGroupsByUserId,
   getMessagesByChatId,
 } from "./queries.js";
 
@@ -100,62 +100,10 @@ async function findDirectChatSummary(chatId = new ChatId({}), user_id = 0) {
   return directChat;
 }
 
-async function getDirectChatSummaries(user_id) {
-  const directChatsData = await getDirectChats(user_id);
-  const directChats = directChatsData.map((direct) =>
-    ChatItemData.createDirect({
-      ...direct,
-      chatId: new ChatId({
-        id: direct.id,
-        isGroup: false,
-      }),
-    }),
-  );
-
-  const promises = [];
-  for (const direct of directChats) {
-    promises.push(
-      getMessagesByChatId(direct.chatId, 1).then((messages) => {
-        if (messages[0]) direct.lastMessage = messages[0];
-      }),
-    );
-  }
-  await Promise.all(promises);
-
-  return directChats;
-}
-
-/*I call it summaries to distinguish it from other group queries,
-  as it generates list of user's groups with last message
-*/
-async function getGroupSummaries(user_id) {
-  const groupsData = await getGroupsByUserId(user_id);
-  const groups = groupsData.map((group) =>
-    ChatItemData.createGroup({
-      ...group,
-      chatId: new ChatId({
-        id: group.id,
-      }),
-    }),
-  );
-
-  const promises = [];
-  for (const group of groups) {
-    promises.push(
-      getMessagesByChatId(group.chatId, 1).then((messages) => {
-        if (messages[0]) group.lastMessage = messages[0];
-      }),
-    );
-  }
-  await Promise.all(promises);
-
-  return groups;
-}
-
 async function getChatList(user_id) {
   const values = await Promise.all([
     getGroupSummaries(user_id),
-    getDirectChatSummaries(user_id),
+    getDirectSummaries(user_id),
   ]);
   return [...values[0], ...values[1]];
 }
@@ -182,7 +130,7 @@ export {
   hideDirectChat,
   findDirectChat,
   findDirectChatShown,
-  getGroupsByUserId,
+  getUserGroupIds,
   findGroupById,
   getMembersByGroupId,
   postMessage as postMessageDB,

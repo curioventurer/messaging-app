@@ -121,12 +121,14 @@ function routes(app, ioHandlers) {
 
     if (!req.user) return res.json(false);
 
+    //Validate: Make sure you are a member of the group and the group exists.
     const members = await getMembersByGroupId(groupId);
     if (!members) return res.json(false);
 
     const membership = members.find((member) => member.user_id === req.user.id);
     if (!membership) return res.json(false);
 
+    //Validation passed, proceed to retrieve info.
     const group = findGroupById(groupId);
     const messages = getMessagesByChatId(new ChatId({ id: groupId }));
     const results = await Promise.all([group, messages]);
@@ -148,9 +150,11 @@ function routes(app, ioHandlers) {
       isGroup: false,
     });
 
+    //Validate: Make sure the direct chat exists and you have access.
     const direct = await findDirectChat(chatId, req.user.id);
     if (!direct) return res.json(false);
 
+    //Validation passed, proceed to retrieve info.
     const messages = await getMessagesByChatId(chatId);
 
     const chatData = new ChatData({
