@@ -508,7 +508,7 @@ async function getGroupSummaries(user_id) {
     
     groups.id, groups.name, memberships.created AS joined,
 
-    messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.msg_user_id, users.name AS msg_name
+    messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.user_id AS msg_user_id, users.name AS msg_name
     
     FROM groups
     
