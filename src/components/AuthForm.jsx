@@ -8,13 +8,13 @@ const TIMEOUT_DURATION = 5000;
 function AuthForm({ children, formInfo }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [output, setOutput] = useState(
-    searchParams.has("msg")
-      ? "Result: " + searchParams.get("msg")
-      : formInfo.register
-        ? "Tip: fill in the form"
-        : "Tip: enter username and password to login",
-  );
+  const message = searchParams.get("msg");
+  let initialOutput;
+
+  if (message) initialOutput = "Result: " + message;
+  else initialOutput = formInfo.initialOutput;
+
+  const [output, setOutput] = useState(initialOutput);
   const [isBlink, setIsBlink] = useState(false);
 
   const outputElement = useRef(null);
@@ -90,14 +90,11 @@ function AuthForm({ children, formInfo }) {
       "Content-Type": "application/json",
     });
 
-    const request = new Request(
-      formInfo.register ? "api/register" : "/api/login",
-      {
-        method: "POST",
-        body: JSON.stringify(formInfo.data),
-        headers,
-      },
-    );
+    const request = new Request(formInfo.path, {
+      method: "POST",
+      body: JSON.stringify(formInfo.data),
+      headers,
+    });
 
     fetch(request)
       .then((res) => {
@@ -123,7 +120,7 @@ function AuthForm({ children, formInfo }) {
     <form onSubmit={submit}>
       {children}
       <output
-        name={formInfo.register ? "registration result" : "login result"}
+        name={formInfo.outputName}
         htmlFor={formInfo.outputFor}
         ref={outputElement}
         className={"pre-wrap" + (isBlink ? " blink" : "")}

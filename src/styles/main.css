@@ -113,6 +113,15 @@ a {
   text-overflow: ellipsis;
 }
 
+.marked-list {
+  list-style-type: initial;
+
+  li {
+    margin-left: 2em;
+    margin-block: 0.5em;
+  }
+}
+
 .icon {
   line-height: 1;
   height: 1em;
@@ -256,19 +265,23 @@ nav .button-bar {
 
 .auth-page form {
   max-width: 100%;
-  width: 40ch;
+  width: 50ch;
 
-  ul {
+  > ul {
     font-size: 1.2em;
+
+    > li {
+      display: flex;
+      flex-direction: column;
+      row-gap: 5px;
+
+      position: relative;
+      margin-bottom: 1em;
+    }
   }
 
-  ul li {
-    display: flex;
-    flex-direction: column;
-    row-gap: 5px;
-
-    position: relative;
-    margin-bottom: 1em;
+  .form-hint li {
+    margin-block: 0.2em;
   }
 
   label {
@@ -296,7 +309,7 @@ nav .button-bar {
     color: black;
   }
 
-  button.show-password {
+  label + button {
     background: transparent;
     color: #ddd;
     padding: 0;

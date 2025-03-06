@@ -19,6 +19,7 @@ import Intro from "./components/Intro";
 import About from "./components/About";
 import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
+import GuestLoginForm from "./components/GuestLoginForm";
 import AppError from "./components/AppError";
 import RouteError from "./components/RouteError";
 import Test from "./components/Test";
@@ -147,6 +148,15 @@ const router = createBrowserRouter([
     element: (
       <Title title="Login">
         <LoginForm />
+      </Title>
+    ),
+    loader: ensureLoggedOut,
+  },
+  {
+    path: "/guest-login",
+    element: (
+      <Title title="Guest Login">
+        <GuestLoginForm />
       </Title>
     ),
     loader: ensureLoggedOut,

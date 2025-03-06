@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import AuthForm from "./AuthForm";
+import { User } from "../../js/chat-data.js";
 
 function LoginForm() {
   const [searchParams] = useSearchParams();
@@ -15,9 +16,9 @@ function LoginForm() {
   const submitButton = useRef(null);
 
   const redirectPath = searchParams.get("rdr");
-  let otherPath = "/register";
-
-  if (redirectPath) otherPath += "?rdr=" + encodeURIComponent(redirectPath);
+  const redirectQuery = redirectPath
+    ? "?rdr=" + encodeURIComponent(redirectPath)
+    : "";
 
   function updateSubmitting(bool) {
     setSubmitting(bool);
@@ -56,14 +57,16 @@ function LoginForm() {
   }
 
   const formInfo = {
-    register: false,
-    outputFor: "username current-password",
-    submitButton,
+    path: "/api/login",
     data: { username, password },
+    initialOutput: "Tip: enter username and password to login",
+    outputName: "login result",
+    outputFor: "username current-password",
     submitting,
-    updateSubmitting,
+    submitButton,
     validateInputs: () => true,
     parseSubmitRes,
+    updateSubmitting,
   };
 
   return (
@@ -79,7 +82,7 @@ function LoginForm() {
               name="username"
               id="username"
               maxLength="50"
-              pattern="\w+"
+              pattern={User.usernameRegex}
               value={username}
               onChange={updateUsername}
               autoComplete="username"
@@ -91,7 +94,6 @@ function LoginForm() {
             <label htmlFor="current-password">Password</label>
             <button
               type="button"
-              className="show-password"
               aria-label={
                 passwordIsShown
                   ? "hide password"
@@ -129,7 +131,11 @@ function LoginForm() {
       </AuthForm>
       <ul>
         <li>
-          <Link to={otherPath}>Register</Link>
+          <Link to={"/guest-login" + redirectQuery}>Guest login</Link>
+          {" to try without an account."}
+        </li>
+        <li>
+          <Link to={"/register" + redirectQuery}>Register</Link>
           {" to create an account."}
         </li>
         <li>

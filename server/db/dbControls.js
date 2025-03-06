@@ -118,6 +118,7 @@ export {
 
 export {
   registerUser,
+  registerGuest,
   getUsers,
   findUserById,
   findUser,

@@ -1,6 +1,7 @@
 import passport from "passport";
 import {
   registerUser,
+  registerGuest,
   getUsers,
   findUserById,
   getFriendships,
@@ -62,6 +63,24 @@ function routes(app, ioHandlers) {
     const password = req.body.password;
 
     const { err, user, info } = await registerUser(username, password);
+
+    if (user) {
+      //perform login for the user after successful registration, before responding.
+      req.logIn(user, function () {
+        res.json({ err, user, info });
+      });
+
+      //inform online users about the new user by socket io.
+      ioHandlers.addUser(user);
+    }
+    //on failure, respond with information
+    else res.json({ err, user, info });
+  });
+
+  app.post("/api/guest-login", async (req, res) => {
+    const username = req.body.username;
+
+    const { err, user, info } = await registerGuest(username);
 
     if (user) {
       //perform login for the user after successful registration, before responding.

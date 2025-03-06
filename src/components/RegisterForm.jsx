@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import AuthForm from "./AuthForm";
+import { User } from "../../js/chat-data.js";
 
 function RegisterForm() {
   const [searchParams] = useSearchParams();
@@ -15,9 +16,9 @@ function RegisterForm() {
   const submitButton = useRef(null);
 
   const redirectPath = searchParams.get("rdr");
-  let otherPath = "/login";
-
-  if (redirectPath) otherPath += "?rdr=" + encodeURIComponent(redirectPath);
+  const redirectQuery = redirectPath
+    ? "?rdr=" + encodeURIComponent(redirectPath)
+    : "";
 
   function updateSubmitting(bool) {
     setSubmitting(bool);
@@ -67,14 +68,16 @@ function RegisterForm() {
   }
 
   const formInfo = {
-    register: true,
-    outputFor: "username new-password confirm-password",
-    submitButton,
+    path: "/api/register",
     data: { username, password },
+    initialOutput: "Tip: fill in the form",
+    outputName: "registration result",
+    outputFor: "username new-password confirm-password",
     submitting,
-    updateSubmitting,
+    submitButton,
     validateInputs,
     parseSubmitRes,
+    updateSubmitting,
   };
 
   return (
@@ -91,7 +94,7 @@ function RegisterForm() {
               id="username"
               aria-describedby="username-hint"
               maxLength="50"
-              pattern="\w+"
+              pattern={User.usernameRegex}
               value={username}
               onChange={updateUsername}
               autoComplete="off"
@@ -99,13 +102,15 @@ function RegisterForm() {
               required
               autoFocus
             />
-            <p id="username-hint">1-50 word characters (a-z, A-Z, 0-9, _).</p>
+            <ul id="username-hint" className="form-hint marked-list">
+              <li>1-50 word characters (a-z, A-Z, 0-9, _).</li>
+              <li>&quot;guest_&quot; not allowed in front of username.</li>
+            </ul>
           </li>
           <li>
             <label htmlFor="new-password">Password</label>
             <button
               type="button"
-              className="show-password"
               aria-label={
                 passwordIsShown
                   ? "hide password"
@@ -128,7 +133,9 @@ function RegisterForm() {
               disabled={submitting}
               required
             />
-            <p id="password-hint">6-30 characters.</p>
+            <ul id="password-hint" className="form-hint marked-list">
+              <li>6-30 characters.</li>
+            </ul>
           </li>
           <li>
             <label htmlFor="confirm-password">Confirm Password</label>
@@ -152,8 +159,12 @@ function RegisterForm() {
       </AuthForm>
       <ul>
         <li>
-          <Link to={otherPath}>Login</Link>
+          <Link to={"/login" + redirectQuery}>Login</Link>
           {" to enter your account."}
+        </li>
+        <li>
+          <Link to={"/guest-login" + redirectQuery}>Guest login</Link>
+          {" to try without an account."}
         </li>
         <li>
           <Link to="/">Intro</Link>

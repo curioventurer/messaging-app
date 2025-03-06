@@ -63,6 +63,11 @@ export class ChatId {
 }
 
 export class User {
+  static GUEST_LABEL = "guest_";
+  static usernameRegex = "(?!" + this.GUEST_LABEL + ")\\w+";
+  static guestUsernameRegex =
+    "(?=" + this.GUEST_LABEL + ")\\w{" + (User.GUEST_LABEL.length + 1) + ",}";
+
   static ACTIVITY_TYPE = {
     OFFLINE: "offline",
     ONLINE: "online",
@@ -76,6 +81,7 @@ export class User {
     name = DEFAULT_TEXT,
     password = DEFAULT_TEXT,
     activity = User.ACTIVITY_TYPE.OFFLINE,
+    is_guest = false,
     last_seen = DEFAULT_TIME,
     created = DEFAULT_TIME,
     friendship = new UserFriendship({}),
@@ -84,6 +90,7 @@ export class User {
     this.name = name;
     this.password = password;
     this.activity = activity;
+    this.is_guest = is_guest;
     this.last_seen = last_seen;
     this.created = created;
     this.friendship = friendship;
@@ -141,7 +148,36 @@ export class User {
   }
 
   static isValidUsername(username) {
-    //1-50 word characters (a-z, A-Z, 0-9, _)
+    if (!this.isValidUsernameFormat(username)) return false;
+
+    if (this.isGuest(username)) return false;
+
+    return true;
+  }
+
+  static isValidGuestUsername(username) {
+    if (!this.isValidUsernameFormat(username)) return false;
+
+    if (!this.isGuest(username)) return false;
+
+    //At least 1 character after guest label.
+    const name = username.slice(this.GUEST_LABEL.length);
+    if (name.length < 1) return false;
+
+    return true;
+  }
+
+  //guest is identified by a label in front of username.
+  static isGuest(username) {
+    const label = username.slice(0, this.GUEST_LABEL.length);
+
+    if (label !== this.GUEST_LABEL) return false;
+
+    return true;
+  }
+
+  //1-50 word characters (a-z, A-Z, 0-9, _)
+  static isValidUsernameFormat(username) {
     if (username.length < 1 || username.length > 50) return false;
 
     if (!username.match(/^\w+$/)) return false;
@@ -149,8 +185,8 @@ export class User {
     return true;
   }
 
+  //6-30 characters
   static isValidPassword(password) {
-    //6-30 characters
     if (password.length < 6 || password.length > 30) return false;
 
     return true;

@@ -9,6 +9,7 @@ CREATE TABLE users (
   name VARCHAR ( 255 ) UNIQUE NOT NULL,
   password VARCHAR ( 255 ) NOT NULL,
   activity user_activity_type DEFAULT 'offline',
+  is_guest BOOLEAN DEFAULT FALSE,
   last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -78,17 +79,17 @@ CREATE TABLE direct_chat_agents (
   last_read_message_id INT REFERENCES messages ( id )
 );
 
-INSERT INTO users ( name, password, activity, created ) VALUES
-  ( 'windseeker', '$2b$12$ZQ05Ky96Gb3Q9JAypVTEve6RvpgfMn87MvxIjaviL/BYANYnRTjO6', 'offline', '2020-02-29 18:52:12+06' ),  --password: 'alpha59'
-  ( 'obb', '$2b$12$tFMKHDOkvOyEoi8VUuKkJeWWiS3BiyAF/ggTqu3Y1HFk9NDQgifEa', 'offline', '2023-09-30 09:07:00+07' ), --password: 'run381'
-  ( 'hill', '$2b$12$HMM/HAq5b0JpF5DioPDAVu8X2g605cjiy1v40mrpbRU3bEBa9ENiq', 'offline', '2024-09-01 22:57:22+04' ), --password: 'bee290'
-  ( 'gin', '$2b$12$zdeIFquDwD93Z5E/Zew0IeB2ewrj4.DkzdDbgNGugsg.hnLEySQq6', 'offline', '2024-10-13 09:07:00-01' ), --password: 'yoyo31'
-  ( 'hue', '$2b$12$XgMmCwwxwkQ7NDVFomhVRuY4LKTbxuENFCzbBqcjsYWAVI1tQzJ4S', 'offline', '2024-10-14 10:07:00-03' ), --password: 'loop48'
-  ( 'alex', '$2b$12$44RXTKzaEA.pi5xvN3qz/u2VfJu7KYUHfs/mLoc92T40irezOmTtS', 'offline', '2024-10-15 10:07:00+08' ), --password: 'rain61'
-  ( 'john_lock_door', '$2b$12$0B4YUhkMB3BhdljuLZrnVeGeQNHf1/PLE7oYm9igkbIY.zzkSc0H2', 'offline', '2024-10-16 10:07:00+08' ), --password: 'pin141'
-  ( 'bob_train', '$2b$12$n4R06F2BYEkw0rDnDebeqOm5p60/QuYj6ppkGAJfYKsDB8xFIM90S', 'offline', '2024-10-17 10:07:00+08' ), --password: 'keg590'
-  ( 'lock', '$2b$12$beSME/2kKsIioQg8WvAwy.Tos5Lfc6BsRDgYb7XdqtAv51jYfMCGu', 'offline', '2024-10-18 10:07:00+08' ), --password: 'bun390'
-  ( 'orange', '$2b$12$jWyt8QZtUdvdZqYKZaRTo.HmV8zCGN9q3INHLlHTKn1SNoO17yXsK', 'offline', '2024-10-19 10:07:00+08' ); --password: 'sweet20'
+INSERT INTO users ( name, password, created ) VALUES
+  ( 'windseeker', '$2b$12$ZQ05Ky96Gb3Q9JAypVTEve6RvpgfMn87MvxIjaviL/BYANYnRTjO6', '2020-02-29 18:52:12+06' ),  --password: 'alpha59'
+  ( 'obb', '$2b$12$tFMKHDOkvOyEoi8VUuKkJeWWiS3BiyAF/ggTqu3Y1HFk9NDQgifEa', '2023-09-30 09:07:00+07' ), --password: 'run381'
+  ( 'hill', '$2b$12$HMM/HAq5b0JpF5DioPDAVu8X2g605cjiy1v40mrpbRU3bEBa9ENiq', '2024-09-01 22:57:22+04' ), --password: 'bee290'
+  ( 'gin', '$2b$12$zdeIFquDwD93Z5E/Zew0IeB2ewrj4.DkzdDbgNGugsg.hnLEySQq6', '2024-10-13 09:07:00-01' ), --password: 'yoyo31'
+  ( 'hue', '$2b$12$XgMmCwwxwkQ7NDVFomhVRuY4LKTbxuENFCzbBqcjsYWAVI1tQzJ4S', '2024-10-14 10:07:00-03' ), --password: 'loop48'
+  ( 'alex', '$2b$12$44RXTKzaEA.pi5xvN3qz/u2VfJu7KYUHfs/mLoc92T40irezOmTtS', '2024-10-15 10:07:00+08' ), --password: 'rain61'
+  ( 'john_lock_door', '$2b$12$0B4YUhkMB3BhdljuLZrnVeGeQNHf1/PLE7oYm9igkbIY.zzkSc0H2', '2024-10-16 10:07:00+08' ), --password: 'pin141'
+  ( 'bob_train', '$2b$12$n4R06F2BYEkw0rDnDebeqOm5p60/QuYj6ppkGAJfYKsDB8xFIM90S', '2024-10-17 10:07:00+08' ), --password: 'keg590'
+  ( 'lock', '$2b$12$beSME/2kKsIioQg8WvAwy.Tos5Lfc6BsRDgYb7XdqtAv51jYfMCGu', '2024-10-18 10:07:00+08' ), --password: 'bun390'
+  ( 'orange', '$2b$12$jWyt8QZtUdvdZqYKZaRTo.HmV8zCGN9q3INHLlHTKn1SNoO17yXsK', '2024-10-19 10:07:00+08' ); --password: 'sweet20'
 
 INSERT INTO friendships ( state, modified ) VALUES
   ( 'accepted', '2023-10-13 09:07:00+07' ),

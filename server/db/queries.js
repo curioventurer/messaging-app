@@ -46,12 +46,36 @@ async function registerUser(name, password) {
   }
 }
 
+async function registerGuest(name) {
+  try {
+    if (!User.isValidGuestUsername(name))
+      return { info: { message: "invalid username" } };
+
+    const existingUser = await findUser(name);
+    if (existingUser) return { info: { message: "username taken" } };
+
+    const { rows } = await pool.query(
+      "INSERT INTO users ( name, password, is_guest ) VALUES ( $1, $2, TRUE ) RETURNING id, name, created",
+      [name, "guest"],
+    );
+    const response = rows[0];
+
+    if (response) {
+      return { user: new User({ ...response, is_guest: true }) };
+    } else {
+      return { info: { message: "database returning failure" } };
+    }
+  } catch (err) {
+    return { err };
+  }
+}
+
 /*Used only for login authentication, and user registration.
   Retrieve user info(with password) using username.
 */
 async function findUser(name) {
   const { rows } = await pool.query(
-    "SELECT id, name, password, activity, last_seen, created FROM users WHERE name = $1",
+    "SELECT id, name, password, activity, is_guest, last_seen, created FROM users WHERE name = $1",
     [name],
   );
   const response = rows[0];
@@ -65,7 +89,7 @@ async function findUser(name) {
 async function findUserById(id) {
   try {
     const { rows } = await pool.query(
-      "SELECT id, name, activity, last_seen, created FROM users WHERE id = $1",
+      "SELECT id, name, activity, is_guest, last_seen, created FROM users WHERE id = $1",
       [id],
     );
     const response = rows[0];
@@ -80,7 +104,7 @@ async function findUserById(id) {
 
 async function getUsers(user_id) {
   const SQL_GET_USERS = `
-    SELECT id, name, created
+    SELECT id, name, is_guest, created
     FROM users
     WHERE id != $1
     ORDER BY name
@@ -736,6 +760,7 @@ async function findDirectChat(chatId = new ChatId({}), user_id) {
 
 export {
   registerUser,
+  registerGuest,
   findUser,
   findUserById,
   getUsers,
