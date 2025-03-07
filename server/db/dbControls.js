@@ -132,6 +132,7 @@ export {
   findDirectChat,
   findDirectChatShown,
   getUserGroupIds,
+  getGroups,
   findGroupById,
   getMembersByGroupId,
   postMessage as postMessageDB,

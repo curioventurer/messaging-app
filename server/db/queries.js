@@ -644,6 +644,17 @@ async function getDirectChats(user_id) {
   return rows.map((direct) => new Direct(direct));
 }
 
+async function getGroups(user_id) {
+  const SQL_GET_GROUPS = `
+    SELECT id, name, created
+    FROM groups
+    ORDER BY name;
+  `;
+
+  const { rows } = await pool.query(SQL_GET_GROUPS);
+  return rows.map((group) => new Group(group));
+}
+
 async function findGroupById(groupId) {
   const { rows } = await pool.query(
     "SELECT id, name, created FROM groups WHERE id = $1",
@@ -773,6 +784,7 @@ export {
   hideDirectChat,
   findDirectChatShown,
   getUserGroupIds,
+  getGroups,
   findGroupById,
   getMembersByGroupId,
   postMessage,

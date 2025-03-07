@@ -172,7 +172,7 @@ function UserList() {
   else
     content = (
       <UpdateDirectIdContext.Provider value={updateDirectId}>
-        <table className="user-list">
+        <table className="list-table">
           <tbody>
             {users.map((user) => (
               <UserItem key={user.id} user={user} />
@@ -183,7 +183,7 @@ function UserList() {
     );
 
   return (
-    <div className="user-list-page">
+    <div className="list-page user-list">
       <h1>Users</h1>
       <p>
         You can add friends from the list of users. But you will have to wait

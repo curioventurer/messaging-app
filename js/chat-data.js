@@ -378,6 +378,16 @@ export class Group {
     this.name = name;
     this.created = created;
   }
+
+  //groups: contain instances of Group - chat-data.js
+  static sortGroups(groups = []) {
+    const sortedGroups = groups.toSorted((a, b) => {
+      if (a.name < b.name) return -1;
+      else return 1;
+    });
+
+    return sortedGroups;
+  }
 }
 
 export class Direct {

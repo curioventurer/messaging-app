@@ -14,6 +14,7 @@ import PrivateInterface from "./components/PrivateInterface";
 import Home from "./components/Home";
 import Room from "./components/Room";
 import FriendOverview from "./components/FriendOverview";
+import GroupList from "./components/GroupList";
 import UserList from "./components/UserList";
 import Intro from "./components/Intro";
 import About from "./components/About";
@@ -25,7 +26,7 @@ import RouteError from "./components/RouteError";
 import Test from "./components/Test";
 
 import "normalize.css";
-import "./styles/main.css";
+import "./styles/main.scss";
 
 //Fetch user from localStorage. If found, user is logged in, return user. Else, return false to indicate logged out.
 async function getUser() {
@@ -99,6 +100,14 @@ const router = createBrowserRouter([
         element: (
           <Title title="Friend">
             <FriendOverview />
+          </Title>
+        ),
+      },
+      {
+        path: "/groups",
+        element: (
+          <Title title="Groups">
+            <GroupList />
           </Title>
         ),
       },

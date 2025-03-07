@@ -388,13 +388,13 @@ nav .button-bar {
   }
 }
 
-.user-list-page {
+.list-page {
   > p {
     margin-bottom: 1em;
   }
 }
 
-.user-list {
+.list-table {
   --background: #0005;
 
   width: 100%;
@@ -402,7 +402,6 @@ nav .button-bar {
   tbody {
     display: grid;
     grid-auto-rows: 1fr;
-    grid-template-columns: 2fr 3fr auto;
   }
 
   tr {
@@ -421,6 +420,58 @@ nav .button-bar {
 
     /*Prevent 'flex child overflow failure'.*/
     min-width: 0;
+  }
+}
+
+//Change table layout to single column
+@mixin narrow-list-table {
+  tbody {
+    grid-template-columns: 1fr;
+  }
+
+  tr {
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.4em;
+
+    padding: 0.7em;
+    border: 1px solid white;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: 1px solid white;
+    }
+
+    /*Prevent 'flex overflow failure'.*/
+    min-width: 0;
+  }
+
+  tr:nth-child(2n + 1) {
+    background: var(--background);
+
+    td {
+      background: initial;
+    }
+  }
+
+  td:empty {
+    display: none;
+  }
+
+  td {
+    padding: 0;
+  }
+}
+
+.group-list table {
+  tbody {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.user-list table {
+  tbody {
+    grid-template-columns: 2fr 3fr auto;
   }
 }
 
@@ -856,48 +907,20 @@ button.room-header {
   }
 }
 
-/*Switch layout for .user-list when width decreases.
+/*Switch layout for user list table when width decreases.
   Breakpoint is an arbitrary value by approximate character counts.
   Value is to be changed, if the length of content changes.
 */
 @media (max-width: 80ch) {
-  .user-list {
-    tbody {
-      grid-template-columns: 1fr;
-    }
+  .user-list table {
+    @include narrow-list-table;
+  }
+}
 
-    tr {
-      display: flex;
-      flex-direction: column;
-      row-gap: 0.4em;
-
-      padding: 0.7em;
-      border: 1px solid white;
-      border-bottom: none;
-
-      &:last-child {
-        border-bottom: 1px solid white;
-      }
-
-      /*Prevent 'flex overflow failure'.*/
-      min-width: 0;
-    }
-
-    tr:nth-child(2n + 1) {
-      background: var(--background);
-
-      td {
-        background: initial;
-      }
-    }
-
-    td:empty {
-      display: none;
-    }
-
-    td {
-      padding: 0;
-    }
+//Switch layout for group list when width decreases.
+@media (max-width: 60ch) {
+  .group-list table {
+    @include narrow-list-table;
   }
 }
 

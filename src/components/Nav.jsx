@@ -19,6 +19,7 @@ const allLinks = {
   },
   home: { href: "/home", name: "Home", classes: ["private-link"] },
   friend: { href: "/friend", name: "Friend", classes: ["private-link"] },
+  groups: { href: "/groups", name: "Groups", classes: ["private-link"] },
   users: { href: "/users", name: "Users", classes: ["private-link"] },
   about: { href: "/about", name: "About", classes: [] },
 };
@@ -40,6 +41,7 @@ function Nav({ isPublic = false }) {
   const privateLinks = [
     allLinks.home,
     allLinks.friend,
+    allLinks.groups,
     allLinks.users,
     allLinks.index,
     allLinks.logout,
