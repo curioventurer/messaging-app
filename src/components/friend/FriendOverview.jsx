@@ -1,19 +1,19 @@
 import { useEffect, useState, useCallback } from "react";
-import useFetch from "../hooks/useFetch";
-import Loading from "./Loading";
-import LoadFail from "./LoadFail";
-import LoadError from "./LoadError";
+import useFetch from "../../hooks/useFetch";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
 import FriendList from "./FriendList";
 import { UpdateDirectIdContext } from "./FriendButtonBar";
-import sortFriends from "../controllers/sortFriends.js";
-import clearSocket from "../controllers/clearSocket.js";
+import sortFriends from "../../controllers/sortFriends.js";
+import clearSocket from "../../controllers/clearSocket.js";
 import {
   ChatItemData,
   User,
   UserFriendship,
   RequestStatus,
   UserActivity,
-} from "../../js/chat-data.js";
+} from "../../../js/chat-data.js";
 
 function FriendOverview() {
   //contain instances of UserFriendship - chat-data.js

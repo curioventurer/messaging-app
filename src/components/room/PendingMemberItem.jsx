@@ -1,8 +1,8 @@
 import { useContext, memo } from "react";
 import PropTypes from "prop-types";
-import useDuration from "../hooks/useDuration";
+import useDuration from "../../hooks/useDuration.jsx";
 import { RoomContext } from "./Room";
-import { Member } from "../../js/chat-data.js";
+import { Member } from "../../../js/chat-data.js";
 
 function PendingMemberItem({ member }) {
   const { room } = useContext(RoomContext);

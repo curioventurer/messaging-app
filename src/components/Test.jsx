@@ -2,8 +2,8 @@
 
 import { useState, memo } from "react";
 import useFetch from "../hooks/useFetch";
-import Loading from "./Loading";
-import LoadFail from "./LoadFail";
+import Loading from "./sys/Loading";
+import LoadFail from "./sys/LoadFail";
 
 function Test() {
   const [i, setI] = useState(0);

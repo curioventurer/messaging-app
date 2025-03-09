@@ -1,12 +1,12 @@
 import { useContext } from "react";
-import Loading from "./Loading";
-import LoadFail from "./LoadFail";
-import LoadError from "./LoadError";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
 import MemberItem from "./MemberItem";
-import PendingMemberItem from "./PendingMemberItem";
+import PendingMemberItem from "./PendingMemberItem.jsx";
 import { RoomContext } from "./Room";
-import DateFormat from "../controllers/DateFormat.js";
-import { Member, RequestStatus } from "../../js/chat-data.js";
+import DateFormat from "../../controllers/DateFormat.js";
+import { Member, RequestStatus } from "../../../js/chat-data.js";
 
 function GroupInfo() {
   const { client, room, members } = useContext(RoomContext);

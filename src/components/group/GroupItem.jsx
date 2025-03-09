@@ -1,8 +1,8 @@
 import { memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import useDuration from "../hooks/useDuration";
-import { Group, Member, RequestStatus } from "../../js/chat-data.js";
+import useDuration from "../../hooks/useDuration.jsx";
+import { Group, Member, RequestStatus } from "../../../js/chat-data.js";
 
 function GroupItem({ group }) {
   const membership = group.membership;

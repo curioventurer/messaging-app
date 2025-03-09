@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import ChatItemMenu from "./ChatItemMenu";
-import { MenuContext } from "./PrivateInterface";
-import { RoomContext } from "./Room";
-import DateFormat from "../controllers/DateFormat.js";
-import updateRect from "../controllers/updateRect.js";
-import { ChatItemData } from "../../js/chat-data.js";
+import ChatItemMenu from "./ChatItemMenu.jsx";
+import { MenuContext } from "../layout/PrivateInterface.jsx";
+import { RoomContext } from "../room/Room.jsx";
+import DateFormat from "../../controllers/DateFormat.js";
+import updateRect from "../../controllers/updateRect.js";
+import { ChatItemData } from "../../../js/chat-data.js";
 
 function ChatItem({ chat = new ChatItemData({}) }) {
   const { isMenuVisible, menuChatId, openMenu } = useContext(MenuContext);

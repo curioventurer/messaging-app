@@ -1,8 +1,8 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
-import useDuration from "../hooks/useDuration";
+import useDuration from "../../hooks/useDuration";
 import FriendButtonBar from "./FriendButtonBar";
-import { User, UserFriendship, RequestStatus } from "../../js/chat-data.js";
+import { User, UserFriendship, RequestStatus } from "../../../js/chat-data.js";
 
 function FriendItem({ friend = new UserFriendship({}) }) {
   const activity = friend.activity;

@@ -1,14 +1,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import useFetch from "../hooks/useFetch";
-import Loading from "./Loading";
-import LoadFail from "./LoadFail";
-import LoadError from "./LoadError";
-import UserItem from "./UserItem";
-import { UpdateDirectIdContext } from "./FriendButtonBar";
-import { allLinks } from "../controllers/constant.js";
-import clearSocket from "../controllers/clearSocket.js";
-import { User, UserFriendship, ChatItemData } from "../../js/chat-data.js";
+import useFetch from "../../hooks/useFetch.jsx";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
+import UserItem from "./UserItem.jsx";
+import { UpdateDirectIdContext } from "../friend/FriendButtonBar.jsx";
+import { allLinks } from "../../controllers/constant.js";
+import clearSocket from "../../controllers/clearSocket.js";
+import { User, UserFriendship, ChatItemData } from "../../../js/chat-data.js";
 
 function UserList() {
   //contain instances of User - chat-data.js

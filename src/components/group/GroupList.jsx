@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
-import useFetch from "../hooks/useFetch";
-import Loading from "./Loading";
-import LoadFail from "./LoadFail";
-import LoadError from "./LoadError";
+import useFetch from "../../hooks/useFetch";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
 import GroupItem from "./GroupItem";
-import clearSocket from "../controllers/clearSocket.js";
-import { Group } from "../../js/chat-data.js";
+import clearSocket from "../../controllers/clearSocket.js";
+import { Group } from "../../../js/chat-data.js";
 
 function GroupList() {
   //contain instances of Group - chat-data.js

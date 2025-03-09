@@ -1,6 +1,6 @@
 import { useState, useRef, useContext } from "react";
 import { RoomContext } from "./Room";
-import { Message, PostMessage } from "../../js/chat-data.js";
+import { Message, PostMessage } from "../../../js/chat-data.js";
 
 function MessagingForm() {
   const { client, chatId, appendMessage, deleteSentMsg } =

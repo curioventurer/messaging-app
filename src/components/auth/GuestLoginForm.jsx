@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import AuthForm from "./AuthForm";
-import { User } from "../../js/chat-data.js";
+import AuthForm from "./AuthForm.jsx";
+import { User } from "../../../js/chat-data.js";
 
 function GuestLoginForm() {
   const [searchParams] = useSearchParams();

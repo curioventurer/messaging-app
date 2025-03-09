@@ -1,7 +1,7 @@
 import { useContext, memo } from "react";
 import PropTypes from "prop-types";
 import { RoomContext } from "./Room";
-import { Member } from "../../js/chat-data.js";
+import { Member } from "../../../js/chat-data.js";
 
 function MemberItem({ member }) {
   const { room } = useContext(RoomContext);

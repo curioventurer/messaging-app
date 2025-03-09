@@ -1,8 +1,8 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
-import useDuration from "../hooks/useDuration";
-import FriendButtonBar from "./FriendButtonBar";
-import { User, RequestStatus } from "../../js/chat-data.js";
+import useDuration from "../../hooks/useDuration.jsx";
+import FriendButtonBar from "../friend/FriendButtonBar.jsx";
+import { User, RequestStatus } from "../../../js/chat-data.js";
 
 function UserItem({ user }) {
   //is defined - non default values.

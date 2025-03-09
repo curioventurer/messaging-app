@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
-import { InterfaceContext } from "./PrivateInterface";
+import { InterfaceContext } from "./layout/PrivateInterface";
 
 function Intro() {
   const client = useContext(InterfaceContext);

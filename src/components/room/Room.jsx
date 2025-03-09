@@ -9,13 +9,13 @@ import {
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import useTitle from "../hooks/useTitle";
-import useFetch from "../hooks/useFetch";
-import ChatList from "./ChatList";
+import useTitle from "../../hooks/useTitle";
+import useFetch from "../../hooks/useFetch";
+import ChatList from "../chatlist/ChatList";
 import RoomInfo from "./RoomInfo";
 import RoomUI from "./RoomUI";
-import { InterfaceContext } from "./PrivateInterface";
-import clearSocket from "../controllers/clearSocket.js";
+import { InterfaceContext } from "../layout/PrivateInterface.jsx";
+import clearSocket from "../../controllers/clearSocket.js";
 import {
   DEFAULT_TEXT,
   User,
@@ -25,7 +25,7 @@ import {
   Group,
   Direct,
   Member,
-} from "../../js/chat-data.js";
+} from "../../../js/chat-data.js";
 
 /*room: Instance of Group or Direct - chat-data.js
   member: Array containing instances of Member - chat-data.js

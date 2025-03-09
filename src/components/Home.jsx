@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
-import ChatList from "./ChatList";
-import { InterfaceContext } from "./PrivateInterface";
+import ChatList from "./chatlist/ChatList";
+import { InterfaceContext } from "./layout/PrivateInterface";
 
 function Home() {
   const client = useContext(InterfaceContext);

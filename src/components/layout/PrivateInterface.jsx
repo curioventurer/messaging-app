@@ -7,16 +7,16 @@ import {
   createContext,
 } from "react";
 import { Outlet, useLoaderData } from "react-router-dom";
-import useFetch from "../hooks/useFetch";
+import useFetch from "../../hooks/useFetch.jsx";
 import Nav from "./Nav";
-import updateRect from "../controllers/updateRect.js";
+import updateRect from "../../controllers/updateRect.js";
 import {
   User,
   ChatItemData,
   ChatId,
   Message,
   NewMessage,
-} from "../../js/chat-data.js";
+} from "../../../js/chat-data.js";
 
 const INTERFACE_CONTEXT_DEFAULT = new User({});
 

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useContext } from "react";
-import Loading from "./Loading";
-import LoadFail from "./LoadFail";
-import LoadError from "./LoadError";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
 import Message from "./Message";
 import { RoomContext, MessageListContext } from "./Room";
-import DateFormat from "../controllers/DateFormat.js";
+import DateFormat from "../../controllers/DateFormat.js";
 
 function MessageList() {
   const { chatId } = useContext(RoomContext);

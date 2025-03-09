@@ -1,18 +1,18 @@
 import { useState, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import AuthForm from "./AuthForm";
-import { User } from "../../js/chat-data.js";
+import AuthForm from "./AuthForm.jsx";
+import { User } from "../../../js/chat-data.js";
 
-function RegisterForm() {
+function LoginForm() {
   const [searchParams] = useSearchParams();
 
+  const [submitting, setSubmitting] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordIsShown, setPasswordIsShown] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
 
   const usernameInput = useRef(null);
+  const passwordInput = useRef(null);
   const submitButton = useRef(null);
 
   const redirectPath = searchParams.get("rdr");
@@ -32,10 +32,6 @@ function RegisterForm() {
     setPassword(event.target.value);
   }
 
-  function updateConfirmPassword(event) {
-    setConfirmPassword(event.target.value);
-  }
-
   function showPassword() {
     if (passwordIsShown) {
       setPasswordIsShown(false);
@@ -44,21 +40,14 @@ function RegisterForm() {
     }
   }
 
-  function validateInputs() {
-    if (password === confirmPassword) return true;
-
-    return {
-      message: "password does not match",
-    };
-  }
-
   function parseSubmitRes(err, info) {
     let message, focusTarget;
 
     if (err) message = "database error";
     else message = info.message;
 
-    if (message === "username taken") focusTarget = usernameInput;
+    if (message === "wrong username") focusTarget = usernameInput;
+    else if (message == "wrong password") focusTarget = passwordInput;
     else focusTarget = usernameInput;
 
     return {
@@ -68,21 +57,21 @@ function RegisterForm() {
   }
 
   const formInfo = {
-    path: "/api/register",
+    path: "/api/login",
     data: { username, password },
-    initialOutput: "Tip: fill in the form",
-    outputName: "registration result",
-    outputFor: "username new-password confirm-password",
+    initialOutput: "Tip: enter username and password to login",
+    outputName: "login result",
+    outputFor: "username current-password",
     submitting,
     submitButton,
-    validateInputs,
+    validateInputs: () => true,
     parseSubmitRes,
     updateSubmitting,
   };
 
   return (
     <div className="auth-page">
-      <h1>Register</h1>
+      <h1>Login</h1>
       <AuthForm formInfo={formInfo}>
         <ul>
           <li>
@@ -92,23 +81,17 @@ function RegisterForm() {
               type="text"
               name="username"
               id="username"
-              aria-describedby="username-hint"
               maxLength="50"
               pattern={User.usernameRegex}
               value={username}
               onChange={updateUsername}
-              autoComplete="off"
+              autoComplete="username"
               disabled={submitting}
               required
-              autoFocus
             />
-            <ul id="username-hint" className="form-hint marked-list">
-              <li>1-50 word characters (a-z, A-Z, 0-9, _).</li>
-              <li>&quot;guest_&quot; not allowed in front of username.</li>
-            </ul>
           </li>
           <li>
-            <label htmlFor="new-password">Password</label>
+            <label htmlFor="current-password">Password</label>
             <button
               type="button"
               className="clear-background"
@@ -122,50 +105,39 @@ function RegisterForm() {
               {passwordIsShown ? "Hide password" : "Show password"}
             </button>
             <input
+              ref={passwordInput}
               type={passwordIsShown ? "text" : "password"}
               name="password"
-              id="new-password"
-              aria-describedby="password-hint"
+              id="current-password"
               minLength="6"
               maxLength="30"
               value={password}
               onChange={updatePassword}
-              autoComplete="new-password"
-              disabled={submitting}
-              required
-            />
-            <ul id="password-hint" className="form-hint marked-list">
-              <li>6-30 characters.</li>
-            </ul>
-          </li>
-          <li>
-            <label htmlFor="confirm-password">Confirm Password</label>
-            <input
-              type={passwordIsShown ? "text" : "password"}
-              name="password"
-              id="confirm-password"
-              value={confirmPassword}
-              onChange={updateConfirmPassword}
-              autoComplete="new-password"
+              autoComplete="current-password"
               disabled={submitting}
               required
             />
           </li>
           <li>
-            <button ref={submitButton} type="submit" disabled={submitting}>
-              {submitting ? "Waiting..." : "Register"}
+            <button
+              ref={submitButton}
+              type="submit"
+              disabled={submitting}
+              autoFocus
+            >
+              {submitting ? "Waiting..." : "Login"}
             </button>
           </li>
         </ul>
       </AuthForm>
       <ul>
         <li>
-          <Link to={"/login" + redirectQuery}>Login</Link>
-          {" to enter your account."}
-        </li>
-        <li>
           <Link to={"/guest-login" + redirectQuery}>Guest login</Link>
           {" to try without an account."}
+        </li>
+        <li>
+          <Link to={"/register" + redirectQuery}>Register</Link>
+          {" to create an account."}
         </li>
         <li>
           <Link to="/">Intro</Link>
@@ -176,4 +148,4 @@ function RegisterForm() {
   );
 }
 
-export default RegisterForm;
+export default LoginForm;
