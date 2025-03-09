@@ -14,7 +14,7 @@ import {
   getMembersByGroupId,
   getMessagesByChatId,
 } from "./db/dbControls.js";
-import { ChatId, ChatData } from "../js/chat-data.js";
+import { ChatId } from "../js/chat-data.js";
 
 function routes(app, ioHandlers) {
   //test code - api for testing.
@@ -156,16 +156,20 @@ function routes(app, ioHandlers) {
     if (!membership) return res.json(false);
 
     //Validation passed, proceed to retrieve info.
-    const group = findGroupById(groupId);
-    const messages = getMessagesByChatId(new ChatId({ id: groupId }));
-    const results = await Promise.all([group, messages]);
+    const groupPromise = findGroupById(groupId);
+    const messagesPromise = getMessagesByChatId(new ChatId({ id: groupId }));
+    const [group, messages] = await Promise.all([
+      groupPromise,
+      messagesPromise,
+    ]);
 
-    const chatData = new ChatData({
-      group: results[0],
+    group.membership = membership;
+
+    res.json({
+      room: group,
       members,
-      messages: results[1],
+      messages,
     });
-    res.json(chatData);
   });
 
   //get direct chat messages
@@ -184,12 +188,10 @@ function routes(app, ioHandlers) {
     //Validation passed, proceed to retrieve info.
     const messages = await getMessagesByChatId(chatId);
 
-    const chatData = new ChatData({
-      isGroup: false,
+    res.json({
+      room: direct,
       messages,
-      direct,
     });
-    res.json(chatData);
   });
 
   app.post("/api/open_chat/:other_id", async (req, res) => {

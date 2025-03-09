@@ -11,7 +11,7 @@ import {
   ChatItemData,
   User,
   Friendship,
-  FriendRequest,
+  RequestStatus,
   UserFriendship,
 } from "../../js/chat-data.js";
 
@@ -128,7 +128,7 @@ async function getUsers(user_id) {
   return users;
 }
 
-async function putUserActivity(id = 0, activity = User.ACTIVITY_TYPE.OFFLINE) {
+async function putUserActivity(id = 0, activity = User.ACTIVITY.OFFLINE) {
   const SQL_PUT_ACTIVITY = `
     UPDATE users
     SET activity = $2
@@ -145,7 +145,7 @@ async function putUserActivity(id = 0, activity = User.ACTIVITY_TYPE.OFFLINE) {
   `;
 
   let sql;
-  if (activity === User.ACTIVITY_TYPE.OFFLINE) sql = SQL_PUT_OFFLINE;
+  if (activity === User.ACTIVITY.OFFLINE) sql = SQL_PUT_OFFLINE;
   else sql = SQL_PUT_ACTIVITY;
 
   const { rows } = await pool.query(sql, [id, activity]);
@@ -301,7 +301,7 @@ async function getFriendships(user_id, state = "all") {
     if (direct) friendship.direct_chat_id = direct.id;
 
     //if not friends, delete sensitive info meant for friends
-    if (friendship.state !== FriendRequest.ACCEPTED)
+    if (friendship.state !== RequestStatus.ACCEPTED)
       friendship.clearSensitive();
   });
 
@@ -371,12 +371,12 @@ async function reverseFriendRequest(id, user_id) {
   if (
     !(
       friendship.receiver_id === user_id &&
-      friendship.state === FriendRequest.REJECTED
+      friendship.state === RequestStatus.REJECTED
     )
   )
     return new Error("friendship conditions not valid");
 
-  const setStatePromise = setFriendshipStateById(id, FriendRequest.PENDING);
+  const setStatePromise = setFriendshipStateById(id, RequestStatus.PENDING);
 
   const SQL_INVERT_INITIATOR = `
     UPDATE friendship_agents
@@ -446,7 +446,7 @@ async function openDirectChat(user_id, other_id) {
   ).rows[0];
 
   //Friendship not found, or not friends. Abort
-  if (friendship?.state !== FriendRequest.ACCEPTED) return false;
+  if (friendship?.state !== RequestStatus.ACCEPTED) return false;
 
   const direct_chat_id = await createDirectChat(user_id, other_id);
   return direct_chat_id;
@@ -507,20 +507,32 @@ async function findDirectChatShown(chatId = new ChatId({}), user_id) {
   return rows[0]?.is_shown;
 }
 
-/*Used only by Socket.IO to join group rooms for user.
-  Get id of groups the user joined.
+/*Get memberships of the user depending on state.
+  membership_state = "all" to specify retrieving all states.
 */
-async function getUserGroupIds(user_id) {
+async function getMemberships(
+  user_id,
+  membership_state = RequestStatus.ACCEPTED,
+) {
+  const isAll = membership_state === "all";
+
   const SQL_GET_GROUPS = `
-    SELECT groups.id
-    FROM groups
-    INNER JOIN memberships
-    ON groups.id = memberships.group_id
-    WHERE memberships.user_id = $1
-    ORDER BY groups.id
+    SELECT id, group_id, user_id, permission, state, modified
+
+    FROM memberships
+
+    WHERE user_id = $1
+    ${isAll ? "" : "AND state = $2"}
+
+    ORDER BY id;
   `;
-  const { rows } = await pool.query(SQL_GET_GROUPS, [user_id]);
-  return rows;
+
+  const values = [user_id, membership_state];
+  if (isAll) values.pop();
+
+  const { rows } = await pool.query(SQL_GET_GROUPS, values);
+
+  return rows.map((member) => new Member(member));
 }
 
 /*I call it summaries to distinguish it from other group queries,
@@ -530,7 +542,7 @@ async function getGroupSummaries(user_id) {
   const SQL_GET_GROUPS = `
     SELECT DISTINCT ON (groups.id)
     
-    groups.id, groups.name, memberships.created AS joined,
+    groups.id, groups.name, memberships.modified AS mem_modified,
 
     messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.user_id AS msg_user_id, users.name AS msg_name
     
@@ -546,6 +558,8 @@ async function getGroupSummaries(user_id) {
     ON messages.user_id = users.id
 
     WHERE memberships.user_id = $1
+    AND memberships.state = '${RequestStatus.ACCEPTED}'
+
     ORDER BY groups.id, messages.created DESC, messages.id DESC;
   `;
   const { rows } = await pool.query(SQL_GET_GROUPS, [user_id]);
@@ -557,7 +571,7 @@ async function getGroupSummaries(user_id) {
         isGroup: true,
       }),
       name: group.name,
-      joined: group.joined,
+      membership_modified: group.mem_modified,
       lastMessage: new Message({
         id: group.msg_id,
         text: group.msg_text,
@@ -651,8 +665,21 @@ async function getGroups(user_id) {
     ORDER BY name;
   `;
 
-  const { rows } = await pool.query(SQL_GET_GROUPS);
-  return rows.map((group) => new Group(group));
+  const groupsPromise = pool.query(SQL_GET_GROUPS);
+  const membershipsPromise = getMemberships(user_id, "all");
+  const values = await Promise.all([groupsPromise, membershipsPromise]);
+
+  const groups = values[0].rows.map((group) => new Group(group));
+  const memberships = values[1];
+
+  groups.forEach((group) => {
+    const membership = memberships.find(
+      (membership) => membership.group_id === group.id,
+    );
+    if (membership) group.membership = membership;
+  });
+
+  return groups;
 }
 
 async function findGroupById(groupId) {
@@ -665,12 +692,15 @@ async function findGroupById(groupId) {
 
 async function getMembersByGroupId(groupId) {
   const SQL_GET_MEMBERS = `
-    SELECT memberships.id, users.id AS user_id, users.name, memberships.permission, memberships.created
+    SELECT memberships.id, users.id AS user_id, users.name, memberships.permission, memberships.state, memberships.modified
+
     FROM memberships
+    
     INNER JOIN users
     ON memberships.user_id = users.id
+    
     WHERE memberships.group_id = $1
-    ORDER BY memberships.permission DESC, users.name
+    ORDER BY memberships.state, memberships.permission DESC, users.name
   `;
   try {
     const { rows } = await pool.query(SQL_GET_MEMBERS, [groupId]);
@@ -783,7 +813,7 @@ export {
   showDirectChat,
   hideDirectChat,
   findDirectChatShown,
-  getUserGroupIds,
+  getMemberships,
   getGroups,
   findGroupById,
   getMembersByGroupId,

@@ -51,26 +51,19 @@
   animation-timing-function: linear;
 }
 
-button {
-  cursor: pointer;
-  border: none;
-  padding: 0.5em 0.8em;
-
-  &:hover {
-    filter: brightness(0.8);
-  }
-  &:active {
-    filter: brightness(0.7);
-  }
-  &:disabled {
-    filter: brightness(0.3);
-    cursor: default;
-  }
-}
-
 h1 {
   font-size: 1.5em;
   margin-block: 0.5em;
+}
+
+h2 {
+  font-size: 1.2em;
+  margin: 0;
+}
+
+h3 {
+  font-size: 1.1em;
+  margin: 0;
 }
 
 p {
@@ -92,6 +85,69 @@ a {
 
   &:active {
     color: red;
+  }
+}
+
+td:empty {
+  padding: 0;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  padding: 0.5em 0.8em;
+
+  &.clear-background {
+    background: transparent;
+    color: white;
+
+    &:hover {
+      filter: brightness(0.7);
+    }
+    &:active {
+      filter: brightness(0.6);
+    }
+  }
+
+  &.low-bright {
+    background: #ddd;
+    border: 1px solid grey;
+  }
+
+  &[type="submit"] {
+    background: #0f0;
+    color: black;
+    font-weight: bold;
+
+    &:hover {
+      filter: brightness(0.6);
+    }
+    &:active {
+      filter: brightness(0.5);
+    }
+  }
+
+  &.hover-whitening {
+    &:hover {
+      filter: none;
+      background: #fff2;
+    }
+
+    &:active {
+      filter: none;
+      background: #fff3;
+    }
+  }
+
+  &:hover {
+    filter: brightness(0.8);
+  }
+  &:active {
+    filter: brightness(0.7);
+  }
+  &:disabled {
+    filter: brightness(0.3);
+    cursor: default;
   }
 }
 
@@ -151,10 +207,6 @@ a {
 
   &:active {
     background: none;
-  }
-
-  &.button-highlight {
-    background: #0f05;
   }
 }
 
@@ -304,14 +356,7 @@ nav .button-bar {
     padding: 0.5em;
   }
 
-  button[type="submit"] {
-    background: #0f0;
-    color: black;
-  }
-
   label + button {
-    background: transparent;
-    color: #ddd;
     padding: 0;
 
     position: absolute;
@@ -382,8 +427,6 @@ nav .button-bar {
 
     button {
       font-size: 1.2em;
-      background: #ddd;
-      border: 1px solid grey;
     }
   }
 }
@@ -463,15 +506,43 @@ nav .button-bar {
   }
 }
 
-.group-list table {
+.group-list {
   tbody {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr 1fr auto;
   }
 }
 
-.user-list table {
+.user-list {
   tbody {
     grid-template-columns: 2fr 3fr auto;
+  }
+}
+
+.pending-member-list {
+  tbody {
+    grid-template-columns: 1fr auto auto;
+  }
+}
+
+.narrow-width .pending-member-list {
+  @include narrow-list-table;
+}
+
+.member-list {
+  tbody {
+    grid-template-columns: 1fr auto auto;
+  }
+
+  tr:first-child td {
+    background: #0f05;
+  }
+}
+
+.narrow-width .member-list {
+  @include narrow-list-table;
+
+  tr:first-child {
+    background: #0f05;
   }
 }
 
@@ -479,6 +550,14 @@ nav .button-bar {
   padding: 5px;
   padding-right: 10px;
   overflow: auto;
+
+  section {
+    margin-block: 20px;
+  }
+
+  h3 {
+    margin-bottom: 5px;
+  }
 }
 
 .room-info-header {
@@ -489,67 +568,10 @@ nav .button-bar {
   border-bottom: 1px solid white;
   margin-bottom: 10px;
 
-  p {
-    font-size: 1.2em;
-    font-weight: bold;
-  }
-
-  button {
-    background: transparent;
+  button.close {
     color: yellow;
     font-weight: bold;
     font-size: 2em;
-
-    &:hover {
-      background: #fff2;
-    }
-
-    &:active {
-      background: #fff3;
-    }
-  }
-}
-
-.group-create-date {
-  margin-block: 10px;
-}
-
-section.member {
-  & > p {
-    font-size: 1.1em;
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-}
-
-.member-list {
-  width: 100%;
-
-  tbody {
-    display: grid;
-    grid-auto-rows: 1fr;
-    grid-template-columns: 1fr auto;
-  }
-
-  tr {
-    display: contents;
-  }
-
-  td {
-    padding: 1px;
-    padding-right: 5px;
-
-    &:last-child {
-      padding-right: 1px;
-    }
-  }
-
-  tr:nth-child(2n + 1) td {
-    background: #fff1;
-  }
-
-  tr:first-child td {
-    background: #0f05;
   }
 }
 
@@ -569,7 +591,7 @@ section.member {
       background: #fff3;
     }
 
-    &.button-highlight {
+    &.highlight {
       background: #0f05;
     }
   }
@@ -600,8 +622,6 @@ section.member {
   column-gap: 5px;
 
   > button {
-    background-color: transparent;
-    color: white;
     font-size: 1.4rem;
     font-weight: bold;
     padding: 0;
@@ -651,19 +671,8 @@ section.member {
   }
 
   button {
-    background-color: inherit;
-    color: white;
     width: 100%;
     text-align: start;
-
-    &:hover {
-      background-color: #333;
-      filter: none;
-    }
-
-    &:active {
-      filter: brightness(0.8);
-    }
   }
 }
 
@@ -697,18 +706,9 @@ section.member {
   row-gap: 5px;
 }
 
-button.room-header {
-  background: transparent;
-  color: inherit;
+.room-header {
   padding-block: 0;
   text-align: center;
-
-  &:hover {
-    background: #fff2;
-  }
-  &:active {
-    background: #fff3;
-  }
 
   h1 {
     margin: 0;
@@ -875,19 +875,8 @@ button.room-header {
   }
 
   button {
-    background: #0f0;
-    font-weight: bold;
-
     padding-inline: 1em;
     border-radius: 1em;
-
-    &:hover {
-      filter: brightness(0.7);
-    }
-
-    &:active {
-      filter: brightness(0.6);
-    }
   }
 }
 
@@ -918,7 +907,7 @@ button.room-header {
 }
 
 //Switch layout for group list when width decreases.
-@media (max-width: 60ch) {
+@media (max-width: 70ch) {
   .group-list table {
     @include narrow-list-table;
   }

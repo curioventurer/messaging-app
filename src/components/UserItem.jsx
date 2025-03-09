@@ -1,39 +1,23 @@
-import { useEffect, useState, memo } from "react";
+import { memo } from "react";
 import PropTypes from "prop-types";
+import useDuration from "../hooks/useDuration";
 import FriendButtonBar from "./FriendButtonBar";
-import DurationFormat from "../controllers/DurationFormat.js";
-import { User, FriendRequest } from "../../js/chat-data.js";
+import { User, RequestStatus } from "../../js/chat-data.js";
 
 function UserItem({ user }) {
-  const [duration, setDuration] = useState("");
-
   //is defined - non default values.
   const friendshipIsDefined = user.friendship.isDefined();
-
   const modified = user.friendship.modified;
-  useEffect(() => {
-    const DELAY = 5000;
 
-    if (!friendshipIsDefined) return; //don't set interval;
-
-    function updateDuration() {
-      setDuration(DurationFormat.getString(modified));
-    }
-    updateDuration();
-
-    const interval = setInterval(updateDuration, DELAY);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [modified, friendshipIsDefined]);
+  //Don't update duration if friendship not defined.
+  const duration = useDuration(modified, !friendshipIsDefined);
 
   let friendshipStatus;
 
   if (!friendshipIsDefined) friendshipStatus = "";
-  else if (user.friendship.state === FriendRequest.ACCEPTED)
+  else if (user.friendship.state === RequestStatus.ACCEPTED)
     friendshipStatus = "friends";
-  else if (user.friendship.state === FriendRequest.PENDING) {
+  else if (user.friendship.state === RequestStatus.PENDING) {
     friendshipStatus = user.friendship.is_initiator ? (
       <>
         {"received - "}
@@ -45,7 +29,7 @@ function UserItem({ user }) {
         <time>{duration}</time>
       </>
     );
-  } else if (user.friendship.state === FriendRequest.REJECTED) {
+  } else if (user.friendship.state === RequestStatus.REJECTED) {
     friendshipStatus = user.friendship.is_initiator ? (
       <>
         {"you reject - "}

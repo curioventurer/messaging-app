@@ -3,10 +3,10 @@ import RoomHeader from "./RoomHeader";
 import MessageList from "./MessageList";
 import MessagingForm from "./MessagingForm";
 
-function RoomUI({ isChatInfoShown }) {
+function RoomUI({ roomInfoIsShown }) {
   const className =
     "room-interface wide-width" +
-    (isChatInfoShown ? " low-priority-display" : "");
+    (roomInfoIsShown ? " low-priority-display" : "");
 
   return (
     <div className={className}>
@@ -18,7 +18,7 @@ function RoomUI({ isChatInfoShown }) {
 }
 
 RoomUI.propTypes = {
-  isChatInfoShown: PropTypes.bool.isRequired,
+  roomInfoIsShown: PropTypes.bool.isRequired,
 };
 
 export default RoomUI;

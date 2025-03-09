@@ -1,29 +1,53 @@
 import { useContext } from "react";
 import Loading from "./Loading";
 import LoadFail from "./LoadFail";
+import LoadError from "./LoadError";
 import MemberItem from "./MemberItem";
-import { ChatContext } from "./Room";
+import PendingMemberItem from "./PendingMemberItem";
+import { RoomContext } from "./Room";
 import DateFormat from "../controllers/DateFormat.js";
+import { Member, RequestStatus } from "../../js/chat-data.js";
 
 function GroupInfo() {
-  const { chatData } = useContext(ChatContext);
+  const { client, room, members } = useContext(RoomContext);
 
-  if (chatData === undefined) return <Loading name="group info" />;
-  else if (chatData === null) return <LoadFail name="group info" />;
+  if (room === undefined) return <Loading name="group info" />;
+  else if (room === null) return <LoadFail name="group info" />;
+  else if (room === false) return <LoadError name="group info" />;
+
+  const acceptedRequest = Member.filterByState(
+    members,
+    RequestStatus.ACCEPTED,
+    client.id,
+  );
+  const pendingRequest = Member.filterByState(members, RequestStatus.PENDING);
 
   return (
     <>
-      <p className="group-create-date">
-        {"Created on "}
-        <time dateTime={chatData.group.created}>
-          {DateFormat.timestamp(chatData.group.created)}
+      <p>
+        {`Group "${room.name}" was created on `}
+        <time dateTime={room.created}>
+          {DateFormat.timestamp(room.created)}
         </time>
+        {"."}
       </p>
-      <section className="member">
-        <p>Members</p>
-        <table className="member-list">
+      {pendingRequest.length > 0 ? (
+        <section className="pending-member-list">
+          <h3>Pending Request</h3>
+          <table className="list-table">
+            <tbody>
+              {pendingRequest.map((member) => (
+                <PendingMemberItem key={member.id} member={member} />
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ) : null}
+      <section className="member-list">
+        <h3>Members</h3>
+        <table className="list-table">
           <tbody>
-            {chatData.members.map((member) => (
+            {acceptedRequest.map((member) => (
               <MemberItem key={member.id} member={member} />
             ))}
           </tbody>

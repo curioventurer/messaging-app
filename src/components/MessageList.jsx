@@ -3,12 +3,12 @@ import Loading from "./Loading";
 import LoadFail from "./LoadFail";
 import LoadError from "./LoadError";
 import Message from "./Message";
-import { RoomContext, ChatContext } from "./Room";
+import { RoomContext, MessageListContext } from "./Room";
 import DateFormat from "../controllers/DateFormat.js";
 
 function MessageList() {
   const { chatId } = useContext(RoomContext);
-  const { chatData } = useContext(ChatContext);
+  const messages = useContext(MessageListContext);
   const msgListRef = useRef(null);
 
   let previousDate = "";
@@ -35,8 +35,8 @@ function MessageList() {
     };
   }, [chatId]);
 
-  const messages = chatData ? chatData.messages : [];
-  for (const msg of messages) {
+  const arr = messages ? messages : [];
+  for (const msg of arr) {
     const timestamp = new Date(msg.created);
     const msgDate = timestamp.toLocaleDateString();
 
@@ -63,11 +63,11 @@ function MessageList() {
   itemsArray.push(<div key="anchor" className="anchor"></div>);
 
   let content;
-  if (chatData === undefined)
+  if (messages === undefined)
     content = <Loading name="messages" className="text-center" />;
-  else if (chatData === null)
+  else if (messages === null)
     content = <LoadFail name="messages" className="text-center" />;
-  else if (chatData === false)
+  else if (messages === false)
     content = <LoadError name="messages" className="text-center" />;
   else if (itemsArray.length === 1)
     content = <p className="no-message">no message</p>;

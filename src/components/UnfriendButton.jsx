@@ -34,10 +34,14 @@ function UnfriendButton({ friend }) {
         </p>
         <ul>
           <li>
-            <button onClick={unfriend}>Yes</button>
+            <button className="low-bright" onClick={unfriend}>
+              Yes
+            </button>
           </li>
           <li>
-            <button onClick={closeDialog}>No</button>
+            <button className="low-bright" onClick={closeDialog}>
+              No
+            </button>
           </li>
         </ul>
       </dialog>

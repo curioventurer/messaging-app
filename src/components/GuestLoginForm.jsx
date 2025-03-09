@@ -74,7 +74,12 @@ function GuestLoginForm() {
         <ul>
           <li>
             <label htmlFor="username">Username</label>
-            <button type="button" onClick={generateUsername}>
+            <button
+              type="button"
+              className="clear-background"
+              onClick={generateUsername}
+              disabled={submitting}
+            >
               Generate Username
             </button>
             <input

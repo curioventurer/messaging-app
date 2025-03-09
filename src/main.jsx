@@ -6,6 +6,7 @@ import {
   redirect,
 } from "react-router-dom";
 import { io } from "socket.io-client";
+import { allLinks } from "./controllers/constant.js";
 import { User } from "../js/chat-data.js";
 
 import Title from "./components/Title";
@@ -50,15 +51,17 @@ async function ensureLoggedIn({ request }) {
     const url = new URL(request.url);
     const redirectPath = url.pathname + url.search;
 
-    return redirect("/login?rdr=" + encodeURIComponent(redirectPath));
+    return redirect(
+      allLinks.login.href + "?rdr=" + encodeURIComponent(redirectPath),
+    );
   }
 }
 
-//Only proceed with routing if logged out, else redirect to "/home".
+//Only proceed with routing if logged out, else redirect to home.
 async function ensureLoggedOut() {
   const user = await getUser();
 
-  if (user) return redirect("/home");
+  if (user) return redirect(allLinks.home.href);
   else return null;
 }
 
@@ -70,7 +73,8 @@ async function logout() {
   const res = await fetch("/api/logout");
   const isSuccess = await res.json();
 
-  if (isSuccess) return redirect("/login?msg=successful+logout");
+  if (isSuccess)
+    return redirect(allLinks.login.href + "?msg=successful+logout");
   else return redirect("/error?err=logout");
 }
 
@@ -80,9 +84,9 @@ const router = createBrowserRouter([
     loader: ensureLoggedIn,
     children: [
       {
-        path: "/home",
+        path: allLinks.home.href,
         element: (
-          <Title title="Home">
+          <Title title={allLinks.home.name}>
             <Home />
           </Title>
         ),
@@ -96,25 +100,25 @@ const router = createBrowserRouter([
         element: <Room isGroup={false} title />,
       },
       {
-        path: "/friend",
+        path: allLinks.friend.href,
         element: (
-          <Title title="Friend">
+          <Title title={allLinks.friend.name}>
             <FriendOverview />
           </Title>
         ),
       },
       {
-        path: "/groups",
+        path: allLinks.groups.href,
         element: (
-          <Title title="Groups">
+          <Title title={allLinks.groups.name}>
             <GroupList />
           </Title>
         ),
       },
       {
-        path: "/users",
+        path: allLinks.users.href,
         element: (
-          <Title title="Users">
+          <Title title={allLinks.users.name}>
             <UserList />
           </Title>
         ),
@@ -128,15 +132,15 @@ const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <Title title="Intro">
+          <Title title={allLinks.index.name}>
             <Intro />
           </Title>
         ),
       },
       {
-        path: "/about",
+        path: allLinks.about.href,
         element: (
-          <Title title="About">
+          <Title title={allLinks.about.name}>
             <About />
           </Title>
         ),
@@ -144,34 +148,34 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/register",
+    path: allLinks.register.href,
     element: (
-      <Title title="Register">
+      <Title title={allLinks.register.name}>
         <RegisterForm />
       </Title>
     ),
     loader: ensureLoggedOut,
   },
   {
-    path: "/login",
+    path: allLinks.login.href,
     element: (
-      <Title title="Login">
+      <Title title={allLinks.login.name}>
         <LoginForm />
       </Title>
     ),
     loader: ensureLoggedOut,
   },
   {
-    path: "/guest-login",
+    path: allLinks.guestLogin.href,
     element: (
-      <Title title="Guest Login">
+      <Title title={allLinks.guestLogin.name}>
         <GuestLoginForm />
       </Title>
     ),
     loader: ensureLoggedOut,
   },
   {
-    path: "/logout",
+    path: allLinks.logout.href,
     loader: logout,
   },
   {

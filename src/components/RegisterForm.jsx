@@ -111,6 +111,7 @@ function RegisterForm() {
             <label htmlFor="new-password">Password</label>
             <button
               type="button"
+              className="clear-background"
               aria-label={
                 passwordIsShown
                   ? "hide password"

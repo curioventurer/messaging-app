@@ -59,7 +59,7 @@ function MessagingForm() {
         required
         autoFocus
       />
-      <button>Send</button>
+      <button type="submit">Send</button>
     </form>
   );
 }

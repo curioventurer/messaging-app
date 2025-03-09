@@ -11,7 +11,7 @@ import {
   ChatItemData,
   User,
   UserFriendship,
-  FriendRequest,
+  RequestStatus,
   UserActivity,
 } from "../../js/chat-data.js";
 
@@ -133,7 +133,7 @@ function FriendOverview() {
       });
 
       //if offline, store last_seen value.
-      if (status.activity === User.ACTIVITY_TYPE.OFFLINE)
+      if (status.activity === User.ACTIVITY.OFFLINE)
         friendship.last_seen = status.last_seen;
 
       const newFriends = sortFriends([
@@ -176,18 +176,18 @@ function FriendOverview() {
   else if (friends.length === 0) content = <p>Friend list is empty.</p>;
   else {
     const acceptedRequest = friends.filter(
-      (friend) => friend.state === FriendRequest.ACCEPTED,
+      (friend) => friend.state === RequestStatus.ACCEPTED,
     );
     const sentRequest = friends.filter(
       (friend) =>
-        friend.state === FriendRequest.PENDING && !friend.is_initiator,
+        friend.state === RequestStatus.PENDING && !friend.is_initiator,
     );
     const receivedRequest = friends.filter(
-      (friend) => friend.state === FriendRequest.PENDING && friend.is_initiator,
+      (friend) => friend.state === RequestStatus.PENDING && friend.is_initiator,
     );
     const rejectedRequest = friends.filter(
       (friend) =>
-        friend.state === FriendRequest.REJECTED && !friend.is_initiator,
+        friend.state === RequestStatus.REJECTED && !friend.is_initiator,
     );
 
     content = (

@@ -12,7 +12,7 @@ import {
   findDirectChat,
   findDirectChatShown,
   findDirectChatSummary,
-  getUserGroupIds,
+  getMemberships,
   postMessageDB,
 } from "./db/dbControls.js";
 import {
@@ -21,7 +21,7 @@ import {
   Friendship,
   User,
   UserActivity,
-  FriendRequest,
+  RequestStatus,
 } from "../js/chat-data.js";
 import { getTimestamp, waitDuration } from "./test-tools.js";
 
@@ -29,14 +29,16 @@ async function initializeConnection(socket) {
   socket.join("user:" + socket.request.user.id);
 
   async function joinGroupRooms(socket, user_id) {
-    const groups = await getUserGroupIds(user_id);
-    const group_ids = groups.map((group) => "group:" + group.id);
+    const memberships = await getMemberships(user_id);
+    const group_ids = memberships.map(
+      (membership) => "group:" + membership.group_id,
+    );
     socket.join(group_ids);
   }
   const groupsPromise = joinGroupRooms(socket, socket.request.user.id);
 
   async function joinFriendRooms(socket, user_id) {
-    const friends = await getFriendships(user_id, FriendRequest.ACCEPTED);
+    const friends = await getFriendships(user_id, RequestStatus.ACCEPTED);
     const friend_ids = friends.map((friend) => "friend:" + friend.user_id);
     socket.join(friend_ids);
   }
@@ -47,11 +49,11 @@ async function initializeConnection(socket) {
 }
 
 async function doPostConnect(socket) {
-  await putUserActivity(socket.request.user.id, User.ACTIVITY_TYPE.ONLINE);
+  await putUserActivity(socket.request.user.id, User.ACTIVITY.ONLINE);
 
   const activity = new UserActivity({
     user_id: socket.request.user.id,
-    activity: User.ACTIVITY_TYPE.ONLINE,
+    activity: User.ACTIVITY.ONLINE,
   });
   socket.to("friend:" + socket.request.user.id).emit("friend", activity);
 
@@ -69,7 +71,7 @@ function emitUpdateFriendship(io, friendship = new Friendship({})) {
   io.to("user:" + receiver_id).emit("update friendship", receiverResponse);
 
   //if they become friends, join the respective friend rooms to receive friend updates
-  if (friendship.state === FriendRequest.ACCEPTED) {
+  if (friendship.state === RequestStatus.ACCEPTED) {
     io.in("user:" + sender_id).socketsJoin("friend:" + receiver_id);
     io.in("user:" + receiver_id).socketsJoin("friend:" + sender_id);
   }
@@ -131,12 +133,12 @@ function comm(server, sessionMiddleware, testLatency) {
     socket.on("disconnect", async () => {
       const last_seen = await putUserActivity(
         socket.request.user.id,
-        User.ACTIVITY_TYPE.OFFLINE,
+        User.ACTIVITY.OFFLINE,
       );
 
       const activity = new UserActivity({
         user_id: socket.request.user.id,
-        activity: User.ACTIVITY_TYPE.OFFLINE,
+        activity: User.ACTIVITY.OFFLINE,
         last_seen,
       });
       socket.to("friend:" + socket.request.user.id).emit("friend", activity);

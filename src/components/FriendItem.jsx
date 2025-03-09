@@ -1,33 +1,18 @@
-import { useEffect, useState, memo } from "react";
+import { memo } from "react";
 import PropTypes from "prop-types";
+import useDuration from "../hooks/useDuration";
 import FriendButtonBar from "./FriendButtonBar";
-import DurationFormat from "../controllers/DurationFormat.js";
-import { User, UserFriendship, FriendRequest } from "../../js/chat-data.js";
+import { User, UserFriendship, RequestStatus } from "../../js/chat-data.js";
 
 function FriendItem({ friend = new UserFriendship({}) }) {
-  const [duration, setDuration] = useState("");
-
   const activity = friend.activity;
-  const isFriend = friend.state === FriendRequest.ACCEPTED;
+  const isFriend = friend.state === RequestStatus.ACCEPTED;
   const time = isFriend ? friend.last_seen : friend.modified;
 
-  useEffect(() => {
-    const DELAY = 5000;
-
-    function updateDuration() {
-      setDuration(DurationFormat.getString(time));
-    }
-    updateDuration();
-
-    const interval = setInterval(updateDuration, DELAY);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [time]);
+  const duration = useDuration(time);
 
   let status;
-  if (activity === User.ACTIVITY_TYPE.OFFLINE) {
+  if (activity === User.ACTIVITY.OFFLINE) {
     status = (
       <>
         {"Last seen "}

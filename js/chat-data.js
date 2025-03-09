@@ -11,7 +11,7 @@ const DEFAULT_TIME = "1970-01-01T00:00:00.000Z";
 */
 export const DEFAULT_TEXT = "\u200B";
 
-export class FriendRequest {
+export class RequestStatus {
   static PENDING = "pending";
   static ACCEPTED = "accepted";
   static REJECTED = "rejected";
@@ -29,7 +29,7 @@ export class FriendRequest {
     }
   }
 
-  static isValidRequest(request) {
+  static isValid(request) {
     return [this.PENDING, this.ACCEPTED, this.REJECTED].includes(request);
   }
 }
@@ -40,7 +40,7 @@ export class FriendRequest {
 export class UserActivity {
   constructor({
     user_id = 0,
-    activity = User.ACTIVITY_TYPE.OFFLINE,
+    activity = User.ACTIVITY.OFFLINE,
     last_seen = new Date().toISOString(),
   }) {
     this.user_id = user_id;
@@ -68,7 +68,7 @@ export class User {
   static guestUsernameRegex =
     "(?=" + this.GUEST_LABEL + ")\\w{" + (User.GUEST_LABEL.length + 1) + ",}";
 
-  static ACTIVITY_TYPE = {
+  static ACTIVITY = {
     OFFLINE: "offline",
     ONLINE: "online",
     TYPING: "typing",
@@ -80,7 +80,7 @@ export class User {
     id = 0,
     name = DEFAULT_TEXT,
     password = DEFAULT_TEXT,
-    activity = User.ACTIVITY_TYPE.OFFLINE,
+    activity = User.ACTIVITY.OFFLINE,
     is_guest = false,
     last_seen = DEFAULT_TIME,
     created = DEFAULT_TIME,
@@ -125,7 +125,7 @@ export class User {
   //Clear sensitive data by setting to defaults.
   clearSensitive() {
     this.password = DEFAULT_TEXT;
-    this.activity = User.ACTIVITY_TYPE.OFFLINE;
+    this.activity = User.ACTIVITY.OFFLINE;
     this.last_seen = DEFAULT_TIME;
   }
 
@@ -211,16 +211,16 @@ export class User {
 export class Friendship {
   constructor({
     id = 0,
-    state = FriendRequest.PENDING,
+    state = RequestStatus.PENDING,
     modified = DEFAULT_TIME,
     direct_chat_id = 0,
     sender_id = 0,
     sender_name = DEFAULT_TEXT,
-    sender_activity = User.ACTIVITY_TYPE.OFFLINE,
+    sender_activity = User.ACTIVITY.OFFLINE,
     sender_last_seen = DEFAULT_TIME,
     receiver_id = 0,
     receiver_name = DEFAULT_TEXT,
-    receiver_activity = User.ACTIVITY_TYPE.OFFLINE,
+    receiver_activity = User.ACTIVITY.OFFLINE,
     receiver_last_seen = DEFAULT_TIME,
   }) {
     this.id = id;
@@ -261,9 +261,9 @@ export class Friendship {
 
   //Clear sensitive data(activity and last_seen) for data delivered to non-friends by setting to defaults.
   clearSensitive() {
-    this.sender_activity = User.ACTIVITY_TYPE.OFFLINE;
+    this.sender_activity = User.ACTIVITY.OFFLINE;
     this.sender_last_seen = DEFAULT_TIME;
-    this.receiver_activity = User.ACTIVITY_TYPE.OFFLINE;
+    this.receiver_activity = User.ACTIVITY.OFFLINE;
     this.receiver_last_seen = DEFAULT_TIME;
   }
 
@@ -305,13 +305,13 @@ export class Friendship {
 export class UserFriendship {
   constructor({
     id = 0,
-    state = FriendRequest.PENDING,
+    state = RequestStatus.PENDING,
     modified = DEFAULT_TIME,
     direct_chat_id = 0,
     is_initiator = true,
     user_id = 0,
     name = DEFAULT_TEXT,
-    activity = User.ACTIVITY_TYPE.OFFLINE,
+    activity = User.ACTIVITY.OFFLINE,
     last_seen = DEFAULT_TIME,
   }) {
     this.id = id;
@@ -335,7 +335,7 @@ export class UserFriendship {
   */
   setDefaults() {
     this.id = 0;
-    this.state = FriendRequest.PENDING;
+    this.state = RequestStatus.PENDING;
     this.modified = DEFAULT_TIME;
     this.direct_chat_id = 0;
     this.is_initiator = true;
@@ -345,38 +345,40 @@ export class UserFriendship {
 
   //Clear sensitive data(activity and last_seen) for data delivered to non-friends by setting to defaults.
   clearSensitive() {
-    this.activity = User.ACTIVITY_TYPE.OFFLINE;
+    this.activity = User.ACTIVITY.OFFLINE;
     this.last_seen = DEFAULT_TIME;
   }
 }
 
-export class ChatData {
-  //messages: contain instances of Message - chat-data.js
-  //members: contain instances of Member - chat-data.js
-  constructor({
-    isGroup = true,
-    messages = [],
-    group = new Group({}),
-    direct = new Direct({}),
-    members = [],
-  }) {
-    this.isGroup = isGroup;
-    this.messages = messages;
-    this.group = group;
-    this.direct = direct;
-    this.members = members;
-  }
-
-  get name() {
-    return this.isGroup ? this.group.name : this.direct.name;
-  }
-}
-
 export class Group {
-  constructor({ id = 0, name = DEFAULT_TEXT, created = DEFAULT_TIME }) {
+  #membership;
+
+  constructor({
+    id = 0,
+    name = DEFAULT_TEXT,
+    created = DEFAULT_TIME,
+    membership = new Member({}),
+  }) {
     this.id = id;
     this.name = name;
     this.created = created;
+    this.membership = membership;
+  }
+
+  set membership(membership) {
+    this.#membership =
+      membership instanceof Member ? membership : new Member(membership);
+  }
+  get membership() {
+    return this.#membership;
+  }
+
+  //Private variables is hidden from JSON stringify. This exposes it to JSON stringify.
+  toJSON() {
+    return {
+      ...this,
+      membership: this.membership,
+    };
   }
 
   //groups: contain instances of Group - chat-data.js
@@ -405,35 +407,81 @@ export class Direct {
 }
 
 export class Member {
-  static PERMISSION_TYPE = ["member", "admin", "owner"];
+  static permission = {
+    MEMBER: "member",
+    ADMIN: "admin",
+    OWNER: "owner",
+  };
 
   constructor({
     id = 0,
+    group_id = 0,
     user_id = 0,
     name = DEFAULT_TEXT,
-    permission = Member.PERMISSION_TYPE[0],
-    created = DEFAULT_TIME,
+    permission = Member.permission.MEMBER,
+    state = RequestStatus.PENDING,
+    modified = DEFAULT_TIME,
   }) {
     this.id = id;
+    this.group_id = group_id;
     this.user_id = user_id;
     this.name = name;
     this.permission = permission;
-    this.created = created;
+    this.state = state;
+    this.modified = modified;
   }
 
-  //members: contain instances of Member - chat-data.js
-  static sortMembers(members = [], user_id = 0) {
-    const sortedMembers = members.toSorted((a, b) => {
-      const powerA = this.PERMISSION_TYPE.indexOf(a.permission);
-      const powerB = this.PERMISSION_TYPE.indexOf(b.permission);
-      const powerDiff = powerB - powerA;
-      if (powerDiff !== 0) return powerDiff;
+  //Is the instance defined? If id = 0, indicating defaults, false.
+  isDefined() {
+    return this.id !== 0;
+  }
 
-      if (a.name > b.name) return 1;
-      else if (a.name < b.name) return -1;
-      else return 0;
+  getPower() {
+    return Member.getPower(this.permission);
+  }
+
+  static getPower(permission = this.permission.MEMBER) {
+    switch (permission) {
+      case this.permission.MEMBER:
+        return 0;
+      case this.permission.ADMIN:
+        return 1;
+      case this.permission.OWNER:
+        return 2;
+      default:
+        return -1;
+    }
+  }
+
+  /*Filter array of members by member state, and return sorted.
+    members: contain instances of Member - chat-data.js
+  */
+  static filterByState(
+    members = [],
+    state = RequestStatus.ACCEPTED,
+    user_id = 0,
+  ) {
+    const subset = members.filter((member) => member.state === state);
+
+    if (state === RequestStatus.ACCEPTED)
+      return this.sortMembers(subset, user_id);
+    else return this.sortApplications(subset);
+  }
+
+  /*Sort members by permission level and name.
+    The user's entry is placed first.
+    members: contain instances of Member - chat-data.js
+  */
+  static sortMembers(members = [], user_id = 0) {
+    //sort members
+    const sortedMembers = members.toSorted((a, b) => {
+      const perm_diff = this.compare_permission(a, b);
+      if (perm_diff !== 0) return perm_diff;
+
+      return this.compare_name(a, b);
     });
 
+    //Place entry for user at the beginning of array.
     const userIndex = sortedMembers.findIndex(
       (member) => member.user_id === user_id,
     );
@@ -443,6 +491,56 @@ export class Member {
     }
 
     return sortedMembers;
+  }
+
+  /*Sort pending/rejected request by modified time and id.
+    members: contain instances of Member - chat-data.js
+  */
+  static sortApplications(members = []) {
+    //sort members
+    const sortedMembers = members.toSorted((a, b) => {
+      return this.compare_time_id(a, b);
+    });
+
+    return sortedMembers;
+  }
+
+  //compare by desc permission power
+  static compare_permission(a, b) {
+    const powerA = this.getPower(a.permission);
+    const powerB = this.getPower(b.permission);
+    const perm_diff = powerB - powerA;
+
+    return perm_diff;
+  }
+
+  //compare by asc name.
+  static compare_name(a, b) {
+    if (a.name < b.name) return -1;
+    else if (a.name > b.name) return 1;
+    else return 0;
+  }
+
+  //compare by desc time(modified).
+  static compare_time(a, b) {
+    const timeA = new Date(a.modified).getTime();
+    const timeB = new Date(b.modified).getTime();
+    const time_diff = timeB - timeA;
+
+    return time_diff;
+  }
+
+  //compare by desc id.
+  static compare_id(a, b) {
+    const id_diff = b.id - a.id;
+    return id_diff;
+  }
+
+  //compare by desc modified time, then desc id.
+  static compare_time_id(a, b) {
+    const time_diff = this.compare_time(a, b);
+    if (time_diff !== 0) return time_diff;
+    else return this.compare_id(a, b);
   }
 }
 
@@ -530,14 +628,14 @@ export class ChatItemData {
     chatId = new ChatId({}),
     name = DEFAULT_TEXT,
     user_id = 0,
-    joined = DEFAULT_TIME,
+    membership_modified = DEFAULT_TIME,
     time_shown = DEFAULT_TIME,
     lastMessage = new Message({}),
   }) {
     this.chatId = chatId;
     this.name = name;
     this.user_id = user_id;
-    this.joined = joined;
+    this.membership_modified = membership_modified;
     this.time_shown = time_shown;
     this.lastMessage = lastMessage;
   }
@@ -546,10 +644,10 @@ export class ChatItemData {
   static createGroup({
     chatId = new ChatId({}),
     name = DEFAULT_TEXT,
-    joined = DEFAULT_TIME,
+    membership_modified = DEFAULT_TIME,
     lastMessage = new Message({}),
   }) {
-    return new this({ chatId, name, joined, lastMessage });
+    return new this({ chatId, name, membership_modified, lastMessage });
   }
 
   //more specialized constructor specifying only properties needed for direct chat item
@@ -586,7 +684,7 @@ export class ChatItemData {
     //if last message is not default, use last message time
     if (this.lastMessage.isDefined()) return this.lastMessage.created;
 
-    if (this.chatId.isGroup) return this.joined;
+    if (this.chatId.isGroup) return this.membership_modified;
     else return this.time_shown;
   }
 

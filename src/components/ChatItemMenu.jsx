@@ -107,11 +107,21 @@ function ChatItemMenu({ chatId, containerRect, targetRect }) {
     >
       {!chatId.isGroup ? (
         <li>
-          <button onClick={hideChat}>hide chat</button>
+          <button
+            className="clear-background hover-whitening"
+            onClick={hideChat}
+          >
+            hide chat
+          </button>
         </li>
       ) : null}
       <li>
-        <button onClick={closeMenu}>cancel</button>
+        <button
+          className="clear-background hover-whitening"
+          onClick={closeMenu}
+        >
+          cancel
+        </button>
       </li>
     </ul>
   );

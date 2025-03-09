@@ -1,9 +1,9 @@
-import { User, FriendRequest } from "../../js/chat-data.js";
+import { User, RequestStatus } from "../../js/chat-data.js";
 
 //compare by asc friend_request order (state prop).
 function compare_state(a, b) {
-  const orderA = FriendRequest.getOrder(a.state);
-  const orderB = FriendRequest.getOrder(b.state);
+  const orderA = RequestStatus.getOrder(a.state);
+  const orderB = RequestStatus.getOrder(b.state);
   const state_diff = orderA - orderB;
 
   return state_diff;
@@ -40,8 +40,8 @@ function compare_name(a, b) {
 
 //compare by offline last, all other activity is equal.
 function compare_activity(a, b) {
-  const a_is_offline = a.activity === User.ACTIVITY_TYPE.OFFLINE;
-  const b_is_offline = b.activity === User.ACTIVITY_TYPE.OFFLINE;
+  const a_is_offline = a.activity === User.ACTIVITY.OFFLINE;
+  const b_is_offline = b.activity === User.ACTIVITY.OFFLINE;
 
   if (a_is_offline && !b_is_offline) return 1;
   else if (!a_is_offline && b_is_offline) return -1;
@@ -64,7 +64,7 @@ function sortFriends(friends = []) {
     if (state_diff !== 0) return state_diff;
 
     //compare friends differently compared to other types of friendship record.
-    if (a.state === FriendRequest.ACCEPTED) return compare_activity_name(a, b);
+    if (a.state === RequestStatus.ACCEPTED) return compare_activity_name(a, b);
     else return compare_time_id(a, b);
   });
 

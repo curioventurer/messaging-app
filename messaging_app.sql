@@ -2,37 +2,36 @@ DROP DATABASE IF EXISTS messaging_app;
 CREATE DATABASE messaging_app;
 \c messaging_app
 
-CREATE TYPE user_activity_type AS ENUM ('offline', 'online', 'typing');
+CREATE TYPE request_status AS ENUM ('pending', 'accepted', 'rejected');
+CREATE TYPE user_activity AS ENUM ('offline', 'online', 'typing');
+
+CREATE OR REPLACE FUNCTION update_modified() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.modified = NOW();
+  RETURN NEW;
+END;
+$$ language plpgsql;
 
 CREATE TABLE users (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name VARCHAR ( 255 ) UNIQUE NOT NULL,
   password VARCHAR ( 255 ) NOT NULL,
-  activity user_activity_type DEFAULT 'offline',
+  activity user_activity DEFAULT 'offline',
   is_guest BOOLEAN DEFAULT FALSE,
   last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TYPE friend_request_type AS ENUM ('pending', 'accepted', 'rejected');
-
 CREATE TABLE friendships (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  state friend_request_type DEFAULT 'pending',
+  state request_status DEFAULT 'pending',
   modified TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE OR REPLACE FUNCTION update_modified()
-        RETURNS TRIGGER AS '
-  BEGIN
-    NEW.modified = NOW();
-    RETURN NEW;
-  END;
-' language 'plpgsql';
-
-CREATE TRIGGER friendships_update_modified_trigger BEFORE UPDATE
-  ON friendships FOR EACH ROW EXECUTE PROCEDURE
-  update_modified();
+CREATE TRIGGER friendships_update_modified
+  BEFORE UPDATE ON friendships
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_modified();
 
 create table friendship_agents (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -58,8 +57,14 @@ CREATE TABLE memberships (
   group_id INT NOT NULL REFERENCES groups ( id ),
   user_id INT NOT NULL REFERENCES users ( id ),
   permission permission_type DEFAULT 'member',
-  created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  state request_status DEFAULT 'pending',
+  modified TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TRIGGER memberships_update_modified
+  BEFORE UPDATE ON memberships
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_modified();
 
 create table messages (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -132,17 +137,37 @@ INSERT INTO groups ( name, created ) VALUES
   ( 'comics_galore', '2020-08-31 13:07:30+06' ),
   ( 'Fruit_Pavilion', '2020-10-01 14:07:35+07' ),
   ( 'bro', '2024-09-06 7:57:58+04' ),
-  ( 'ender', '2024-10-02 8:00:00-01' );
+  ( 'ender', '2024-10-02 8:00:00-01' ),
+  ( 'whatever', '2024-10-03 8:00:00-01' ),
+  ( 'palace', '2024-10-04 8:00:00-01' );
 
-INSERT INTO memberships ( group_id, user_id, permission, created ) VALUES
-  ( 1, 1, 'owner', '2020-08-31 13:07:30+06' ),
-  ( 1, 2, 'member', '2023-10-24 13:07:30+07' ),
-  ( 1, 3, 'admin', '2024-09-01 13:07:30+04' ),
-  ( 2, 2, 'owner', '2020-10-01 14:07:35+07' ),
-  ( 2, 1, 'member', '2024-10-25 13:45:20+06' ),
-  ( 3, 2, 'owner', '2024-09-06 7:57:58+04' ),
-  ( 3, 1, 'member', '2024-09-06 7:58:30+04' ),
-  ( 4, 1, 'owner', '2024-10-02 8:00:00-01' );
+INSERT INTO memberships ( group_id, user_id, permission, state, modified ) VALUES
+  ( 1, 1, 'owner', 'accepted', '2020-08-31 13:07:30+06' ),
+  ( 1, 2, 'member', 'accepted', '2023-10-24 13:07:30+07' ),
+  ( 1, 3, 'admin', 'accepted', '2024-09-01 13:07:30+04' ),
+  ( 1, 4, 'member', 'pending', '2024-09-01 14:07:30+04' ),
+  ( 1, 5, 'member', 'pending', '2024-09-01 15:07:30+04' ),
+  ( 1, 6, 'member', 'rejected', '2024-09-01 16:07:30+04' ),
+  
+  ( 2, 2, 'owner', 'accepted', '2020-10-01 14:07:35+07' ),
+  ( 2, 1, 'admin', 'accepted', '2024-10-25 13:45:20+06' ),
+  ( 2, 5, 'admin', 'accepted', '2024-10-25 13:45:20+06' ),
+  ( 2, 3, 'member', 'accepted', '2024-10-25 14:45:20+06' ),
+  ( 2, 4, 'member', 'pending', '2024-10-25 15:45:20+06' ),
+  ( 2, 6, 'member', 'rejected', '2024-10-25 16:45:20+06' ),
+
+  ( 3, 2, 'owner', 'accepted', '2024-09-06 7:57:58+04' ),
+  ( 3, 1, 'member', 'accepted', '2024-09-06 7:58:30+04' ),
+  ( 3, 5, 'admin', 'accepted', '2024-09-06 7:58:30+04' ),
+  ( 3, 3, 'member', 'accepted', '2024-09-06 8:58:30+04' ),
+  ( 3, 4, 'member', 'pending', '2024-09-06 9:58:30+04' ),
+  ( 3, 6, 'member', 'rejected', '2024-09-06 10:58:30+04' ),
+  
+  ( 4, 2, 'owner', 'accepted', '2024-10-02 8:00:00-01' ),
+  ( 4, 1, 'member', 'pending', '2024-10-02 9:00:00-01' ),
+
+  ( 5, 3, 'owner', 'accepted', '2024-10-02 9:00:00-01' ),
+  ( 5, 1, 'member', 'rejected', '2024-10-03 9:00:00-01' );
 
 INSERT INTO messages ( text, group_id, user_id, created ) VALUES
   ( 'A new comic is releasing soon.', 1, 1, '2020-10-25 13:57:58+06' ),

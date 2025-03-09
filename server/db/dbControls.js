@@ -1,4 +1,4 @@
-import { ChatId, ChatItemData, FriendRequest } from "../../js/chat-data.js";
+import { ChatId, ChatItemData, RequestStatus } from "../../js/chat-data.js";
 import {
   findFriendshipById,
   setFriendshipStateById,
@@ -13,8 +13,8 @@ import {
 
 async function updateFriendRequest(id, user_id, state) {
   //check validity of state, abort if invalid
-  if (!FriendRequest.isValidRequest(state)) return false;
-  if (state === FriendRequest.PENDING) return false;
+  if (!RequestStatus.isValid(state)) return false;
+  if (state === RequestStatus.PENDING) return false;
 
   //search for id, abort if not found
   const friendship = await findFriendshipById(id);
@@ -24,7 +24,7 @@ async function updateFriendRequest(id, user_id, state) {
   if (friendship.receiver_id !== user_id) return false;
 
   //if state is no longer pending, abort attempt
-  if (friendship.state !== FriendRequest.PENDING) return false;
+  if (friendship.state !== RequestStatus.PENDING) return false;
 
   const update = await setFriendshipStateById(id, state);
 
@@ -33,7 +33,7 @@ async function updateFriendRequest(id, user_id, state) {
     friendship.state = update.state;
     friendship.modified = update.modified;
 
-    if (friendship.state !== FriendRequest.ACCEPTED)
+    if (friendship.state !== RequestStatus.ACCEPTED)
       friendship.clearSensitive();
 
     return friendship;
@@ -49,7 +49,7 @@ async function deleteFriendRequest(friendship_id = 0, user_id = 0) {
   if (friendship.sender_id !== user_id) return false;
 
   //if state is no longer pending, abort attempt
-  if (friendship.state !== FriendRequest.PENDING) return false;
+  if (friendship.state !== RequestStatus.PENDING) return false;
 
   await deleteFriendship(friendship_id);
 
@@ -61,7 +61,7 @@ async function unfriend(friendship_id, user_id) {
 
   const friendship = await findFriendshipById(friendship_id);
 
-  if (!friendship || friendship.state !== FriendRequest.ACCEPTED) return false;
+  if (!friendship || friendship.state !== RequestStatus.ACCEPTED) return false;
 
   let other_id = 0;
   if (friendship.sender_id === user_id) other_id = friendship.receiver_id;
@@ -131,7 +131,7 @@ export {
   hideDirectChat,
   findDirectChat,
   findDirectChatShown,
-  getUserGroupIds,
+  getMemberships,
   getGroups,
   findGroupById,
   getMembersByGroupId,

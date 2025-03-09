@@ -93,7 +93,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
   return (
     <Link
       to={(chat.chatId.isGroup ? "/group/" : "/chat/") + chat.chatId.id}
-      className={"button-link" + (isActive ? " button-highlight" : "")}
+      className={"button-link" + (isActive ? " highlight" : "")}
     >
       <div className="chat-item-header">
         <p className="clipped-text">{chat.name}</p>
@@ -101,7 +101,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
           <time dateTime={date}>{displayDate}</time>
           <button
             aria-label="menu"
-            className="icon"
+            className="icon clear-background"
             ref={menuButtonRef}
             onClick={(event) => {
               openMenu(event, chat.chatId);

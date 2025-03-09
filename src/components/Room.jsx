@@ -18,8 +18,8 @@ import { InterfaceContext } from "./PrivateInterface";
 import clearSocket from "../controllers/clearSocket.js";
 import {
   DEFAULT_TEXT,
+  User,
   ChatId,
-  ChatData,
   Message,
   NewMessage,
   Group,
@@ -27,35 +27,40 @@ import {
   Member,
 } from "../../js/chat-data.js";
 
+/*room: Instance of Group or Direct - chat-data.js
+  member: Array containing instances of Member - chat-data.js
+  Initialized with undefined to indicate data not yet fetched.
+*/
 const ROOM_CONTEXT_DEFAULT = {
-  client: {
-    id: 0,
-    name: "default_name",
-    created: "1970-01-01T00:00:00.000Z",
-  },
+  client: new User({}),
   chatId: new ChatId({}),
+  room: undefined,
+  members: undefined,
   appendMessage: function () {},
   deleteSentMsg: function () {},
   toggleRoomInfo: function () {},
+  toggleExpandRoomInfo: function () {},
   storeRoomHeaderRef: function () {},
 };
 
-/*Instance of ChatData - chat-data.js
+/*Array containing instances of Message - chat-data.js
   Initialized with undefined to indicate data not yet fetched.
 */
-const CHAT_CONTEXT_DEFAULT = {
-  chatData: undefined,
-};
+const MESSAGE_LIST_CONTEXT_DEFAULT = undefined;
 
 export const RoomContext = createContext(ROOM_CONTEXT_DEFAULT);
-export const ChatContext = createContext(CHAT_CONTEXT_DEFAULT);
+export const MessageListContext = createContext(MESSAGE_LIST_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true, title = false }) {
   const { chat_id } = useParams();
   const client = useContext(InterfaceContext);
 
-  const [chatData, setChatData] = useState(CHAT_CONTEXT_DEFAULT.chatData);
-  const [isChatInfoShown, setIsChatInfoShown] = useState(false);
+  const [room, setRoom] = useState(ROOM_CONTEXT_DEFAULT.room);
+  const [members, setMembers] = useState(ROOM_CONTEXT_DEFAULT.members);
+  const [messages, setMessages] = useState(MESSAGE_LIST_CONTEXT_DEFAULT);
+
+  const [roomInfoIsShown, setRoomInfoIsShown] = useState(false);
+  const [roomInfoIsExpanded, setRoomInfoIsExpanded] = useState(false);
 
   const roomHeaderRef = useRef(null);
   const navigate = useNavigate();
@@ -70,94 +75,81 @@ function Room({ isGroup = true, title = false }) {
   );
   const apiPath = (chatId.isGroup ? "/api/group/" : "/api/chat/") + chatId.id;
 
-  const parseChatData = useCallback(
+  const parseRoomData = useCallback(
     function (data) {
-      if (data === false) return setChatData(data);
+      if (data === false) return clearRoomData(false);
 
-      setChatData(
-        new ChatData({
-          isGroup: data.isGroup,
-          messages: data.messages.map((msg) => new Message(msg)),
-          group: new Group(data.group),
-          direct: new Direct(data.direct),
-          members: Member.sortMembers(
-            data.members.map((member) => new Member(member)),
-            client.id,
-          ),
-        }),
+      setRoom(chatId.isGroup ? new Group(data.room) : new Direct(data.room));
+      setMembers(
+        chatId.isGroup ? data.members.map((member) => new Member(member)) : [],
       );
+      setMessages(data.messages.map((msg) => new Message(msg)));
     },
-    [client],
+    [chatId],
   );
 
   const appendMessage = useCallback(function (message = new Message({})) {
-    setChatData((prevChatData) => {
-      if (!prevChatData) return prevChatData;
+    setMessages((prevMessages) => {
+      if (!prevMessages) return prevMessages;
 
-      const newMessages = Message.sortMessages([
-        ...prevChatData.messages,
-        message,
-      ]);
-      const newChatData = {
-        ...prevChatData,
-        messages: newMessages,
-      };
-      return newChatData;
+      const newMessages = Message.sortMessages([...prevMessages, message]);
+      return newMessages;
     });
   }, []);
 
   const deleteSentMsg = useCallback(function (clientId) {
-    setChatData((prevChatData) => {
-      if (!prevChatData) return prevChatData;
+    setMessages((prevMessages) => {
+      if (!prevMessages) return prevMessages;
 
-      const prevMessages = prevChatData.messages;
       const index = prevMessages.findIndex(
         (message) => message.id === clientId,
       );
-      if (index === -1) return prevChatData;
+      if (index === -1) return prevMessages;
 
       const newMessages = [
         ...prevMessages.slice(0, index),
         ...prevMessages.slice(index + 1),
       ];
-
-      const newChatData = {
-        ...prevChatData,
-        messages: newMessages,
-      };
-      return newChatData;
+      return newMessages;
     });
   }, []);
 
   const toggleRoomInfo = useCallback(function () {
-    setIsChatInfoShown((prev) => {
+    setRoomInfoIsShown((prev) => {
       //if true, and thus about to hide roomInfo, move focus back to RoomHeader
-      if (prev) roomHeaderRef.current.focus();
+      if (prev) {
+        setRoomInfoIsExpanded(false);
+        roomHeaderRef.current.focus();
+      }
 
       return !prev;
     });
+  }, []);
+
+  const toggleExpandRoomInfo = useCallback(function () {
+    setRoomInfoIsExpanded((prev) => !prev);
   }, []);
 
   const storeRoomHeaderRef = useCallback(function (element) {
     roomHeaderRef.current = element;
   }, []);
 
-  const roomName = chatData ? chatData.name : DEFAULT_TEXT;
-  useTitle((isGroup ? "Group" : "Chat") + " - " + roomName, !title);
+  const roomName = room ? room.name : DEFAULT_TEXT;
+  useTitle((chatId.isGroup ? "Group" : "Chat") + " - " + roomName, !title);
 
   useEffect(() => clearSocket, [chatId]);
 
-  //On room change, reset chatData to default to clear display to avoid showing old data, also used to indicate the display of loading text.
-  useEffect(() => resetChatData, [chatId]);
+  //On room change, clear room data to avoid showing previous data, also used to specify the display of loading text.
+  useEffect(() => clearRoomData, [chatId]);
 
-  const isExpired = useFetch({ callback: parseChatData, path: apiPath });
+  const isExpired = useFetch({ callback: parseRoomData, path: apiPath });
 
   /*If fetch timeouts(expires), set null to indicate fetch failure.
     Else, initialize to undefined to indicate fetch in progress.
   */
   useEffect(() => {
-    if (isExpired) setChatData(null);
-    else setChatData(undefined);
+    if (isExpired) clearRoomData(null);
+    else clearRoomData(undefined);
   }, [isExpired]);
 
   useEffect(() => {
@@ -178,7 +170,7 @@ function Room({ isGroup = true, title = false }) {
   }, [chatId, appendMessage]);
 
   //if current room shows the direct chat of removed friend, redirect to home
-  const directChatUserId = chatData?.direct?.user_id;
+  const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
   useEffect(() => {
     function handleUnfriend({ user_id }) {
       if (directChatUserId === user_id)
@@ -194,8 +186,10 @@ function Room({ isGroup = true, title = false }) {
     };
   }, [navigate, directChatUserId]);
 
-  function resetChatData() {
-    setChatData(CHAT_CONTEXT_DEFAULT.chatData);
+  function clearRoomData(value = undefined) {
+    setRoom(value);
+    setMembers(value);
+    setMessages(value);
   }
 
   return (
@@ -205,25 +199,37 @@ function Room({ isGroup = true, title = false }) {
           () => ({
             client,
             chatId,
+            room,
+            members,
             appendMessage,
             deleteSentMsg,
             toggleRoomInfo,
+            toggleExpandRoomInfo,
             storeRoomHeaderRef,
           }),
           [
             client,
             chatId,
+            room,
+            members,
             appendMessage,
             deleteSentMsg,
             toggleRoomInfo,
+            toggleExpandRoomInfo,
             storeRoomHeaderRef,
           ],
         )}
       >
-        <ChatContext.Provider value={useMemo(() => ({ chatData }), [chatData])}>
-          {isChatInfoShown ? <RoomInfo /> : <ChatList />}
-          <RoomUI isChatInfoShown={isChatInfoShown} />
-        </ChatContext.Provider>
+        <MessageListContext.Provider value={messages}>
+          {roomInfoIsShown ? (
+            <RoomInfo roomInfoIsExpanded={roomInfoIsExpanded} />
+          ) : (
+            <ChatList />
+          )}
+          {roomInfoIsExpanded ? null : (
+            <RoomUI roomInfoIsShown={roomInfoIsShown} />
+          )}
+        </MessageListContext.Provider>
       </RoomContext.Provider>
     </div>
   );

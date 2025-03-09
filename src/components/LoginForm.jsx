@@ -94,6 +94,7 @@ function LoginForm() {
             <label htmlFor="current-password">Password</label>
             <button
               type="button"
+              className="clear-background"
               aria-label={
                 passwordIsShown
                   ? "hide password"

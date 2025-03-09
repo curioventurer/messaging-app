@@ -1,3 +1,4 @@
+//date parameter allows any value accepted by Date().
 class DurationFormat {
   static getDuration(date) {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
