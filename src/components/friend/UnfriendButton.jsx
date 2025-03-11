@@ -1,30 +1,30 @@
-import { useRef } from "react";
+import { useRef, useCallback } from "react";
 import PropTypes from "prop-types";
+import ConfirmDialog from "../ConfirmDialog";
 
 function UnfriendButton({ friend }) {
-  const dialogRef = useRef(null);
+  const dialog = useRef(null);
+
+  const storeDialog = useCallback(function (element) {
+    dialog.current = element;
+  }, []);
 
   function unfriend() {
     window.socket.emit("unfriend", {
       friendship_id: friend.id,
     });
-    closeDialog();
-  }
-
-  function closeDialog() {
-    dialogRef.current.close();
   }
 
   return (
     <>
       <button
         onClick={() => {
-          dialogRef.current.showModal();
+          dialog.current.showModal();
         }}
       >
         Unfriend
       </button>
-      <dialog ref={dialogRef} className="confirmation-dialog">
+      <ConfirmDialog storeDialog={storeDialog} confirm={unfriend}>
         <p>
           {"Are you sure you want to unfriend "}
           <span className="name">{friend.name}</span>
@@ -32,19 +32,7 @@ function UnfriendButton({ friend }) {
             "? This will delete all messages in direct chat for both users, and is irreversible."
           }
         </p>
-        <ul>
-          <li>
-            <button className="low-bright" onClick={unfriend}>
-              Yes
-            </button>
-          </li>
-          <li>
-            <button className="low-bright" onClick={closeDialog}>
-              No
-            </button>
-          </li>
-        </ul>
-      </dialog>
+      </ConfirmDialog>
     </>
   );
 }

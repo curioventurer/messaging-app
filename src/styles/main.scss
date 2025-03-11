@@ -151,6 +151,10 @@ button {
   }
 }
 
+summary > * {
+  display: inline-block;
+}
+
 .pre-wrap {
   white-space: pre-wrap;
 }
@@ -518,13 +522,14 @@ nav .button-bar {
   }
 }
 
-.pending-member-list {
+.pending-member-list,
+.rejected-member-list {
   tbody {
     grid-template-columns: 1fr auto auto;
   }
 }
 
-.narrow-width .pending-member-list {
+.narrow-width :is(.pending-member-list, .rejected-member-list) {
   @include narrow-list-table;
 }
 

@@ -1,16 +1,32 @@
-import { useContext, memo } from "react";
+import { useRef, useContext, useCallback, memo } from "react";
 import PropTypes from "prop-types";
+import ConfirmDialog from "../ConfirmDialog.jsx";
 import { RoomContext } from "./Room";
 import { Member } from "../../../js/chat-data.js";
 
 function MemberItem({ member }) {
   const { room } = useContext(RoomContext);
-  const membership = room.membership;
+  const dialog = useRef(null);
 
+  const membership = room.membership;
   const power = membership.getPower();
   const memberPower = member.getPower();
   const notUser = membership.id !== member.id;
   const isOwner = membership.permission === Member.permission.OWNER;
+
+  const storeDialog = useCallback(function (element) {
+    dialog.current = element;
+  }, []);
+
+  const promote = useCallback(function () {}, []);
+
+  //Show dialog if promoting an admin to owner.
+  function handlePromote() {
+    if (memberPower === 1)
+      //admin
+      dialog.current.showModal();
+    else promote();
+  }
 
   const buttonArray = [];
 
@@ -23,7 +39,18 @@ function MemberItem({ member }) {
   } else if (isOwner) {
     buttonArray.push({
       key: "promote",
-      element: <button>Promote</button>,
+      element: (
+        <>
+          <button onClick={handlePromote}>Promote</button>
+          <ConfirmDialog storeDialog={storeDialog} confirm={promote}>
+            <p>
+              {"Are you sure you want to promote "}
+              <span className="name">{member.name}</span>
+              {" to owner? You will be demoted to admin."}
+            </p>
+          </ConfirmDialog>
+        </>
+      ),
     });
 
     if (memberPower > 0)
