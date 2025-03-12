@@ -5,7 +5,7 @@ import { InterfaceContext } from "./PrivateInterface";
 import { allLinks } from "../../controllers/constant.js";
 
 function Nav({ isPublic = false }) {
-  const client = useContext(InterfaceContext);
+  const { client } = useContext(InterfaceContext);
 
   //Additional links shown when logged out.
   const loggedOutLinks = [
@@ -21,8 +21,8 @@ function Nav({ isPublic = false }) {
   const privateLinks = [
     allLinks.home,
     allLinks.friend,
-    allLinks.groups,
-    allLinks.users,
+    allLinks.groupList,
+    allLinks.userList,
     allLinks.index,
     allLinks.logout,
   ];

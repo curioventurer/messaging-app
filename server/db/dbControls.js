@@ -132,6 +132,7 @@ export {
   findDirectChat,
   findDirectChatShown,
   getMemberships,
+  getUserGroups,
   getGroups,
   findGroupById,
   getMembersByGroupId,

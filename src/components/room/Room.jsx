@@ -53,7 +53,7 @@ export const MessageListContext = createContext(MESSAGE_LIST_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true, title = false }) {
   const { chat_id } = useParams();
-  const client = useContext(InterfaceContext);
+  const { client } = useContext(InterfaceContext);
 
   const [room, setRoom] = useState(ROOM_CONTEXT_DEFAULT.room);
   const [members, setMembers] = useState(ROOM_CONTEXT_DEFAULT.members);

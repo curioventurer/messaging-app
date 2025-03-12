@@ -12,13 +12,20 @@ import Nav from "./Nav";
 import updateRect from "../../controllers/updateRect.js";
 import {
   User,
+  Group,
   ChatItemData,
   ChatId,
   Message,
   NewMessage,
 } from "../../../js/chat-data.js";
 
-const INTERFACE_CONTEXT_DEFAULT = new User({});
+/*memberships: Array containing instances of Group - chat-data.js
+  Initialized with undefined to indicate data not yet fetched.
+*/
+const INTERFACE_CONTEXT_DEFAULT = {
+  client: new User({}),
+  memberships: undefined,
+};
 
 const MENU_CONTEXT_DEFAULT = {
   isMenuVisible: false,
@@ -44,6 +51,9 @@ function PrivateInterface() {
   const client = useLoaderData();
 
   const [chats, setChats] = useState(CHAT_LIST_CONTEXT_DEFAULT);
+  const [memberships, setMemberships] = useState(
+    INTERFACE_CONTEXT_DEFAULT.memberships,
+  );
   const [isMenuVisible, setIsMenuVisible] = useState(
     MENU_CONTEXT_DEFAULT.isMenuVisible,
   );
@@ -94,21 +104,41 @@ function PrivateInterface() {
   );
 
   const parseChats = useCallback(function (array) {
-    if (array === false) return setChats(array);
+    if (array === false) return setChats(false);
 
     const objectArray = array.map((item) => new ChatItemData(item));
     setChats(ChatItemData.sortChats(objectArray));
   }, []);
 
-  const isExpired = useFetch({ callback: parseChats, path: "/api/chats" });
+  const chatsIsExpired = useFetch({ callback: parseChats, path: "/api/chats" });
 
-  /*If fetch timeouts(expires), set chats to null to indicate fetch failure.
-    Else, initialize chats to undefined to indicate fetch in progress.
+  /*If fetch timeouts(expires), set state to null to indicate fetch failure.
+    Else, initialize state to undefined to indicate fetch in progress.
   */
   useEffect(() => {
-    if (isExpired) setChats(null);
+    if (chatsIsExpired) setChats(null);
     else setChats(undefined);
-  }, [isExpired]);
+  }, [chatsIsExpired]);
+
+  const parseMemberships = useCallback(function (array) {
+    if (array === false) return setMemberships(false);
+
+    const objectArray = array.map((item) => new Group(item));
+    setMemberships(objectArray);
+  }, []);
+
+  const membershipsIsExpired = useFetch({
+    callback: parseMemberships,
+    path: "/api/memberships",
+  });
+
+  /*If fetch timeouts(expires), set state to null to indicate fetch failure.
+    Else, initialize state to undefined to indicate fetch in progress.
+  */
+  useEffect(() => {
+    if (membershipsIsExpired) setMemberships(null);
+    else setMemberships(undefined);
+  }, [membershipsIsExpired]);
 
   useEffect(() => {
     window.socket.on("chat item", addChat);
@@ -189,7 +219,15 @@ function PrivateInterface() {
 
   return (
     <div className="interface" onClick={closeMenu} onKeyDown={handleKey}>
-      <InterfaceContext.Provider value={client}>
+      <InterfaceContext.Provider
+        value={useMemo(
+          () => ({
+            client,
+            memberships,
+          }),
+          [client, memberships],
+        )}
+      >
         <Nav />
         <MenuContext.Provider
           value={useMemo(

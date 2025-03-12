@@ -9,6 +9,7 @@ import {
   hideDirectChat,
   findDirectChat,
   getChatList,
+  getUserGroups,
   getGroups,
   findGroupById,
   getMembersByGroupId,
@@ -125,6 +126,13 @@ function routes(app, ioHandlers) {
     if (!req.user) return res.json(false);
 
     const groups = await getGroups(req.user.id);
+    res.json(groups);
+  });
+
+  app.get("/api/memberships", async (req, res) => {
+    if (!req.user) return res.json(false);
+
+    const groups = await getUserGroups(req.user.id);
     res.json(groups);
   });
 

@@ -3,8 +3,7 @@ import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import MemberItem from "./MemberItem";
-import PendingMemberItem from "./PendingMemberItem.jsx";
-import RejectedMemberItem from "./RejectedMemberItem.jsx";
+import AppliedMemberItem from "./AppliedMemberItem.jsx";
 import { RoomContext } from "./Room";
 import DateFormat from "../../controllers/DateFormat.js";
 import { Member, RequestStatus } from "../../../js/chat-data.js";
@@ -34,50 +33,56 @@ function GroupInfo() {
         {"."}
       </p>
       {pendingRequest.length > 0 ? (
-        <section className="pending-member-list">
-          <details>
+        <section>
+          <details open>
             <summary>
               <h3>Pending Request ({pendingRequest.length})</h3>
             </summary>
-            <table className="list-table">
+            <table className="list-table member">
               <tbody>
                 {pendingRequest.map((member) => (
-                  <PendingMemberItem key={member.id} member={member} />
+                  <AppliedMemberItem key={member.id} member={member} />
                 ))}
               </tbody>
             </table>
           </details>
         </section>
       ) : null}
-      <section className="member-list">
-        <details>
-          <summary>
-            <h3>Members ({acceptedRequest.length})</h3>
-          </summary>
-          <table className="list-table">
-            <tbody>
-              {acceptedRequest.map((member) => (
-                <MemberItem key={member.id} member={member} />
-              ))}
-            </tbody>
-          </table>
-        </details>
-      </section>
-      {rejectedRequest.length > 0 ? (
-        <section className="rejected-member-list">
+      <>
+        <div className="line"></div>
+        <section className="member-list">
           <details>
             <summary>
-              <h3>Rejected Request ({rejectedRequest.length})</h3>
+              <h3>Members ({acceptedRequest.length})</h3>
             </summary>
-            <table className="list-table">
+            <table className="list-table member">
               <tbody>
-                {rejectedRequest.map((member) => (
-                  <RejectedMemberItem key={member.id} member={member} />
+                {acceptedRequest.map((member) => (
+                  <MemberItem key={member.id} member={member} />
                 ))}
               </tbody>
             </table>
           </details>
         </section>
+      </>
+      {rejectedRequest.length > 0 ? (
+        <>
+          <div className="line"></div>
+          <section>
+            <details>
+              <summary>
+                <h3>Rejected Request ({rejectedRequest.length})</h3>
+              </summary>
+              <table className="list-table member">
+                <tbody>
+                  {rejectedRequest.map((member) => (
+                    <AppliedMemberItem key={member.id} member={member} />
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          </section>
+        </>
       ) : null}
     </>
   );

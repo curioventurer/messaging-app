@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { InterfaceContext } from "./layout/PrivateInterface";
 
 function Intro() {
-  const client = useContext(InterfaceContext);
+  const { client } = useContext(InterfaceContext);
 
   return (
     <div className="intro">

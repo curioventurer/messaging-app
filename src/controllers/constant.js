@@ -1,3 +1,5 @@
+import { LinkClass } from "../../js/chat-data.js";
+
 export const allLinks = {
   index: { href: "/", name: "Intro", classes: [] },
   logout: { href: "/logout", name: "Logout", classes: ["important-link"] },
@@ -12,9 +14,26 @@ export const allLinks = {
     name: "Register",
     classes: ["important-link"],
   },
-  home: { href: "/home", name: "Home", classes: ["private-link"] },
+  home: new LinkClass({
+    href: "/home",
+    name: "Home",
+    classes: ["private-link"],
+    search: {
+      chats: { param: "", name: "Chats", classes: [] },
+      groups: { param: "?tab=groups", name: "Groups", classes: [] },
+      friends: { param: "?tab=friends", name: "Friends", classes: [] },
+    },
+  }),
   friend: { href: "/friend", name: "Friend", classes: ["private-link"] },
-  groups: { href: "/groups", name: "Groups", classes: ["private-link"] },
-  users: { href: "/users", name: "Users", classes: ["private-link"] },
+  groupList: {
+    href: "/group-list",
+    name: "Group List",
+    classes: ["private-link"],
+  },
+  userList: {
+    href: "/user-list",
+    name: "User List",
+    classes: ["private-link"],
+  },
   about: { href: "/about", name: "About", classes: [] },
 };

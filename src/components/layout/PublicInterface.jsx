@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Outlet, useLoaderData } from "react-router-dom";
 import Nav from "./Nav";
 import { InterfaceContext } from "./PrivateInterface";
@@ -7,7 +8,14 @@ function PublicInterface() {
 
   return (
     <div className="interface">
-      <InterfaceContext.Provider value={client}>
+      <InterfaceContext.Provider
+        value={useMemo(
+          () => ({
+            client,
+          }),
+          [client],
+        )}
+      >
         <Nav isPublic />
         <div className="outlet">
           <Outlet />

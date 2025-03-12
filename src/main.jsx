@@ -12,7 +12,7 @@ import { User } from "../js/chat-data.js";
 import Title from "./components/layout/Title";
 import PublicInterface from "./components/layout/PublicInterface.jsx";
 import PrivateInterface from "./components/layout/PrivateInterface.jsx";
-import Home from "./components/Home";
+import Home from "./components/home/Home.jsx";
 import Room from "./components/room/Room";
 import FriendOverview from "./components/friend/FriendOverview";
 import GroupList from "./components/group/GroupList";
@@ -108,17 +108,17 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: allLinks.groups.href,
+        path: allLinks.groupList.href,
         element: (
-          <Title title={allLinks.groups.name}>
+          <Title title={allLinks.groupList.name}>
             <GroupList />
           </Title>
         ),
       },
       {
-        path: allLinks.users.href,
+        path: allLinks.userList.href,
         element: (
-          <Title title={allLinks.users.name}>
+          <Title title={allLinks.userList.name}>
             <UserList />
           </Title>
         ),

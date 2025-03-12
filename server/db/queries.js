@@ -517,8 +517,7 @@ async function getMemberships(
   const isAll = membership_state === "all";
 
   const SQL_GET_GROUPS = `
-    SELECT id, group_id, user_id, permission, state, modified
-
+    SELECT id, group_id, permission, state, modified
     FROM memberships
 
     WHERE user_id = $1
@@ -658,6 +657,41 @@ async function getDirectChats(user_id) {
   return rows.map((direct) => new Direct(direct));
 }
 
+//Retrieves groups that linked to user's memberships.
+async function getUserGroups(user_id) {
+  const SQL_GET_GROUPS = `
+    SELECT groups.id, groups.name, groups.created,
+    memberships.id AS mem_id, memberships.permission, memberships.state, memberships.modified
+    
+    FROM groups
+
+    INNER JOIN memberships
+    ON groups.id = memberships.group_id
+
+    WHERE memberships.user_id = $1
+    ORDER BY memberships.state, groups.name;
+  `;
+
+  const { rows } = await pool.query(SQL_GET_GROUPS, [user_id]);
+
+  const groups = rows.map((group) => {
+    return new Group({
+      id: group.id,
+      name: group.name,
+      created: group.created,
+      membership: new Member({
+        id: group.mem_id,
+        permission: group.permission,
+        state: group.state,
+        modified: group.modified,
+      }),
+    });
+  });
+
+  return groups;
+}
+
+//Retrieves all groups
 async function getGroups(user_id) {
   const SQL_GET_GROUPS = `
     SELECT id, name, created
@@ -814,6 +848,7 @@ export {
   hideDirectChat,
   findDirectChatShown,
   getMemberships,
+  getUserGroups,
   getGroups,
   findGroupById,
   getMembersByGroupId,

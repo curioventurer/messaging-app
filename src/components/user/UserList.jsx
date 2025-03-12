@@ -174,7 +174,7 @@ function UserList() {
   else
     content = (
       <UpdateDirectIdContext.Provider value={updateDirectId}>
-        <table className="list-table">
+        <table className="list-table user">
           <tbody>
             {users.map((user) => (
               <UserItem key={user.id} user={user} />
@@ -185,8 +185,8 @@ function UserList() {
     );
 
   return (
-    <div className="list-page user-list">
-      <h1>Users</h1>
+    <div className="list-page">
+      <h1>User List</h1>
       <p>
         You can add friends from the list of users. Once added, you will have to
         wait for them to accept your request. You can check all your pending

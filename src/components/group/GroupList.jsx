@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import useFetch from "../../hooks/useFetch";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
-import GroupItem from "./GroupItem";
+import GroupItem from "./GroupItem.jsx";
 import clearSocket from "../../controllers/clearSocket.js";
+import { allLinks } from "../../controllers/constant.js";
 import { Group } from "../../../js/chat-data.js";
 
 function GroupList() {
@@ -60,7 +62,7 @@ function GroupList() {
   else if (groups.length === 0) content = <p>Group list is empty.</p>;
   else
     content = (
-      <table className="list-table">
+      <table className="list-table group">
         <tbody>
           {groups.map((group) => (
             <GroupItem key={group.id} group={group} />
@@ -70,9 +72,14 @@ function GroupList() {
     );
 
   return (
-    <div className="list-page group-list">
-      <h1>Groups</h1>
-      <p>List of groups.</p>
+    <div className="list-page">
+      <h1>Group List</h1>
+      <p>
+        You can apply to join a group from the list of groups. After
+        application, you will have to wait for the group owner or admin to
+        accept your request. You can check all your pending applications in{" "}
+        <Link to={allLinks.home.search.groups.href}>home</Link> page.
+      </p>
       {content}
     </div>
   );

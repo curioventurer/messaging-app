@@ -58,22 +58,20 @@ h1 {
 
 h2 {
   font-size: 1.2em;
-  margin: 0;
+  margin-block: 0.5em;
 }
 
 h3 {
   font-size: 1.1em;
-  margin: 0;
+  margin: 0.4em;
 }
 
 p {
   margin: 0;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+summary > * {
+  display: inline-block;
 }
 
 a {
@@ -86,10 +84,6 @@ a {
   &:active {
     color: red;
   }
-}
-
-td:empty {
-  padding: 0;
 }
 
 button {
@@ -151,8 +145,18 @@ button {
   }
 }
 
-summary > * {
-  display: inline-block;
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+section {
+  margin-block: 30px;
+}
+
+td:empty {
+  padding: 0;
 }
 
 .pre-wrap {
@@ -165,6 +169,15 @@ summary > * {
 
 .text-center {
   text-align: center;
+}
+
+.s-pad {
+  padding: 10px;
+}
+
+.line {
+  border-top: 1px solid orange;
+  margin-block: 30px;
 }
 
 .clipped-text {
@@ -249,15 +262,58 @@ summary > * {
   color: red;
 }
 
+.content {
+  border: 1px solid white;
+
+  > * {
+    border: none;
+    margin: 0;
+  }
+}
+
 .button-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.7em;
+
+  nav & {
+    column-gap: 1.4em;
+  }
 }
 
-nav .button-bar {
-  column-gap: 1.4em;
+nav.tabs {
+  --border-radius: 10px;
+  --active-color: green;
+
+  background: #222;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+
+  max-width: max-content;
+
+  .button-bar {
+    column-gap: 5px;
+  }
+
+  .button-link {
+    background: transparent;
+    border: none;
+    border-radius: var(--border-radius);
+
+    &:hover {
+      background: #333;
+    }
+  }
+
+  .active {
+    background: var(--active-color);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+
+    &:hover {
+      background: var(--active-color);
+    }
+  }
 }
 
 .error-page {
@@ -510,44 +566,37 @@ nav .button-bar {
   }
 }
 
-.group-list {
+.list-table.group {
   tbody {
     grid-template-columns: 1fr 1fr auto;
   }
 }
 
-.user-list {
+.list-table.user {
   tbody {
     grid-template-columns: 2fr 3fr auto;
   }
 }
 
-.pending-member-list,
-.rejected-member-list {
+.list-table.member {
   tbody {
     grid-template-columns: 1fr auto auto;
   }
 }
 
-.narrow-width :is(.pending-member-list, .rejected-member-list) {
+.narrow-width .list-table.member {
   @include narrow-list-table;
 }
 
-.member-list {
-  tbody {
-    grid-template-columns: 1fr auto auto;
-  }
+.member-list .list-table {
+  --color: #0f05;
 
   tr:first-child td {
-    background: #0f05;
+    background: var(--color);
   }
-}
 
-.narrow-width .member-list {
-  @include narrow-list-table;
-
-  tr:first-child {
-    background: #0f05;
+  .narrow-width & tr:first-child {
+    background: var(--color);
   }
 }
 
@@ -556,12 +605,8 @@ nav .button-bar {
   padding-right: 10px;
   overflow: auto;
 
-  section {
-    margin-block: 20px;
-  }
-
-  h3 {
-    margin-bottom: 5px;
+  h2 {
+    margin-block: 0;
   }
 }
 
@@ -583,7 +628,6 @@ nav .button-bar {
 .chat-list {
   font-size: 1rem;
   color: #ccc;
-  border: 1px solid white;
   padding: 5px;
   overflow: auto;
 
@@ -736,7 +780,7 @@ nav .button-bar {
   /*create gap between scrollbar and contents*/
   padding-right: 5px;
 
-  & > * {
+  > * {
     overflow-anchor: none;
   }
 
@@ -901,19 +945,19 @@ nav .button-bar {
   }
 }
 
-/*Switch layout for user list table when width decreases.
+/*Switch layout for user table when width decreases.
   Breakpoint is an arbitrary value by approximate character counts.
   Value is to be changed, if the length of content changes.
 */
 @media (max-width: 80ch) {
-  .user-list table {
+  .list-table.user {
     @include narrow-list-table;
   }
 }
 
-//Switch layout for group list when width decreases.
+//Switch layout for group tables when width decreases.
 @media (max-width: 70ch) {
-  .group-list table {
+  .list-table.group {
     @include narrow-list-table;
   }
 }

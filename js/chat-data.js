@@ -11,6 +11,22 @@ const DEFAULT_TIME = "1970-01-01T00:00:00.000Z";
 */
 export const DEFAULT_TEXT = "\u200B";
 
+//class for links in constant.js
+export class LinkClass {
+  constructor({ href, name, classes = [], search }) {
+    this.href = href;
+    this.name = name;
+    this.classes = classes;
+    this.search = search;
+
+    //Generate href for search links.
+    for (const key in search) {
+      const link = search[key];
+      link.href = href + link.param;
+    }
+  }
+}
+
 export class RequestStatus {
   static PENDING = "pending";
   static ACCEPTED = "accepted";
