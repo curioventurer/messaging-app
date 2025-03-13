@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
-import RoomHeader from "./RoomHeader";
-import MessageList from "./MessageList";
-import MessagingForm from "./MessagingForm";
+import RoomHeader from "./RoomHeader.jsx";
+import MessageList from "./MessageList.jsx";
+import MessagingForm from "./MessagingForm.jsx";
 
 function RoomUI({ roomInfoIsShown }) {
   const className =

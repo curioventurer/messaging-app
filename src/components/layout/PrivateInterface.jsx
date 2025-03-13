@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Outlet, useLoaderData } from "react-router-dom";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
-import Nav from "./Nav";
+import Nav from "./Nav.jsx";
 import updateRect from "../../controllers/updateRect.js";
 import sortFriendships from "../../controllers/sortFriendships.js";
 import {

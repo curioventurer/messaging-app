@@ -1,8 +1,8 @@
 import { useContext } from "react";
 import PropTypes from "prop-types";
-import GroupInfo from "./GroupInfo";
-import DirectInfo from "./DirectInfo";
-import { RoomContext } from "./Room";
+import GroupInfo from "./GroupInfo.jsx";
+import DirectInfo from "./DirectInfo.jsx";
+import { RoomContext } from "./Room.jsx";
 
 function RoomInfo({ roomInfoIsExpanded }) {
   const { chatId, toggleRoomInfo, toggleExpandRoomInfo } =

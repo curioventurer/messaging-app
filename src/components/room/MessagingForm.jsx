@@ -1,5 +1,5 @@
 import { useState, useRef, useContext } from "react";
-import { RoomContext } from "./Room";
+import { RoomContext } from "./Room.jsx";
 import { Message, PostMessage } from "../../../js/chat-data.js";
 
 function MessagingForm() {

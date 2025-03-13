@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Outlet, useLoaderData } from "react-router-dom";
-import Nav from "./Nav";
-import { InterfaceContext } from "./PrivateInterface";
+import Nav from "./Nav.jsx";
+import { InterfaceContext } from "./PrivateInterface.jsx";
 
 function PublicInterface() {
   const client = useLoaderData();

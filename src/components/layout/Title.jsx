@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import useTitle from "../../hooks/useTitle";
+import useTitle from "../../hooks/useTitle.jsx";
 
 function Title({ children, title = "default" }) {
   useTitle(title);

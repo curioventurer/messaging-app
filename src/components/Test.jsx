@@ -1,9 +1,9 @@
 //test code - react component used for testing
 
 import { useState, useCallback, memo } from "react";
-import useFetchedState from "../hooks/useFetchedState";
-import Loading from "./sys/Loading";
-import LoadFail from "./sys/LoadFail";
+import useFetchedState from "../hooks/useFetchedState.jsx";
+import Loading from "./sys/Loading.jsx";
+import LoadFail from "./sys/LoadFail.jsx";
 
 function Test() {
   const [i, setI] = useState(0);

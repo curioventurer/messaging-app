@@ -1,6 +1,6 @@
 import { useRef, useCallback } from "react";
 import PropTypes from "prop-types";
-import ConfirmDialog from "../ConfirmDialog";
+import ConfirmDialog from "../ConfirmDialog.jsx";
 
 function UnfriendButton({ friendship }) {
   const dialog = useRef(null);

@@ -2,8 +2,8 @@ import { useEffect, useRef, useContext } from "react";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
-import Message from "./Message";
-import { RoomContext, MessageListContext } from "./Room";
+import Message from "./Message.jsx";
+import { RoomContext, MessageListContext } from "./Room.jsx";
 import DateFormat from "../../controllers/DateFormat.js";
 
 function MessageList() {

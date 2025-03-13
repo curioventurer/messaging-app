@@ -9,11 +9,11 @@ import {
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
-import useTitle from "../../hooks/useTitle";
+import useTitle from "../../hooks/useTitle.jsx";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
-import ChatList from "../chatlist/ChatList";
-import RoomInfo from "./RoomInfo";
-import RoomUI from "./RoomUI";
+import ChatList from "../chatlist/ChatList.jsx";
+import RoomInfo from "./RoomInfo.jsx";
+import RoomUI from "./RoomUI.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import clearSocket from "../../controllers/clearSocket.js";
 import {

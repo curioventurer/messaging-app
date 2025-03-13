@@ -1,7 +1,7 @@
 import { useRef, useContext, useCallback, memo } from "react";
 import PropTypes from "prop-types";
 import ConfirmDialog from "../ConfirmDialog.jsx";
-import { RoomContext } from "./Room";
+import { RoomContext } from "./Room.jsx";
 import { Member } from "../../../js/chat-data.js";
 
 function MemberItem({ member }) {

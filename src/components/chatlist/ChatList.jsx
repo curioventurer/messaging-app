@@ -1,9 +1,9 @@
 import { useContext, memo } from "react";
-import ChatItem from "./ChatItem";
-import Loading from "../sys/Loading";
-import LoadFail from "../sys/LoadFail";
-import LoadError from "../sys/LoadError";
-import { ChatListContext } from "../layout/PrivateInterface";
+import ChatItem from "./ChatItem.jsx";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
+import { ChatListContext } from "../layout/PrivateInterface.jsx";
 
 function ChatList() {
   const chats = useContext(ChatListContext);

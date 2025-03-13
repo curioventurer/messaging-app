@@ -1,7 +1,7 @@
 import { useContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import { InterfaceContext } from "./PrivateInterface";
+import { InterfaceContext } from "./PrivateInterface.jsx";
 import { allLinks } from "../../controllers/constant.js";
 
 function Nav({ isPublic = false }) {
