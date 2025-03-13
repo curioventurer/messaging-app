@@ -1,7 +1,7 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
 import useDuration from "../../hooks/useDuration.jsx";
-import FriendButtonBar from "../friend/FriendButtonBar.jsx";
+import FriendshipButtonBar from "../friend/FriendshipButtonBar.jsx";
 import { User, RequestStatus } from "../../../js/chat-data.js";
 
 function UserItem({ user }) {
@@ -52,7 +52,7 @@ function UserItem({ user }) {
         <p className="clipped-text">{friendshipStatus}</p>
       </td>
       <td>
-        <FriendButtonBar friend={user.friendship} />
+        <FriendshipButtonBar friendship={user.friendship} />
       </td>
     </tr>
   );

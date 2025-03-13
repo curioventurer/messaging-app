@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import ConfirmDialog from "../ConfirmDialog";
 
-function UnfriendButton({ friend }) {
+function UnfriendButton({ friendship }) {
   const dialog = useRef(null);
 
   const storeDialog = useCallback(function (element) {
@@ -11,7 +11,7 @@ function UnfriendButton({ friend }) {
 
   function unfriend() {
     window.socket.emit("unfriend", {
-      friendship_id: friend.id,
+      friendship_id: friendship.id,
     });
   }
 
@@ -27,7 +27,7 @@ function UnfriendButton({ friend }) {
       <ConfirmDialog storeDialog={storeDialog} confirm={unfriend}>
         <p>
           {"Are you sure you want to unfriend "}
-          <span className="name">{friend.name}</span>
+          <span className="bold">{friendship.name}</span>
           {
             "? This will delete all messages in direct chat for both users, and is irreversible."
           }
@@ -38,7 +38,7 @@ function UnfriendButton({ friend }) {
 }
 
 UnfriendButton.propTypes = {
-  friend: PropTypes.object.isRequired,
+  friendship: PropTypes.object.isRequired,
 };
 
 export default UnfriendButton;

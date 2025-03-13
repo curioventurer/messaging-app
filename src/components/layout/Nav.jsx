@@ -20,7 +20,6 @@ function Nav({ isPublic = false }) {
   //Links exposed to PrivateInterface(for logged in users).
   const privateLinks = [
     allLinks.home,
-    allLinks.friend,
     allLinks.groupList,
     allLinks.userList,
     allLinks.index,

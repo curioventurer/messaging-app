@@ -356,7 +356,7 @@ nav.tabs {
   padding-right: 5px;
 
   > p {
-    margin-block: 10px;
+    margin-block: 5px 20px;
   }
 }
 
@@ -431,53 +431,7 @@ nav.tabs {
   }
 }
 
-.friend-overview {
-  text-align: center;
-
-  h2 {
-    font-size: 1.3em;
-    margin-block: 0 10px;
-  }
-
-  section {
-    border-top: 1px solid white;
-    margin-bottom: 30px;
-    padding: 10px;
-  }
-}
-
-.friend-list {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  row-gap: 5px;
-
-  > li {
-    width: 50ch;
-    max-width: 100%;
-    background: #0f03;
-    padding: 5px;
-    text-align: start;
-
-    .name {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-
-    .details {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      column-gap: 5px;
-    }
-  }
-}
-
 .confirmation-dialog {
-  .name {
-    font-weight: bold;
-  }
-
   ul {
     display: flex;
     justify-content: center;
@@ -566,15 +520,21 @@ nav.tabs {
   }
 }
 
+.list-table.user {
+  tbody {
+    grid-template-columns: 2fr 3fr auto;
+  }
+}
+
 .list-table.group {
   tbody {
     grid-template-columns: 1fr 1fr auto;
   }
 }
 
-.list-table.user {
+.list-table.friend {
   tbody {
-    grid-template-columns: 2fr 3fr auto;
+    grid-template-columns: 1fr 1fr auto;
   }
 }
 
@@ -958,6 +918,13 @@ nav.tabs {
 //Switch layout for group tables when width decreases.
 @media (max-width: 70ch) {
   .list-table.group {
+    @include narrow-list-table;
+  }
+}
+
+//Switch layout for friendship tables when width decreases.
+@media (max-width: 80ch) {
+  .list-table.friend {
     @include narrow-list-table;
   }
 }

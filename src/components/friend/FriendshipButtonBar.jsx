@@ -1,41 +1,41 @@
 import { useContext, createContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import UnfriendButton from "./UnfriendButton";
+import UnfriendButton from "./UnfriendButton.jsx";
 import { UserFriendship, RequestStatus } from "../../../js/chat-data.js";
 
 export const UpdateDirectIdContext = createContext(function () {});
 
-function FriendButtonBar({ friend }) {
+function FriendshipButtonBar({ friendship }) {
   const updateDirectId = useContext(UpdateDirectIdContext);
 
   function addFriend() {
     window.socket.emit("add friend", {
-      id: friend.user_id,
+      id: friendship.user_id,
     });
   }
 
   function inverseAdd() {
     window.socket.emit("reverse friend request", {
-      id: friend.id,
+      id: friendship.id,
     });
   }
 
   function answerRequest(event) {
     window.socket.emit("friend request update", {
-      id: friend.id,
+      id: friendship.id,
       state: event.target.value,
     });
   }
 
   function deleteRequest() {
     window.socket.emit("delete friend request", {
-      id: friend.id,
+      id: friendship.id,
     });
   }
 
   function showChat() {
-    const user_id = friend.user_id;
+    const user_id = friendship.user_id;
     const request = new Request(`/api/open_chat/${user_id}`, {
       method: "POST",
     });
@@ -55,13 +55,13 @@ function FriendButtonBar({ friend }) {
   /*Default value is used, meaning the friendship relation is absent.
     Thus, provide add friend button.
   */
-  if (!friend.isDefined())
+  if (!friendship.isDefined())
     buttonArray.push({
       key: "add",
       element: <button onClick={addFriend}>Add</button>,
     });
-  else if (friend.state === RequestStatus.PENDING) {
-    if (friend.is_initiator) {
+  else if (friendship.state === RequestStatus.PENDING) {
+    if (friendship.is_initiator) {
       buttonArray.push({
         key: "accept",
         element: (
@@ -83,18 +83,24 @@ function FriendButtonBar({ friend }) {
         key: "cancel",
         element: <button onClick={deleteRequest}>Cancel</button>,
       });
-  } else if (friend.state === RequestStatus.REJECTED && friend.is_initiator)
+  } else if (
+    friendship.state === RequestStatus.REJECTED &&
+    friendship.is_initiator
+  )
     buttonArray.push({
       key: "inverse add",
       element: <button onClick={inverseAdd}>Add</button>,
     });
-  else if (friend.state === RequestStatus.ACCEPTED) {
+  else if (friendship.state === RequestStatus.ACCEPTED) {
     //if not default value(0), chat is already shown, provide link to chat
-    if (friend.direct_chat_id !== 0)
+    if (friendship.direct_chat_id !== 0)
       buttonArray.push({
         key: "chat",
         element: (
-          <Link to={"/chat/" + friend.direct_chat_id} className="button-link">
+          <Link
+            to={"/chat/" + friendship.direct_chat_id}
+            className="button-link"
+          >
             Chat
           </Link>
         ),
@@ -108,7 +114,7 @@ function FriendButtonBar({ friend }) {
 
     buttonArray.push({
       key: "unfriend",
-      element: <UnfriendButton friend={friend} />,
+      element: <UnfriendButton friendship={friendship} />,
     });
   }
 
@@ -123,8 +129,8 @@ function FriendButtonBar({ friend }) {
   );
 }
 
-FriendButtonBar.propTypes = {
-  friend: PropTypes.instanceOf(UserFriendship).isRequired,
+FriendshipButtonBar.propTypes = {
+  friendship: PropTypes.instanceOf(UserFriendship).isRequired,
 };
 
-export default memo(FriendButtonBar);
+export default memo(FriendshipButtonBar);

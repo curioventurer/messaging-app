@@ -1,16 +1,26 @@
 //test code - react component used for testing
 
-import { useState, memo } from "react";
-import useFetch from "../hooks/useFetch";
+import { useState, useCallback, memo } from "react";
+import useFetchedState from "../hooks/useFetchedState";
 import Loading from "./sys/Loading";
 import LoadFail from "./sys/LoadFail";
 
 function Test() {
   const [i, setI] = useState(0);
   const [t, setT] = useState(false);
-  console.log(i, t);
+  console.log("test", i, t);
 
-  useFetch({});
+  const parseData = useCallback(function (data, setState) {
+    console.log("parse", data);
+    setState(100);
+  }, []);
+
+  const [data, setData] = useFetchedState({
+    path: "/api/delay/500",
+    callback: parseData,
+    timeoutDuration: 1000,
+  });
+  console.log("data", data);
 
   return (
     <>
@@ -19,6 +29,7 @@ function Test() {
       <button
         onClick={function () {
           setI((prev) => prev + 1);
+          setData((prev) => prev + 1);
         }}
       >
         click

@@ -19,12 +19,11 @@ export const allLinks = {
     name: "Home",
     classes: ["private-link"],
     search: {
-      chats: { param: "", name: "Chats", classes: [] },
-      groups: { param: "?tab=groups", name: "Groups", classes: [] },
-      friends: { param: "?tab=friends", name: "Friends", classes: [] },
+      chat: { param: "", name: "Chat", classes: [] },
+      group: { param: "?tab=group", name: "Group", classes: [] },
+      friend: { param: "?tab=friend", name: "Friend", classes: [] },
     },
   }),
-  friend: { href: "/friend", name: "Friend", classes: ["private-link"] },
   groupList: {
     href: "/group-list",
     name: "Group List",

@@ -56,10 +56,10 @@ function compare_activity_name(a, b) {
 }
 
 /*Sort array of friendship records.
-  friends: contain instances of UserFriendship - chat-data.js
+  friendships: contain instances of UserFriendship - chat-data.js
 */
-function sortFriends(friends = []) {
-  const sortedFriends = friends.toSorted((a, b) => {
+function sortFriendships(friendships = []) {
+  const sorted = friendships.toSorted((a, b) => {
     const state_diff = compare_state(a, b);
     if (state_diff !== 0) return state_diff;
 
@@ -68,7 +68,7 @@ function sortFriends(friends = []) {
     else return compare_time_id(a, b);
   });
 
-  return sortedFriends;
+  return sorted;
 }
 
-export default sortFriends;
+export default sortFriendships;

@@ -45,7 +45,7 @@ function MemberItem({ member }) {
           <ConfirmDialog storeDialog={storeDialog} confirm={promote}>
             <p>
               {"Are you sure you want to promote "}
-              <span className="name">{member.name}</span>
+              <span className="bold">{member.name}</span>
               {" to owner? You will be demoted to admin."}
             </p>
           </ConfirmDialog>

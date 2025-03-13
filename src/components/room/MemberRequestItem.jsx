@@ -1,10 +1,10 @@
 import { useContext, memo } from "react";
 import PropTypes from "prop-types";
 import useDuration from "../../hooks/useDuration.jsx";
-import { RoomContext } from "./Room";
+import { RoomContext } from "./Room.jsx";
 import { Member, RequestStatus } from "../../../js/chat-data.js";
 
-function AppliedMemberItem({ member }) {
+function MemberRequestItem({ member }) {
   const { room } = useContext(RoomContext);
 
   const power = room.membership.getPower();
@@ -37,8 +37,8 @@ function AppliedMemberItem({ member }) {
   );
 }
 
-AppliedMemberItem.propTypes = {
+MemberRequestItem.propTypes = {
   member: PropTypes.instanceOf(Member).isRequired,
 };
 
-export default memo(AppliedMemberItem);
+export default memo(MemberRequestItem);

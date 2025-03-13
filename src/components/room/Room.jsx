@@ -10,7 +10,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import useTitle from "../../hooks/useTitle";
-import useFetch from "../../hooks/useFetch";
+import useFetchedState from "../../hooks/useFetchedState.jsx";
 import ChatList from "../chatlist/ChatList";
 import RoomInfo from "./RoomInfo";
 import RoomUI from "./RoomUI";
@@ -75,6 +75,12 @@ function Room({ isGroup = true, title = false }) {
   );
   const apiPath = (chatId.isGroup ? "/api/group/" : "/api/chat/") + chatId.id;
 
+  const clearRoomData = useCallback(function (value = undefined) {
+    setRoom(value);
+    setMembers(value);
+    setMessages(value);
+  }, []);
+
   const parseRoomData = useCallback(
     function (data) {
       if (data === false) return clearRoomData(false);
@@ -85,7 +91,7 @@ function Room({ isGroup = true, title = false }) {
       );
       setMessages(data.messages.map((msg) => new Message(msg)));
     },
-    [chatId],
+    [chatId, clearRoomData],
   );
 
   const appendMessage = useCallback(function (message = new Message({})) {
@@ -140,17 +146,13 @@ function Room({ isGroup = true, title = false }) {
   useEffect(() => clearSocket, [chatId]);
 
   //On room change, clear room data to avoid showing previous data, also used to specify the display of loading text.
-  useEffect(() => clearRoomData, [chatId]);
+  useEffect(() => clearRoomData, [chatId, clearRoomData]);
 
-  const isExpired = useFetch({ callback: parseRoomData, path: apiPath });
-
-  /*If fetch timeouts(expires), set null to indicate fetch failure.
-    Else, initialize to undefined to indicate fetch in progress.
-  */
-  useEffect(() => {
-    if (isExpired) clearRoomData(null);
-    else clearRoomData(undefined);
-  }, [isExpired]);
+  useFetchedState({
+    callback: parseRoomData,
+    path: apiPath,
+    clearState: clearRoomData,
+  });
 
   useEffect(() => {
     function addNewMessage(messageData) {
@@ -185,12 +187,6 @@ function Room({ isGroup = true, title = false }) {
       window.socket.off("unfriend", handleUnfriend);
     };
   }, [navigate, directChatUserId]);
-
-  function clearRoomData(value = undefined) {
-    setRoom(value);
-    setMembers(value);
-    setMessages(value);
-  }
 
   return (
     <div className="room">

@@ -115,35 +115,35 @@ function routes(app, ioHandlers) {
     res.json(user);
   });
 
-  app.get("/api/users", async (req, res) => {
+  app.get("/api/user-list", async (req, res) => {
     if (!req.user) return res.json(false);
 
     const users = await getUsers(req.user.id);
     res.json(users);
   });
 
-  app.get("/api/groups", async (req, res) => {
+  app.get("/api/group-list", async (req, res) => {
     if (!req.user) return res.json(false);
 
     const groups = await getGroups(req.user.id);
     res.json(groups);
   });
 
-  app.get("/api/memberships", async (req, res) => {
+  app.get("/api/membership-list", async (req, res) => {
     if (!req.user) return res.json(false);
 
     const groups = await getUserGroups(req.user.id);
     res.json(groups);
   });
 
-  app.get("/api/friends", async (req, res) => {
+  app.get("/api/friendship-list", async (req, res) => {
     if (!req.user) return res.json(false);
 
-    const friends = await getFriendships(req.user.id);
-    res.json(friends);
+    const friendships = await getFriendships(req.user.id);
+    res.json(friendships);
   });
 
-  app.get("/api/chats", async (req, res) => {
+  app.get("/api/chat-list", async (req, res) => {
     if (!req.user) return res.json(false);
 
     const chatList = await getChatList(req.user.id);

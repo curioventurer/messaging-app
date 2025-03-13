@@ -14,7 +14,6 @@ import PublicInterface from "./components/layout/PublicInterface.jsx";
 import PrivateInterface from "./components/layout/PrivateInterface.jsx";
 import Home from "./components/home/Home.jsx";
 import Room from "./components/room/Room";
-import FriendOverview from "./components/friend/FriendOverview";
 import GroupList from "./components/group/GroupList";
 import UserList from "./components/user/UserList.jsx";
 import Intro from "./components/Intro";
@@ -98,14 +97,6 @@ const router = createBrowserRouter([
       {
         path: "/chat/:chat_id",
         element: <Room isGroup={false} title />,
-      },
-      {
-        path: allLinks.friend.href,
-        element: (
-          <Title title={allLinks.friend.name}>
-            <FriendOverview />
-          </Title>
-        ),
       },
       {
         path: allLinks.groupList.href,
