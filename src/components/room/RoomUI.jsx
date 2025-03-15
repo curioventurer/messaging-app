@@ -3,10 +3,11 @@ import RoomHeader from "./RoomHeader.jsx";
 import MessageList from "./MessageList.jsx";
 import MessagingForm from "./MessagingForm.jsx";
 
-function RoomUI({ roomInfoIsShown }) {
+function RoomUI({ roomInfoIsShown, roomInfoIsExpanded }) {
   const className =
     "room-interface wide-width" +
-    (roomInfoIsShown ? " low-priority-display" : "");
+    (roomInfoIsShown ? " low-priority-display" : "") +
+    (roomInfoIsExpanded ? " remove" : "");
 
   return (
     <div className={className}>
@@ -19,6 +20,7 @@ function RoomUI({ roomInfoIsShown }) {
 
 RoomUI.propTypes = {
   roomInfoIsShown: PropTypes.bool.isRequired,
+  roomInfoIsExpanded: PropTypes.bool.isRequired,
 };
 
 export default RoomUI;

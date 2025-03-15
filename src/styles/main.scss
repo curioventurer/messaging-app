@@ -171,6 +171,10 @@ td:empty {
   text-align: center;
 }
 
+.remove {
+  display: none;
+}
+
 .s-pad {
   padding: 10px;
 }
@@ -713,6 +717,10 @@ nav.tabs {
   display: flex;
   flex-direction: column;
   row-gap: 5px;
+
+  &.remove {
+    display: none;
+  }
 }
 
 .room-header {
@@ -901,6 +909,13 @@ nav.tabs {
   .room {
     > .low-priority-display {
       display: none;
+    }
+
+    > .narrow-width {
+      width: auto;
+      flex: 1;
+
+      border-right: none;
     }
   }
 }

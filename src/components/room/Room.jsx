@@ -10,12 +10,14 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import useTitle from "../../hooks/useTitle.jsx";
+import useSearchState from "../../hooks/useSearchState.jsx";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
 import ChatList from "../chatlist/ChatList.jsx";
 import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import clearSocket from "../../controllers/clearSocket.js";
+import { boolType, searchType } from "../../controllers/constant.js";
 import {
   DEFAULT_TEXT,
   User,
@@ -38,8 +40,8 @@ const ROOM_CONTEXT_DEFAULT = {
   members: undefined,
   appendMessage: function () {},
   deleteSentMsg: function () {},
-  toggleRoomInfo: function () {},
-  toggleExpandRoomInfo: function () {},
+  updateRoomInfoIsShown: function () {},
+  updateRoomInfoIsExpanded: function () {},
   storeRoomHeaderRef: function () {},
 };
 
@@ -59,8 +61,14 @@ function Room({ isGroup = true, title = false }) {
   const [members, setMembers] = useState(ROOM_CONTEXT_DEFAULT.members);
   const [messages, setMessages] = useState(MESSAGE_LIST_CONTEXT_DEFAULT);
 
-  const [roomInfoIsShown, setRoomInfoIsShown] = useState(false);
-  const [roomInfoIsExpanded, setRoomInfoIsExpanded] = useState(false);
+  const [roomInfoIsShown, setRoomInfoIsShown] = useSearchState({
+    param: "info",
+    type: searchType.BOOL,
+  });
+  const [roomInfoIsExpanded, setRoomInfoIsExpanded] = useSearchState({
+    param: "expand-info",
+    type: searchType.BOOL,
+  });
 
   const roomHeaderRef = useRef(null);
   const navigate = useNavigate();
@@ -120,21 +128,83 @@ function Room({ isGroup = true, title = false }) {
     });
   }, []);
 
-  const toggleRoomInfo = useCallback(function () {
-    setRoomInfoIsShown((prev) => {
-      //if true, and thus about to hide roomInfo, move focus back to RoomHeader
-      if (prev) {
-        setRoomInfoIsExpanded(false);
-        roomHeaderRef.current.focus();
+  const updateRoomInfoIsExpanded = useCallback(
+    function (type = boolType.TOGGLE) {
+      switch (type) {
+        case boolType.FALSE:
+          if (roomInfoIsExpanded) shrinkRoomInfo();
+          break;
+        case boolType.TRUE:
+          if (!roomInfoIsExpanded) expandRoomInfo();
+          break;
+        case boolType.TOGGLE:
+          if (roomInfoIsExpanded) shrinkRoomInfo();
+          else expandRoomInfo();
+          break;
       }
 
-      return !prev;
-    });
-  }, []);
+      function expandRoomInfo() {
+        setRoomInfoIsExpanded(true);
+      }
 
-  const toggleExpandRoomInfo = useCallback(function () {
-    setRoomInfoIsExpanded((prev) => !prev);
-  }, []);
+      function shrinkRoomInfo() {
+        setRoomInfoIsExpanded(false);
+      }
+    },
+    [roomInfoIsExpanded, setRoomInfoIsExpanded],
+  );
+
+  const updateRoomInfoIsShown = useCallback(
+    function (type = boolType.TOGGLE) {
+      switch (type) {
+        case boolType.FALSE:
+          if (roomInfoIsShown) closeRoomInfo();
+          break;
+        case boolType.TRUE:
+          if (!roomInfoIsShown) openRoomInfo();
+          break;
+        case boolType.TOGGLE:
+          if (roomInfoIsShown) closeRoomInfo();
+          else openRoomInfo();
+          break;
+      }
+
+      function openRoomInfo() {
+        setRoomInfoIsShown(true);
+      }
+
+      function closeRoomInfo() {
+        /*2 simultaneous updates of searchParams causes 1 to fail to update.
+          The 2nd update needs to be delayed with timeout.
+
+          This is a problem with react router's setSearchParams(),
+          it does not operate like react's setState() that allows result from previous update to
+          carry over to the next update when using callbacks.
+
+          Delay of 0 works, but i don't know if it will work under edge conditions.
+          I use a large delay instead to also create an animation like transition.
+        */
+        if (roomInfoIsExpanded) {
+          updateRoomInfoIsExpanded(boolType.FALSE);
+
+          setTimeout(() => {
+            setRoomInfoIsShown(false);
+            roomHeaderRef.current.focus();
+          }, 300);
+        } else {
+          //only 1 update, no need for timeout.
+          setRoomInfoIsShown(false);
+          roomHeaderRef.current.focus();
+        }
+      }
+    },
+    [
+      roomInfoIsShown,
+      roomInfoIsExpanded,
+      setRoomInfoIsShown,
+      updateRoomInfoIsExpanded,
+    ],
+  );
 
   const storeRoomHeaderRef = useCallback(function (element) {
     roomHeaderRef.current = element;
@@ -143,10 +213,16 @@ function Room({ isGroup = true, title = false }) {
   const roomName = room ? room.name : DEFAULT_TEXT;
   useTitle((chatId.isGroup ? "Group" : "Chat") + " - " + roomName, !title);
 
-  useEffect(() => clearSocket, [chatId]);
+  /*Handle invalid search param.
+    If room info is expanded without being shown, set expand to false.
+  */
+  useEffect(() => {
+    if (roomInfoIsExpanded && !roomInfoIsShown) {
+      setRoomInfoIsExpanded(false);
+    }
+  }, [roomInfoIsShown, roomInfoIsExpanded, setRoomInfoIsExpanded]);
 
-  //On room change, clear room data to avoid showing previous data, also used to specify the display of loading text.
-  useEffect(() => clearRoomData, [chatId, clearRoomData]);
+  useEffect(() => clearSocket, [chatId]);
 
   useFetchedState({
     callback: parseRoomData,
@@ -199,8 +275,8 @@ function Room({ isGroup = true, title = false }) {
             members,
             appendMessage,
             deleteSentMsg,
-            toggleRoomInfo,
-            toggleExpandRoomInfo,
+            updateRoomInfoIsShown,
+            updateRoomInfoIsExpanded,
             storeRoomHeaderRef,
           }),
           [
@@ -210,21 +286,22 @@ function Room({ isGroup = true, title = false }) {
             members,
             appendMessage,
             deleteSentMsg,
-            toggleRoomInfo,
-            toggleExpandRoomInfo,
+            updateRoomInfoIsShown,
+            updateRoomInfoIsExpanded,
             storeRoomHeaderRef,
           ],
         )}
       >
         <MessageListContext.Provider value={messages}>
-          {roomInfoIsShown ? (
-            <RoomInfo roomInfoIsExpanded={roomInfoIsExpanded} />
-          ) : (
-            <ChatList />
-          )}
-          {roomInfoIsExpanded ? null : (
-            <RoomUI roomInfoIsShown={roomInfoIsShown} />
-          )}
+          <ChatList roomInfoIsShown={roomInfoIsShown} />
+          <RoomInfo
+            roomInfoIsShown={roomInfoIsShown}
+            roomInfoIsExpanded={roomInfoIsExpanded}
+          />
+          <RoomUI
+            roomInfoIsShown={roomInfoIsShown}
+            roomInfoIsExpanded={roomInfoIsExpanded}
+          />
         </MessageListContext.Provider>
       </RoomContext.Provider>
     </div>

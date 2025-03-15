@@ -58,7 +58,13 @@ function useFetchedState({
     }
   }, [isExpired, clearState]);
 
-  return [state, setState];
+  //On changes to fetch parameters, clear state to avoid showing previous values, also used to specify the display of loading text.
+  useEffect(() => {
+    setState(undefined);
+    if (clearState) clearState(undefined);
+  }, [callback, path, options, clearState]);
+
+  return useMemo(() => [state, setState], [state, setState]);
 }
 
 export default useFetchedState;

@@ -1,11 +1,12 @@
 import { useContext, memo } from "react";
+import PropTypes from "prop-types";
 import ChatItem from "./ChatItem.jsx";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import { ChatListContext } from "../layout/PrivateInterface.jsx";
 
-function ChatList() {
+function ChatList({ roomInfoIsShown = false }) {
   const chats = useContext(ChatListContext);
   let content;
 
@@ -21,8 +22,19 @@ function ChatList() {
     ));
 
   return (
-    <ul className="chat-list narrow-width low-priority-display">{content}</ul>
+    <ul
+      className={
+        "chat-list narrow-width low-priority-display" +
+        (roomInfoIsShown ? " remove" : "")
+      }
+    >
+      {content}
+    </ul>
   );
 }
+
+ChatList.propTypes = {
+  roomInfoIsShown: PropTypes.bool,
+};
 
 export default memo(ChatList);

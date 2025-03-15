@@ -1,5 +1,17 @@
 import { LinkClass } from "../../js/chat-data.js";
 
+export const boolType = {
+  FALSE: 0,
+  TRUE: 1,
+  TOGGLE: 2,
+};
+
+export const searchType = {
+  STRING: "string",
+  BOOL: "bool",
+  ARRAY: "array",
+};
+
 export const allLinks = {
   index: { href: "/", name: "Intro", classes: [] },
   logout: { href: "/logout", name: "Logout", classes: ["important-link"] },

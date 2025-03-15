@@ -4,26 +4,35 @@ import GroupInfo from "./GroupInfo.jsx";
 import DirectInfo from "./DirectInfo.jsx";
 import { RoomContext } from "./Room.jsx";
 
-function RoomInfo({ roomInfoIsExpanded }) {
-  const { chatId, toggleRoomInfo, toggleExpandRoomInfo } =
+function RoomInfo({ roomInfoIsShown, roomInfoIsExpanded }) {
+  const { chatId, updateRoomInfoIsShown, updateRoomInfoIsExpanded } =
     useContext(RoomContext);
 
   return (
     <div
       className={
-        "room-info " + (roomInfoIsExpanded ? "wide-width" : "narrow-width")
+        "room-info " +
+        (roomInfoIsExpanded ? "wide-width" : "narrow-width") +
+        (!roomInfoIsShown ? " remove" : "")
       }
     >
       <div className="room-info-header">
         <h2>{chatId.isGroup ? "Group Info" : "Direct Chat Info"}</h2>
         <div className="button-bar">
-          <button className="clear-background" onClick={toggleExpandRoomInfo}>
+          <button
+            className="clear-background"
+            onClick={() => {
+              updateRoomInfoIsExpanded();
+            }}
+          >
             {roomInfoIsExpanded ? "shrink" : "expand"}
           </button>
           <button
             className="icon close clear-background hover-whitening"
             aria-label="close info"
-            onClick={toggleRoomInfo}
+            onClick={() => {
+              updateRoomInfoIsShown();
+            }}
             autoFocus
           >
             <span aria-hidden>&#x2A2F;</span>
@@ -36,6 +45,7 @@ function RoomInfo({ roomInfoIsExpanded }) {
 }
 
 RoomInfo.propTypes = {
+  roomInfoIsShown: PropTypes.bool.isRequired,
   roomInfoIsExpanded: PropTypes.bool.isRequired,
 };
 

@@ -3,7 +3,8 @@ import { RoomContext } from "./Room.jsx";
 import { DEFAULT_TEXT } from "../../../js/chat-data.js";
 
 function RoomHeader() {
-  const { room, toggleRoomInfo, storeRoomHeaderRef } = useContext(RoomContext);
+  const { room, updateRoomInfoIsShown, storeRoomHeaderRef } =
+    useContext(RoomContext);
   const buttonRef = useRef(null);
 
   useEffect(() => {
@@ -16,7 +17,9 @@ function RoomHeader() {
     <button
       className="room-header clear-background hover-whitening"
       ref={buttonRef}
-      onClick={toggleRoomInfo}
+      onClick={() => {
+        updateRoomInfoIsShown();
+      }}
     >
       <h1 className="clipped-text">{name}</h1>
       <p>click for info</p>
