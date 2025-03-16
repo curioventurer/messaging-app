@@ -6,7 +6,7 @@ import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import { ChatListContext } from "../layout/PrivateInterface.jsx";
 
-function ChatList({ roomInfoIsShown = false }) {
+function ChatList({ className = "" }) {
   const chats = useContext(ChatListContext);
   let content;
 
@@ -22,19 +22,14 @@ function ChatList({ roomInfoIsShown = false }) {
     ));
 
   return (
-    <ul
-      className={
-        "chat-list narrow-width low-priority-display" +
-        (roomInfoIsShown ? " remove" : "")
-      }
-    >
+    <ul className={"chat-list narrow-width low-priority-display " + className}>
       {content}
     </ul>
   );
 }
 
 ChatList.propTypes = {
-  roomInfoIsShown: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 export default memo(ChatList);

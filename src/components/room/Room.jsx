@@ -189,12 +189,19 @@ function Room({ isGroup = true, title = false }) {
 
           setTimeout(() => {
             setRoomInfoIsShown(false);
-            roomHeaderRef.current.focus();
+            restoreFocus();
           }, 300);
         } else {
           //only 1 update, no need for timeout.
           setRoomInfoIsShown(false);
-          roomHeaderRef.current.focus();
+          restoreFocus();
+        }
+
+        //return focus to room header. use timeout to wait for display of room to be restored.
+        function restoreFocus() {
+          setTimeout(() => {
+            roomHeaderRef.current.focus();
+          }, 0);
         }
       }
     },
@@ -292,15 +299,19 @@ function Room({ isGroup = true, title = false }) {
           ],
         )}
       >
+        <ChatList className={roomInfoIsShown ? "remove" : ""} />
+        <RoomInfo
+          className={!roomInfoIsShown ? "remove" : ""}
+          roomInfoIsShown={roomInfoIsShown}
+          roomInfoIsExpanded={roomInfoIsExpanded}
+        />
         <MessageListContext.Provider value={messages}>
-          <ChatList roomInfoIsShown={roomInfoIsShown} />
-          <RoomInfo
-            roomInfoIsShown={roomInfoIsShown}
-            roomInfoIsExpanded={roomInfoIsExpanded}
-          />
           <RoomUI
-            roomInfoIsShown={roomInfoIsShown}
-            roomInfoIsExpanded={roomInfoIsExpanded}
+            className={
+              (roomInfoIsExpanded ? "remove" : "") +
+              " " +
+              (roomInfoIsShown ? "low-priority-display" : "")
+            }
           />
         </MessageListContext.Provider>
       </RoomContext.Provider>

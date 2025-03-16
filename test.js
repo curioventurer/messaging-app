@@ -42,3 +42,12 @@ const array = [
 //const newArr = Member.sortApplications(array);
 //console.log(newArr);
 getMemberships(1, "pending").then((i) => console.log(i));
+
+apple: {
+  apple.toString();
+}
+<br />;
+cart: {
+  showCart();
+}
+<br />;

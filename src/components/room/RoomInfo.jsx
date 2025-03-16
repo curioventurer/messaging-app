@@ -1,19 +1,25 @@
-import { useContext } from "react";
+import { useEffect, useRef, useContext } from "react";
 import PropTypes from "prop-types";
 import GroupInfo from "./GroupInfo.jsx";
 import DirectInfo from "./DirectInfo.jsx";
 import { RoomContext } from "./Room.jsx";
 
-function RoomInfo({ roomInfoIsShown, roomInfoIsExpanded }) {
+function RoomInfo({ className = "", roomInfoIsShown, roomInfoIsExpanded }) {
   const { chatId, updateRoomInfoIsShown, updateRoomInfoIsExpanded } =
     useContext(RoomContext);
+  const closeButton = useRef(null);
+
+  useEffect(() => {
+    if (roomInfoIsShown) closeButton.current.focus();
+  }, [roomInfoIsShown]);
 
   return (
     <div
       className={
         "room-info " +
         (roomInfoIsExpanded ? "wide-width" : "narrow-width") +
-        (!roomInfoIsShown ? " remove" : "")
+        " " +
+        className
       }
     >
       <div className="room-info-header">
@@ -28,12 +34,12 @@ function RoomInfo({ roomInfoIsShown, roomInfoIsExpanded }) {
             {roomInfoIsExpanded ? "shrink" : "expand"}
           </button>
           <button
+            ref={closeButton}
             className="icon close clear-background hover-whitening"
             aria-label="close info"
             onClick={() => {
               updateRoomInfoIsShown();
             }}
-            autoFocus
           >
             <span aria-hidden>&#x2A2F;</span>
           </button>
@@ -45,8 +51,9 @@ function RoomInfo({ roomInfoIsShown, roomInfoIsExpanded }) {
 }
 
 RoomInfo.propTypes = {
-  roomInfoIsShown: PropTypes.bool.isRequired,
-  roomInfoIsExpanded: PropTypes.bool.isRequired,
+  className: PropTypes.string,
+  roomInfoIsShown: PropTypes.bool,
+  roomInfoIsExpanded: PropTypes.bool,
 };
 
 export default RoomInfo;
