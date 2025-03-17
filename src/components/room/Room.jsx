@@ -147,7 +147,7 @@ function Room({ isGroup = true, title = false }) {
       const newMember = new Member(membershipData);
 
       //Not an update for this room, return.
-      if (!chatId.isGroup || chatId.id !== newMember.group_id) return;
+      if (!newMember.chatIdIsEqual(chatId)) return;
 
       setMemberList((prevMemberList) => {
         if (!prevMemberList) return prevMemberList;
@@ -181,7 +181,7 @@ function Room({ isGroup = true, title = false }) {
       const membership = new Member(membershipData);
 
       //Not an update for this room, return.
-      if (!chatId.isGroup || chatId.id !== membership.group_id) return;
+      if (!membership.chatIdIsEqual(chatId)) return;
 
       setMemberList((prevMemberList) => {
         if (!prevMemberList) return prevMemberList;
@@ -203,16 +203,33 @@ function Room({ isGroup = true, title = false }) {
     [chatId, setMemberList],
   );
 
-  //if current room shows the direct chat of removed friend, redirect to home
-  const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
-  const handleUnfriend = useCallback(
-    function ({ user_id }) {
-      if (directChatUserId === user_id)
-        navigate("/home", {
-          replace: true,
-        });
+  //Redirect to home when the room is deleted by removing friend or leaving group.
+  const deleteRoom = useCallback(
+    function () {
+      navigate("/home", {
+        replace: true,
+      });
     },
-    [directChatUserId, navigate],
+    [navigate],
+  );
+
+  const deleteGroupRoom = useCallback(
+    function (membershipData = new Member({})) {
+      const membership = new Member(membershipData);
+
+      //if same room, delete room
+      if (membership.chatIdIsEqual(chatId)) deleteRoom();
+    },
+    [chatId, deleteRoom],
+  );
+
+  //if current room shows the direct chat of removed friend, delete room.
+  const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
+  const deleteDirectRoom = useCallback(
+    function ({ user_id }) {
+      if (directChatUserId === user_id) deleteRoom();
+    },
+    [directChatUserId, deleteRoom],
   );
 
   const updateRoomInfoIsExpanded = useCallback(
@@ -325,20 +342,29 @@ function Room({ isGroup = true, title = false }) {
   });
 
   useEffect(() => {
-    window.socket.on("unfriend", handleUnfriend);
+    window.socket.on("unfriend", deleteDirectRoom);
     window.socket.on("message", handleSocketMessage);
-    window.socket.on("updateMembership", updateMember);
-    window.socket.on("deleteMembership", deleteMember);
+    window.socket.on("updateGroupMember", updateMember);
+    window.socket.on("deleteGroupMember", deleteMember);
+    window.socket.on("deleteMembership", deleteGroupRoom);
 
     return () => {
-      window.socket.off("unfriend", handleUnfriend);
+      window.socket.off("unfriend", deleteDirectRoom);
       window.socket.off("message", handleSocketMessage);
-      window.socket.off("updateMembership", updateMember);
-      window.socket.off("deleteMembership", deleteMember);
+      window.socket.off("updateGroupMember", updateMember);
+      window.socket.off("deleteGroupMember", deleteMember);
+      window.socket.off("deleteMembership", deleteGroupRoom);
     };
 
     //Socket.IO bug: Reestablish the socket listeners on url search change.
-  }, [search, handleUnfriend, handleSocketMessage, updateMember, deleteMember]);
+  }, [
+    search,
+    deleteDirectRoom,
+    handleSocketMessage,
+    updateMember,
+    deleteMember,
+    deleteGroupRoom,
+  ]);
 
   return (
     <div className="room">

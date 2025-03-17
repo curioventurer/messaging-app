@@ -123,9 +123,6 @@ function PrivateInterface() {
     function (membershipData = new Member({})) {
       const newMembership = new Member(membershipData);
 
-      //Not an update for user, return.
-      if (newMembership.user_id !== client.id) return;
-
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
 
@@ -148,15 +145,12 @@ function PrivateInterface() {
         return newGroupList;
       });
     },
-    [client.id, setGroupList],
+    [setGroupList],
   );
 
   const deleteGroup = useCallback(
     function (membershipData = new Member({})) {
       const membership = new Member(membershipData);
-
-      //Not an update for user, return.
-      if (membership.user_id !== client.id) return;
 
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
@@ -175,7 +169,7 @@ function PrivateInterface() {
         return newGroupList;
       });
     },
-    [client.id, setGroupList],
+    [setGroupList],
   );
 
   const updateDirectId = useCallback(
@@ -255,15 +249,8 @@ function PrivateInterface() {
     [setChats],
   );
 
-  //accepts either ChatId instance or { user_id } as identifier
-  const removeChat = useCallback(
-    function (identifier) {
-      let find = () => false;
-
-      if (identifier instanceof ChatId)
-        find = (chat) => identifier.isEqual(chat.chatId);
-      else find = (chat) => chat.user_id === identifier.user_id;
-
+  const deleteChat = useCallback(
+    function (find = () => {}) {
       setChats((prevChats) => {
         if (!prevChats) return prevChats;
 
@@ -279,6 +266,29 @@ function PrivateInterface() {
       });
     },
     [setChats],
+  );
+
+  const deleteDirectChat = useCallback(
+    function ({ user_id }) {
+      const find = (chat) => chat.user_id === user_id;
+      deleteChat(find);
+    },
+    [deleteChat],
+  );
+
+  const deleteGroupChat = useCallback(
+    function (membershipData = new Member({})) {
+      const membership = new Member(membershipData);
+
+      const chatId = new ChatId({
+        id: membership.group_id,
+        isGroup: true,
+      });
+
+      const find = (chat) => chatId.isEqual(chat.chatId);
+      deleteChat(find);
+    },
+    [deleteChat],
   );
 
   const closeMenu = useCallback(function () {
@@ -301,29 +311,31 @@ function PrivateInterface() {
 
   const hideChat = useCallback(
     function (user_id) {
-      removeChat({ user_id });
+      deleteDirectChat({ user_id });
 
       //clear direct id by setting to default of 0.
       updateDirectId(user_id, 0);
     },
-    [removeChat, updateDirectId],
+    [deleteDirectChat, updateDirectId],
   );
 
   useEffect(() => {
     window.socket.on("chat item", addChat);
     window.socket.on("message", updateLastMsg);
-    window.socket.on("unfriend", removeChat);
+    window.socket.on("unfriend", deleteDirectChat);
     window.socket.on("addGroup", addGroup);
     window.socket.on("updateMembership", updateMembership);
     window.socket.on("deleteMembership", deleteGroup);
+    window.socket.on("deleteMembership", deleteGroupChat);
 
     return () => {
       window.socket.off("chat item", addChat);
       window.socket.off("message", updateLastMsg);
-      window.socket.off("unfriend", removeChat);
+      window.socket.off("unfriend", deleteDirectChat);
       window.socket.off("addGroup", addGroup);
       window.socket.off("updateMembership", updateMembership);
       window.socket.off("deleteMembership", deleteGroup);
+      window.socket.off("deleteMembership", deleteGroupChat);
     };
 
     /*Socket.IO bug: Reestablish the socket listeners on url search change.
@@ -333,11 +345,12 @@ function PrivateInterface() {
   }, [
     search,
     addChat,
-    removeChat,
     updateLastMsg,
+    deleteDirectChat,
     addGroup,
     updateMembership,
     deleteGroup,
+    deleteGroupChat,
   ]);
 
   //update rect at intervals

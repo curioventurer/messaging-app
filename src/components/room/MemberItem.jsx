@@ -28,13 +28,21 @@ function MemberItem({ member }) {
     else promote();
   }
 
+  function leaveGroup() {
+    window.socket.emit("leaveGroup", { id: member.id });
+  }
+
+  function kickMember() {
+    window.socket.emit("kickMember", { id: member.id });
+  }
+
   const buttonArray = [];
 
   if (!notUser) {
     if (!isOwner)
       buttonArray.push({
         key: "leave",
-        element: <button>Leave</button>,
+        element: <button onClick={leaveGroup}>Leave</button>,
       });
   } else if (isOwner) {
     buttonArray.push({
@@ -63,7 +71,7 @@ function MemberItem({ member }) {
   if (notUser && power > memberPower)
     buttonArray.push({
       key: "kick",
-      element: <button>Kick</button>,
+      element: <button onClick={kickMember}>Kick</button>,
     });
 
   return (

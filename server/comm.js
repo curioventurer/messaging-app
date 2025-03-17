@@ -17,6 +17,8 @@ import {
   postMembership,
   deleteGroupApplication,
   putMemberRequest,
+  leaveGroup,
+  kickMember,
   findGroupById,
   findGroupSummary,
 } from "./db/dbControls.js";
@@ -274,7 +276,7 @@ function comm(server, sessionMiddleware, testLatency) {
       membership.name = socket.request.user.name;
       socket.emit("updateMembership", membership);
       io.to("group:" + membership.group_id).emit(
-        "updateMembership",
+        "updateGroupMember",
         membership,
       );
 
@@ -297,7 +299,7 @@ function comm(server, sessionMiddleware, testLatency) {
 
       socket.emit("deleteMembership", membership);
       io.to("group:" + membership.group_id).emit(
-        "deleteMembership",
+        "deleteGroupMember",
         membership,
       );
     });
@@ -312,7 +314,7 @@ function comm(server, sessionMiddleware, testLatency) {
 
       io.to("user:" + membership.user_id).emit("updateMembership", membership);
       io.to("group:" + membership.group_id).emit(
-        "updateMembership",
+        "updateGroupMember",
         membership,
       );
 
@@ -332,6 +334,38 @@ function comm(server, sessionMiddleware, testLatency) {
 
         io.to("user:" + membership.user_id).emit("chat item", chatItem);
       }
+    });
+
+    socket.on("leaveGroup", async (data) => {
+      const membership = await leaveGroup(data.id, socket.request.user.id);
+      if (membership === false) return;
+
+      membership.name = socket.request.user.name;
+
+      socket.emit("deleteMembership", membership);
+      io.to("group:" + membership.group_id).emit(
+        "deleteGroupMember",
+        membership,
+      );
+
+      //leave room
+      socket.leave("group:" + membership.group_id);
+    });
+
+    socket.on("kickMember", async (data) => {
+      const membership = await kickMember(data.id, socket.request.user.id);
+      if (membership === false) return;
+
+      io.to("user:" + membership.user_id).emit("deleteMembership", membership);
+      io.to("group:" + membership.group_id).emit(
+        "deleteGroupMember",
+        membership,
+      );
+
+      //leave room
+      io.in("user:" + membership.user_id).socketsLeave(
+        "group:" + membership.group_id,
+      );
     });
 
     doPostConnect(socket);

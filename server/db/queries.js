@@ -881,6 +881,65 @@ async function putMemberRequest(id, state, user_id) {
   }
 }
 
+async function leaveGroup(id, user_id) {
+  const SQL_DELETE_MEMBERSHIP = `
+    DELETE FROM memberships
+    
+    WHERE id = $1
+    AND user_id = $2
+    AND state = '${RequestStatus.ACCEPTED}'
+    AND NOT permission = '${Member.permission.OWNER}'
+    
+    RETURNING id, group_id, user_id, permission, state, modified;
+  `;
+  try {
+    const { rows } = await pool.query(SQL_DELETE_MEMBERSHIP, [id, user_id]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
+async function kickMember(id, user_id) {
+  const SQL_DELETE_MEMBERSHIP = `
+    DELETE FROM memberships
+
+    WHERE id = $1
+
+    RETURNING id, group_id, user_id, permission, state, modified;
+  `;
+  try {
+    //return false, if membership does not exists.
+    const membership = await findMembershipById(id);
+    if (!membership) return false;
+
+    //return false, if not an accepted member.
+    if (membership.state !== RequestStatus.ACCEPTED) return false;
+
+    //return false, if membership does not exists.
+    const userMembership = await findMembership(membership.group_id, user_id);
+    if (!userMembership) return false;
+
+    //return false, if not an accepted member.
+    if (userMembership.state !== RequestStatus.ACCEPTED) return false;
+
+    //Can only kick if user's power is greater than member.
+    if (membership.getPower() >= userMembership.getPower()) return false;
+
+    //All checks passed, proceed to kick.
+    const { rows } = await pool.query(SQL_DELETE_MEMBERSHIP, [id]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
 async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
   const SQL_POST_MESSAGE = `
     INSERT INTO messages
@@ -991,6 +1050,8 @@ export {
   postMembership,
   deleteGroupApplication,
   putMemberRequest,
+  leaveGroup,
+  kickMember,
   postMessage,
   getMessagesByChatId,
   findDirectChat,

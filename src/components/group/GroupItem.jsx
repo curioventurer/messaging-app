@@ -18,6 +18,10 @@ function GroupItem({ group }) {
     window.socket.emit("deleteGroupApplication", { group_id: group.id });
   }
 
+  function leaveGroup() {
+    window.socket.emit("leaveGroup", { id: membership.id });
+  }
+
   let status;
   const buttonArray = [];
 
@@ -43,7 +47,7 @@ function GroupItem({ group }) {
     if (membership.permission !== Member.permission.OWNER)
       buttonArray.push({
         key: "leave",
-        element: <button>Leave</button>,
+        element: <button onClick={leaveGroup}>Leave</button>,
       });
   } else if (membership.state === RequestStatus.PENDING) {
     status = (

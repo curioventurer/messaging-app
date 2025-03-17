@@ -456,6 +456,10 @@ export class Member {
     return Member.getPower(this.permission);
   }
 
+  chatIdIsEqual(chatId = new ChatId({})) {
+    return chatId.isGroup && chatId.id === this.group_id;
+  }
+
   static getPower(permission = this.permission.MEMBER) {
     switch (permission) {
       case this.permission.MEMBER:

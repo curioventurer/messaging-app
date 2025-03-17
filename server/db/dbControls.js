@@ -161,6 +161,8 @@ export {
   postMembership,
   deleteGroupApplication,
   putMemberRequest,
+  leaveGroup,
+  kickMember,
   postMessage as postMessageDB,
   getMessagesByChatId,
 } from "./queries.js";
