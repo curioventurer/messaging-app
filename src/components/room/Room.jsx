@@ -143,8 +143,8 @@ function Room({ isGroup = true, title = false }) {
   );
 
   const updateMember = useCallback(
-    function (groupData = new Group({})) {
-      const newMember = new Member(groupData.membership);
+    function (membershipData = new Member({})) {
+      const newMember = new Member(membershipData);
 
       //Not an update for this room, return.
       if (!chatId.isGroup || chatId.id !== newMember.group_id) return;
@@ -158,12 +158,17 @@ function Room({ isGroup = true, title = false }) {
 
         let newMemberList;
         if (index === -1) newMemberList = [...prevMemberList, newMember];
-        else
+        else {
+          //for updates, the name is missing from new entry. Add in from preexisting entry.
+          const prevMember = prevMemberList[index];
+          newMember.name = prevMember.name;
+
           newMemberList = [
             ...prevMemberList.slice(0, index),
             newMember,
             ...prevMemberList.slice(index + 1),
           ];
+        }
 
         return newMemberList;
       });

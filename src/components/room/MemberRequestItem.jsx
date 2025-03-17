@@ -10,6 +10,13 @@ function MemberRequestItem({ member }) {
   const power = room.membership.getPower();
   const duration = useDuration(member.modified);
 
+  function putMemberRequest(state = RequestStatus.ACCEPTED) {
+    window.socket.emit("putMemberRequest", {
+      id: member.id,
+      state,
+    });
+  }
+
   return (
     <tr>
       <td className="clipped-text">{member.name}</td>
@@ -19,16 +26,34 @@ function MemberRequestItem({ member }) {
           {power > 0 && member.state === RequestStatus.PENDING ? (
             <>
               <li>
-                <button>Accept</button>
+                <button
+                  onClick={() => {
+                    putMemberRequest(RequestStatus.ACCEPTED);
+                  }}
+                >
+                  Accept
+                </button>
               </li>
               <li>
-                <button>Reject</button>
+                <button
+                  onClick={() => {
+                    putMemberRequest(RequestStatus.REJECTED);
+                  }}
+                >
+                  Reject
+                </button>
               </li>
             </>
           ) : null}
           {power > 0 && member.state === RequestStatus.REJECTED ? (
             <li>
-              <button>Accept</button>
+              <button
+                onClick={() => {
+                  putMemberRequest(RequestStatus.ACCEPTED);
+                }}
+              >
+                Accept
+              </button>
             </li>
           ) : null}
         </ul>

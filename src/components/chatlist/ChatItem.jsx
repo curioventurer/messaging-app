@@ -111,7 +111,7 @@ function ChatItem({ chat = new ChatItemData({}) }) {
           </button>
           {isMenuShown ? (
             <ChatItemMenu
-              chatId={chat.chatId}
+              chat={chat}
               containerRect={menuContRect}
               targetRect={menuButtonRect}
             />

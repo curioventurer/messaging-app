@@ -167,7 +167,9 @@ INSERT INTO memberships ( group_id, user_id, permission, state, modified ) VALUE
   ( 4, 1, 'member', 'pending', '2024-10-02 9:00:00-01' ),
 
   ( 5, 3, 'owner', 'accepted', '2024-10-02 9:00:00-01' ),
-  ( 5, 1, 'member', 'rejected', '2024-10-03 9:00:00-01' );
+  ( 5, 1, 'member', 'rejected', '2024-10-03 9:00:00-01' ),
+
+  ( 6, 3, 'owner', 'accepted', '2024-10-04 9:00:00-01' );
 
 INSERT INTO messages ( text, group_id, user_id, created ) VALUES
   ( 'A new comic is releasing soon.', 1, 1, '2020-10-25 13:57:58+06' ),

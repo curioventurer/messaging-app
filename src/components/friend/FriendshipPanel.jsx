@@ -18,33 +18,8 @@ import {
 } from "../../../js/chat-data.js";
 
 function FriendshipPanel() {
-  const { friendships, setFriendships } = useContext(InterfaceContext);
-
-  const updateDirectId = useCallback(
-    function (user_id, direct_chat_id) {
-      setFriendships((prevFriendships) => {
-        if (!prevFriendships) return prevFriendships;
-
-        const index = prevFriendships.findIndex(
-          (friend) => friend.user_id === user_id,
-        );
-        if (index === -1) return prevFriendships;
-
-        const friendship = new UserFriendship({
-          ...prevFriendships[index],
-          direct_chat_id,
-        });
-
-        const newFriendships = [
-          ...prevFriendships.slice(0, index),
-          friendship,
-          ...prevFriendships.slice(index + 1),
-        ];
-        return newFriendships;
-      });
-    },
-    [setFriendships],
-  );
+  const { friendships, updateDirectId, setFriendships } =
+    useContext(InterfaceContext);
 
   //Add or replace friendship entry.
   const updateFriendship = useCallback(

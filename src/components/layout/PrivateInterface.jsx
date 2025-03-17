@@ -30,6 +30,7 @@ const INTERFACE_CONTEXT_DEFAULT = {
   client: new User({}),
   groupList: undefined,
   friendships: undefined,
+  updateDirectId: () => {},
   setFriendships: () => {},
   setGroupList: () => {},
 };
@@ -37,7 +38,7 @@ const INTERFACE_CONTEXT_DEFAULT = {
 const MENU_CONTEXT_DEFAULT = {
   isMenuVisible: false,
   menuChatId: new ChatId({}),
-  removeChat: function () {},
+  hideChat: function () {},
   openMenu: function () {},
   closeMenu: function () {},
 };
@@ -99,12 +100,9 @@ function PrivateInterface() {
 
   const outletRef = useRef(null);
 
-  const updateGroup = useCallback(
+  const addGroup = useCallback(
     function (groupData = new Group({})) {
       const newGroup = new Group(groupData);
-
-      //Not an update for user, return.
-      if (newGroup.membership.user_id !== client.id) return;
 
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
@@ -112,15 +110,40 @@ function PrivateInterface() {
         const index = prevGroupList.findIndex(
           (group) => group.id === newGroup.id,
         );
+        if (index !== -1) return;
 
-        let newGroupList;
-        if (index === -1) newGroupList = [...prevGroupList, newGroup];
-        else
-          newGroupList = [
-            ...prevGroupList.slice(0, index),
-            newGroup,
-            ...prevGroupList.slice(index + 1),
-          ];
+        const newGroupList = [...prevGroupList, newGroup];
+        return newGroupList;
+      });
+    },
+    [setGroupList],
+  );
+
+  const updateMembership = useCallback(
+    function (membershipData = new Member({})) {
+      const newMembership = new Member(membershipData);
+
+      //Not an update for user, return.
+      if (newMembership.user_id !== client.id) return;
+
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
+
+        const index = prevGroupList.findIndex(
+          (group) => group.id === newMembership.group_id,
+        );
+        if (index === -1) return prevGroupList;
+
+        const newGroup = new Group({
+          ...prevGroupList[index].toJSON(),
+          membership: newMembership,
+        });
+
+        const newGroupList = [
+          ...prevGroupList.slice(0, index),
+          newGroup,
+          ...prevGroupList.slice(index + 1),
+        ];
 
         return newGroupList;
       });
@@ -153,6 +176,32 @@ function PrivateInterface() {
       });
     },
     [client.id, setGroupList],
+  );
+
+  const updateDirectId = useCallback(
+    function (user_id, direct_chat_id) {
+      setFriendships((prevFriendships) => {
+        if (!prevFriendships) return prevFriendships;
+
+        const index = prevFriendships.findIndex(
+          (friend) => friend.user_id === user_id,
+        );
+        if (index === -1) return prevFriendships;
+
+        const friendship = new UserFriendship({
+          ...prevFriendships[index],
+          direct_chat_id,
+        });
+
+        const newFriendships = [
+          ...prevFriendships.slice(0, index),
+          friendship,
+          ...prevFriendships.slice(index + 1),
+        ];
+        return newFriendships;
+      });
+    },
+    [setFriendships],
   );
 
   const addChat = useCallback(
@@ -250,18 +299,30 @@ function PrivateInterface() {
     [isMenuVisible, menuChatId, closeMenu],
   );
 
+  const hideChat = useCallback(
+    function (user_id) {
+      removeChat({ user_id });
+
+      //clear direct id by setting to default of 0.
+      updateDirectId(user_id, 0);
+    },
+    [removeChat, updateDirectId],
+  );
+
   useEffect(() => {
     window.socket.on("chat item", addChat);
-    window.socket.on("unfriend", removeChat);
     window.socket.on("message", updateLastMsg);
-    window.socket.on("updateMembership", updateGroup);
+    window.socket.on("unfriend", removeChat);
+    window.socket.on("addGroup", addGroup);
+    window.socket.on("updateMembership", updateMembership);
     window.socket.on("deleteMembership", deleteGroup);
 
     return () => {
       window.socket.off("chat item", addChat);
-      window.socket.off("unfriend", removeChat);
       window.socket.off("message", updateLastMsg);
-      window.socket.off("updateMembership", updateGroup);
+      window.socket.off("unfriend", removeChat);
+      window.socket.off("addGroup", addGroup);
+      window.socket.off("updateMembership", updateMembership);
       window.socket.off("deleteMembership", deleteGroup);
     };
 
@@ -269,7 +330,15 @@ function PrivateInterface() {
       For reasons I do not understand, the listener disappears when changing url query.
       It is inconsistent, message listener continues to work in spite of it, but updateMembership listener fails.
     */
-  }, [search, addChat, removeChat, updateLastMsg, updateGroup, deleteGroup]);
+  }, [
+    search,
+    addChat,
+    removeChat,
+    updateLastMsg,
+    addGroup,
+    updateMembership,
+    deleteGroup,
+  ]);
 
   //update rect at intervals
   useEffect(() => {
@@ -299,10 +368,18 @@ function PrivateInterface() {
             client,
             groupList,
             friendships,
+            updateDirectId,
             setFriendships,
             setGroupList,
           }),
-          [client, groupList, friendships, setFriendships, setGroupList],
+          [
+            client,
+            groupList,
+            friendships,
+            updateDirectId,
+            setFriendships,
+            setGroupList,
+          ],
         )}
       >
         <Nav />
@@ -311,11 +388,11 @@ function PrivateInterface() {
             () => ({
               isMenuVisible,
               menuChatId,
-              removeChat,
+              hideChat,
               openMenu,
               closeMenu,
             }),
-            [isMenuVisible, menuChatId, removeChat, openMenu, closeMenu],
+            [isMenuVisible, menuChatId, hideChat, openMenu, closeMenu],
           )}
         >
           <OutletContext.Provider value={outletRect}>

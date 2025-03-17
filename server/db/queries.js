@@ -764,6 +764,24 @@ async function findMembership(group_id, user_id) {
   }
 }
 
+async function findMembershipById(id) {
+  const SQL_FIND_MEMBERSHIP = `
+    SELECT id, group_id, user_id, permission, state, modified
+    FROM memberships
+
+    WHERE id = $1
+  `;
+  try {
+    const { rows } = await pool.query(SQL_FIND_MEMBERSHIP, [id]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
 async function postMembership(group_id, user_id) {
   try {
     const SQL_POST_MEMBERSHIP = `
@@ -802,6 +820,58 @@ async function deleteGroupApplication(group_id, user_id) {
       group_id,
       user_id,
     ]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
+async function putMemberRequest(id, state, user_id) {
+  try {
+    const SQL_PUT_MEMBERSHIP = `
+      UPDATE memberships
+      SET state = $2
+      WHERE id = $1
+      RETURNING id, group_id, user_id, permission, state, modified;
+    `;
+
+    //return false, if state isn't accepted or rejected.
+    if (state !== RequestStatus.ACCEPTED && state !== RequestStatus.REJECTED)
+      return false;
+
+    //First, determine if membership can be modified. It must a pending or rejected request.
+
+    //return false, if membership does not exists.
+    const membership = await findMembershipById(id);
+    if (!membership) return false;
+
+    //return false, if membership is accepted.
+    if (membership.state === RequestStatus.ACCEPTED) return false;
+
+    /*Current strategy is such that, pending request can be accepted/rejected.
+      While already rejected request can only be accepted.
+      Therefore, there is still a need to validate specifically for rejected request.
+    */
+    if (
+      membership.state === RequestStatus.REJECTED &&
+      state === RequestStatus.REJECTED
+    )
+      return false;
+
+    //Next, determine if user has the permission to update(accept/reject) the membership request. User must be at least admin in the group.
+
+    //return false, if membership does not exists.
+    const userMembership = await findMembership(membership.group_id, user_id);
+    if (!userMembership) return false;
+
+    //return false, if user is not at least admin
+    if (userMembership.getPower() < 1) return false;
+
+    //All test has passed, now proceed to put the request.
+    const { rows } = await pool.query(SQL_PUT_MEMBERSHIP, [id, state]);
     const entry = rows[0];
 
     if (!entry) return false;
@@ -920,6 +990,7 @@ export {
   getMembersByGroupId,
   postMembership,
   deleteGroupApplication,
+  putMemberRequest,
   postMessage,
   getMessagesByChatId,
   findDirectChat,

@@ -16,7 +16,9 @@ import {
   postMessageDB,
   postMembership,
   deleteGroupApplication,
+  putMemberRequest,
   findGroupById,
+  findGroupSummary,
 } from "./db/dbControls.js";
 import {
   ChatId,
@@ -269,15 +271,19 @@ function comm(server, sessionMiddleware, testLatency) {
       );
       if (membership === false) return;
 
-      //Post successful, get data to sent to clients.
-      const group = await findGroupById(data.group_id);
+      membership.name = socket.request.user.name;
+      socket.emit("updateMembership", membership);
+      io.to("group:" + membership.group_id).emit(
+        "updateMembership",
+        membership,
+      );
+
+      //For user, emit new group to group panel.
+      const group = await findGroupById(membership.group_id);
       if (group === false) return;
 
-      membership.name = socket.request.user.name;
       group.membership = membership;
-
-      socket.emit("updateMembership", group);
-      io.to("group:" + data.group_id).emit("updateMembership", group);
+      socket.emit("addGroup", group);
     });
 
     socket.on("deleteGroupApplication", async (data) => {
@@ -290,7 +296,42 @@ function comm(server, sessionMiddleware, testLatency) {
       membership.name = socket.request.user.name;
 
       socket.emit("deleteMembership", membership);
-      io.to("group:" + data.group_id).emit("deleteMembership", membership);
+      io.to("group:" + membership.group_id).emit(
+        "deleteMembership",
+        membership,
+      );
+    });
+
+    socket.on("putMemberRequest", async (data) => {
+      const membership = await putMemberRequest(
+        data.id,
+        data.state,
+        socket.request.user.id,
+      );
+      if (membership === false) return;
+
+      io.to("user:" + membership.user_id).emit("updateMembership", membership);
+      io.to("group:" + membership.group_id).emit(
+        "updateMembership",
+        membership,
+      );
+
+      /*if membership accepted.
+        Add user to group room to receive group updates.
+        Emit chat item to user's chatlist.
+      */
+      if (membership.state === RequestStatus.ACCEPTED) {
+        io.in("user:" + membership.user_id).socketsJoin(
+          "group:" + membership.group_id,
+        );
+
+        const chatItem = await findGroupSummary(
+          new ChatId({ id: membership.group_id, isGroup: true }),
+        );
+        if (chatItem === false) return;
+
+        io.to("user:" + membership.user_id).emit("chat item", chatItem);
+      }
     });
 
     doPostConnect(socket);

@@ -1,8 +1,8 @@
 /* eslint-disable */
 
-import { Member } from "./js/chat-data.js";
+import { RequestStatus, Member } from "./js/chat-data.js";
 import "dotenv/config";
-import { postMembership, deleteGroupApplication } from "./server/db/queries.js";
+import { postMembership, memberRequestUpdate } from "./server/db/queries.js";
 
 const array = [
   {
@@ -41,7 +41,7 @@ const array = [
 
 //const newArr = Member.sortApplications(array);
 //console.log(newArr);
-postMembership(1, 7).then((i) => {
+//palace: 6, owner: 3
+memberRequestUpdate(54, RequestStatus.ACCEPTED, 3).then((i) => {
   console.log(i);
-  return deleteGroupApplication(1, 7).then((i) => console.log(i));
 });

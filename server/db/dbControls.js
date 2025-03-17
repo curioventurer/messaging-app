@@ -5,6 +5,7 @@ import {
   deleteFriendship,
   getGroupSummaries,
   getDirectSummaries,
+  findGroupById,
   findDirectChat,
   findDirectChatByUserId,
   deleteDirectChat,
@@ -83,6 +84,24 @@ async function unfriend(friendship_id, user_id) {
   return other_id;
 }
 
+async function findGroupSummary(chatId = new ChatId({})) {
+  const groupPromise = findGroupById(chatId.id);
+  const messagesPromise = getMessagesByChatId(chatId, 1);
+  const values = await Promise.all([groupPromise, messagesPromise]);
+
+  const group = values[0];
+  if (group === false) return false;
+
+  const chatItem = ChatItemData.createGroup({
+    chatId,
+    name: group.name,
+    membership_modified: group.membership.modified,
+    lastMessage: values[1][0],
+  });
+
+  return chatItem;
+}
+
 async function findDirectChatSummary(chatId = new ChatId({}), user_id = 0) {
   const directPromise = findDirectChat(chatId, user_id);
   const messagesPromise = getMessagesByChatId(chatId, 1);
@@ -91,13 +110,15 @@ async function findDirectChatSummary(chatId = new ChatId({}), user_id = 0) {
   const direct = values[0];
   if (direct === false) return false;
 
-  const directChat = ChatItemData.createDirect({
-    ...direct,
+  const chatItem = ChatItemData.createDirect({
     chatId,
+    name: direct.name,
+    user_id: direct.user_id,
+    time_shown: direct.time_shown,
     lastMessage: values[1][0],
   });
 
-  return directChat;
+  return chatItem;
 }
 
 async function getChatList(user_id) {
@@ -112,6 +133,7 @@ export {
   updateFriendRequest,
   deleteFriendRequest,
   unfriend,
+  findGroupSummary,
   findDirectChatSummary,
   getChatList,
 };
@@ -138,6 +160,7 @@ export {
   getMembersByGroupId,
   postMembership,
   deleteGroupApplication,
+  putMemberRequest,
   postMessage as postMessageDB,
   getMessagesByChatId,
 } from "./queries.js";

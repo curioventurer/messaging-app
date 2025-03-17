@@ -45,20 +45,25 @@ function GroupList() {
     [setGroupList],
   );
 
-  const updateGroup = useCallback(
-    function (groupData = new Group({})) {
-      const newGroup = new Group(groupData);
+  const updateMembership = useCallback(
+    function (membershipData = new Member({})) {
+      const newMembership = new Member(membershipData);
 
       //Not an update for user, return.
-      if (newGroup.membership.user_id !== client.id) return;
+      if (newMembership.user_id !== client.id) return;
 
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
 
         const index = prevGroupList.findIndex(
-          (group) => group.id === newGroup.id,
+          (group) => group.id === newMembership.group_id,
         );
         if (index === -1) return prevGroupList;
+
+        const newGroup = new Group({
+          ...prevGroupList[index].toJSON(),
+          membership: newMembership,
+        });
 
         const newGroupList = [
           ...prevGroupList.slice(0, index),
@@ -107,15 +112,15 @@ function GroupList() {
 
   useEffect(() => {
     window.socket.on("add group", addGroup);
-    window.socket.on("updateMembership", updateGroup);
+    window.socket.on("updateMembership", updateMembership);
     window.socket.on("deleteMembership", deleteMembership);
 
     return () => {
       window.socket.off("add group", addGroup);
-      window.socket.off("updateMembership", updateGroup);
+      window.socket.off("updateMembership", updateMembership);
       window.socket.off("deleteMembership", deleteMembership);
     };
-  }, [addGroup, updateGroup, deleteMembership]);
+  }, [addGroup, updateMembership, deleteMembership]);
 
   useEffect(() => clearSocket, []);
 

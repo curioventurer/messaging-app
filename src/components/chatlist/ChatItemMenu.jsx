@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import PropTypes from "prop-types";
 import { MenuContext, OutletContext } from "../layout/PrivateInterface.jsx";
-import { ChatId } from "../../../js/chat-data.js";
+import { ChatItemData } from "../../../js/chat-data.js";
 
-function ChatItemMenu({ chatId, containerRect, targetRect }) {
-  const { removeChat, closeMenu } = useContext(MenuContext);
+function ChatItemMenu({ chat, containerRect, targetRect }) {
+  const { hideChat, closeMenu } = useContext(MenuContext);
   const outletRect = useContext(OutletContext);
 
   const [menuRect, setMenuRect] = useState(new DOMRect());
@@ -80,15 +80,15 @@ function ChatItemMenu({ chatId, containerRect, targetRect }) {
     setMenuRect(() => menuRef.current.getBoundingClientRect());
   }
 
-  function hideChat() {
-    const request = new Request(`/api/chat/${chatId.id}/hide`, {
+  function handleHideChat() {
+    const request = new Request(`/api/chat/${chat.chatId.id}/hide`, {
       method: "PUT",
     });
 
     fetch(request)
       .then((res) => res.json())
       .then((data) => {
-        if (data) removeChat(chatId);
+        if (data) hideChat(chat.user_id);
       })
       .catch(() => {});
   }
@@ -105,11 +105,11 @@ function ChatItemMenu({ chatId, containerRect, targetRect }) {
       className={"chat-item-menu" + (isBottomEdge ? " bottom-edge" : "")}
       onClick={captureClick}
     >
-      {!chatId.isGroup ? (
+      {!chat.chatId.isGroup ? (
         <li>
           <button
             className="clear-background hover-whitening"
-            onClick={hideChat}
+            onClick={handleHideChat}
           >
             hide chat
           </button>
@@ -128,7 +128,7 @@ function ChatItemMenu({ chatId, containerRect, targetRect }) {
 }
 
 ChatItemMenu.propTypes = {
-  chatId: PropTypes.instanceOf(ChatId).isRequired,
+  chat: PropTypes.instanceOf(ChatItemData).isRequired,
   containerRect: PropTypes.instanceOf(DOMRect).isRequired,
   targetRect: PropTypes.instanceOf(DOMRect).isRequired,
 };
