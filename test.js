@@ -2,7 +2,7 @@
 
 import { Member } from "./js/chat-data.js";
 import "dotenv/config";
-import { getMemberships } from "./server/db/queries.js";
+import { postMembership, deleteGroupApplication } from "./server/db/queries.js";
 
 const array = [
   {
@@ -41,13 +41,7 @@ const array = [
 
 //const newArr = Member.sortApplications(array);
 //console.log(newArr);
-getMemberships(1, "pending").then((i) => console.log(i));
-
-apple: {
-  apple.toString();
-}
-<br />;
-cart: {
-  showCart();
-}
-<br />;
+postMembership(1, 7).then((i) => {
+  console.log(i);
+  return deleteGroupApplication(1, 7).then((i) => console.log(i));
+});

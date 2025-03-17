@@ -37,7 +37,7 @@ const ROOM_CONTEXT_DEFAULT = {
   client: new User({}),
   chatId: new ChatId({}),
   room: undefined,
-  members: undefined,
+  memberList: undefined,
   appendMessage: function () {},
   deleteSentMsg: function () {},
   updateRoomInfoIsShown: function () {},
@@ -54,11 +54,12 @@ export const RoomContext = createContext(ROOM_CONTEXT_DEFAULT);
 export const MessageListContext = createContext(MESSAGE_LIST_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true, title = false }) {
+  const search = window.location.search;
   const { chat_id } = useParams();
   const { client } = useContext(InterfaceContext);
 
   const [room, setRoom] = useState(ROOM_CONTEXT_DEFAULT.room);
-  const [members, setMembers] = useState(ROOM_CONTEXT_DEFAULT.members);
+  const [memberList, setMemberList] = useState(ROOM_CONTEXT_DEFAULT.memberList);
   const [messages, setMessages] = useState(MESSAGE_LIST_CONTEXT_DEFAULT);
 
   const [roomInfoIsShown, setRoomInfoIsShown] = useSearchState({
@@ -85,7 +86,7 @@ function Room({ isGroup = true, title = false }) {
 
   const clearRoomData = useCallback(function (value = undefined) {
     setRoom(value);
-    setMembers(value);
+    setMemberList(value);
     setMessages(value);
   }, []);
 
@@ -94,7 +95,7 @@ function Room({ isGroup = true, title = false }) {
       if (data === false) return clearRoomData(false);
 
       setRoom(chatId.isGroup ? new Group(data.room) : new Direct(data.room));
-      setMembers(
+      setMemberList(
         chatId.isGroup ? data.members.map((member) => new Member(member)) : [],
       );
       setMessages(data.messages.map((msg) => new Message(msg)));
@@ -127,6 +128,87 @@ function Room({ isGroup = true, title = false }) {
       return newMessages;
     });
   }, []);
+
+  const handleSocketMessage = useCallback(
+    function (messageData) {
+      const newMessage = new NewMessage({
+        chatId: new ChatId(messageData.chatId),
+        message: new Message(messageData.message),
+      });
+
+      //If same room
+      if (newMessage.chatId.isEqual(chatId)) appendMessage(newMessage.message);
+    },
+    [chatId, appendMessage],
+  );
+
+  const updateMember = useCallback(
+    function (groupData = new Group({})) {
+      const newMember = new Member(groupData.membership);
+
+      //Not an update for this room, return.
+      if (!chatId.isGroup || chatId.id !== newMember.group_id) return;
+
+      setMemberList((prevMemberList) => {
+        if (!prevMemberList) return prevMemberList;
+
+        const index = prevMemberList.findIndex(
+          (member) => member.id === newMember.id,
+        );
+
+        let newMemberList;
+        if (index === -1) newMemberList = [...prevMemberList, newMember];
+        else
+          newMemberList = [
+            ...prevMemberList.slice(0, index),
+            newMember,
+            ...prevMemberList.slice(index + 1),
+          ];
+
+        return newMemberList;
+      });
+    },
+    [chatId, setMemberList],
+  );
+
+  const deleteMember = useCallback(
+    function (membershipData = new Member({})) {
+      const membership = new Member(membershipData);
+
+      //Not an update for this room, return.
+      if (!chatId.isGroup || chatId.id !== membership.group_id) return;
+
+      setMemberList((prevMemberList) => {
+        if (!prevMemberList) return prevMemberList;
+
+        const index = prevMemberList.findIndex(
+          (member) => member.id === membership.id,
+        );
+        if (index === -1) return;
+
+        //remove index.
+        const newMemberList = [
+          ...prevMemberList.slice(0, index),
+          ...prevMemberList.slice(index + 1),
+        ];
+
+        return newMemberList;
+      });
+    },
+    [chatId, setMemberList],
+  );
+
+  //if current room shows the direct chat of removed friend, redirect to home
+  const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
+  const handleUnfriend = useCallback(
+    function ({ user_id }) {
+      if (directChatUserId === user_id)
+        navigate("/home", {
+          replace: true,
+        });
+    },
+    [directChatUserId, navigate],
+  );
 
   const updateRoomInfoIsExpanded = useCallback(
     function (type = boolType.TOGGLE) {
@@ -238,38 +320,20 @@ function Room({ isGroup = true, title = false }) {
   });
 
   useEffect(() => {
-    function addNewMessage(messageData) {
-      const newMessage = new NewMessage({
-        chatId: new ChatId(messageData.chatId),
-        message: new Message(messageData.message),
-      });
-
-      if (newMessage.chatId.isEqual(chatId)) appendMessage(newMessage.message);
-    }
-
-    window.socket.on("message", addNewMessage);
-
-    return () => {
-      window.socket.off("message", addNewMessage);
-    };
-  }, [chatId, appendMessage]);
-
-  //if current room shows the direct chat of removed friend, redirect to home
-  const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
-  useEffect(() => {
-    function handleUnfriend({ user_id }) {
-      if (directChatUserId === user_id)
-        navigate("/home", {
-          replace: true,
-        });
-    }
-
     window.socket.on("unfriend", handleUnfriend);
+    window.socket.on("message", handleSocketMessage);
+    window.socket.on("updateMembership", updateMember);
+    window.socket.on("deleteMembership", deleteMember);
 
     return () => {
       window.socket.off("unfriend", handleUnfriend);
+      window.socket.off("message", handleSocketMessage);
+      window.socket.off("updateMembership", updateMember);
+      window.socket.off("deleteMembership", deleteMember);
     };
-  }, [navigate, directChatUserId]);
+
+    //Socket.IO bug: Reestablish the socket listeners on url search change.
+  }, [search, handleUnfriend, handleSocketMessage, updateMember, deleteMember]);
 
   return (
     <div className="room">
@@ -279,7 +343,7 @@ function Room({ isGroup = true, title = false }) {
             client,
             chatId,
             room,
-            members,
+            memberList,
             appendMessage,
             deleteSentMsg,
             updateRoomInfoIsShown,
@@ -290,7 +354,7 @@ function Room({ isGroup = true, title = false }) {
             client,
             chatId,
             room,
-            members,
+            memberList,
             appendMessage,
             deleteSentMsg,
             updateRoomInfoIsShown,

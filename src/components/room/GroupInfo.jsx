@@ -8,19 +8,25 @@ import DateFormat from "../../controllers/DateFormat.js";
 import { Member, RequestStatus } from "../../../js/chat-data.js";
 
 function GroupInfo() {
-  const { client, room, members } = useContext(RoomContext);
+  const { client, room, memberList } = useContext(RoomContext);
 
   if (room === undefined) return <Loading name="group info" />;
   else if (room === null) return <LoadFail name="group info" />;
   else if (room === false) return <LoadError name="group info" />;
 
   const acceptedRequest = Member.filterByState(
-    members,
+    memberList,
     RequestStatus.ACCEPTED,
     client.id,
   );
-  const pendingRequest = Member.filterByState(members, RequestStatus.PENDING);
-  const rejectedRequest = Member.filterByState(members, RequestStatus.REJECTED);
+  const pendingRequest = Member.filterByState(
+    memberList,
+    RequestStatus.PENDING,
+  );
+  const rejectedRequest = Member.filterByState(
+    memberList,
+    RequestStatus.REJECTED,
+  );
 
   return (
     <>
@@ -36,7 +42,7 @@ function GroupInfo() {
           <div className="line"></div>
           <MemberSection
             header="Pending Request"
-            members={pendingRequest}
+            memberList={pendingRequest}
             open
             request
           />
@@ -45,7 +51,7 @@ function GroupInfo() {
       <div className="line"></div>
       <MemberSection
         header="Members"
-        members={acceptedRequest}
+        memberList={acceptedRequest}
         className="member-list"
       />
       {rejectedRequest.length > 0 ? (
@@ -53,7 +59,7 @@ function GroupInfo() {
           <div className="line"></div>
           <MemberSection
             header="Rejected Request"
-            members={rejectedRequest}
+            memberList={rejectedRequest}
             request
           />
         </>

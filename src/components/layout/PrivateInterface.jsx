@@ -15,22 +15,23 @@ import {
   UserFriendship,
   User,
   Group,
+  Member,
   ChatItemData,
   ChatId,
   Message,
   NewMessage,
 } from "../../../js/chat-data.js";
 
-/*memberships: Array containing instances of Group - chat-data.js
+/*groupList: Array containing instances of Group - chat-data.js
   friendships: Array containing instances of UserFriendship - chat-data.js
   Initialized with undefined to indicate data not yet fetched.
 */
 const INTERFACE_CONTEXT_DEFAULT = {
   client: new User({}),
-  memberships: undefined,
+  groupList: undefined,
   friendships: undefined,
-  updateFriendships: () => {},
-  updateMemberships: () => {},
+  setFriendships: () => {},
+  setGroupList: () => {},
 };
 
 const MENU_CONTEXT_DEFAULT = {
@@ -54,16 +55,17 @@ export const OutletContext = createContext(OUTLET_CONTEXT_DEFAULT);
 export const ChatListContext = createContext(CHAT_LIST_CONTEXT_DEFAULT);
 
 function PrivateInterface() {
+  const search = window.location.search;
   const client = useLoaderData();
 
-  const parseMemberships = useCallback(function (array, setMemberships) {
-    if (array === false) return setMemberships(false);
+  const parseGroupList = useCallback(function (array, setGroupList) {
+    if (array === false) return setGroupList(false);
 
     const objectArray = array.map((item) => new Group(item));
-    setMemberships(objectArray);
+    setGroupList(objectArray);
   }, []);
-  const [memberships, setMemberships] = useFetchedState({
-    callback: parseMemberships,
+  const [groupList, setGroupList] = useFetchedState({
+    callback: parseGroupList,
     path: "/api/membership-list",
   });
 
@@ -97,18 +99,60 @@ function PrivateInterface() {
 
   const outletRef = useRef(null);
 
-  const updateFriendships = useCallback(
-    function (callback) {
-      setFriendships(callback);
+  const updateGroup = useCallback(
+    function (groupData = new Group({})) {
+      const newGroup = new Group(groupData);
+
+      //Not an update for user, return.
+      if (newGroup.membership.user_id !== client.id) return;
+
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
+
+        const index = prevGroupList.findIndex(
+          (group) => group.id === newGroup.id,
+        );
+
+        let newGroupList;
+        if (index === -1) newGroupList = [...prevGroupList, newGroup];
+        else
+          newGroupList = [
+            ...prevGroupList.slice(0, index),
+            newGroup,
+            ...prevGroupList.slice(index + 1),
+          ];
+
+        return newGroupList;
+      });
     },
-    [setFriendships],
+    [client.id, setGroupList],
   );
 
-  const updateMemberships = useCallback(
-    function (callback) {
-      setMemberships(callback);
+  const deleteGroup = useCallback(
+    function (membershipData = new Member({})) {
+      const membership = new Member(membershipData);
+
+      //Not an update for user, return.
+      if (membership.user_id !== client.id) return;
+
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
+
+        const index = prevGroupList.findIndex(
+          (group) => group.id === membership.group_id,
+        );
+        if (index === -1) return prevGroupList;
+
+        //remove index.
+        const newGroupList = [
+          ...prevGroupList.slice(0, index),
+          ...prevGroupList.slice(index + 1),
+        ];
+
+        return newGroupList;
+      });
     },
-    [setMemberships],
+    [client.id, setGroupList],
   );
 
   const addChat = useCallback(
@@ -210,13 +254,22 @@ function PrivateInterface() {
     window.socket.on("chat item", addChat);
     window.socket.on("unfriend", removeChat);
     window.socket.on("message", updateLastMsg);
+    window.socket.on("updateMembership", updateGroup);
+    window.socket.on("deleteMembership", deleteGroup);
 
     return () => {
       window.socket.off("chat item", addChat);
       window.socket.off("unfriend", removeChat);
       window.socket.off("message", updateLastMsg);
+      window.socket.off("updateMembership", updateGroup);
+      window.socket.off("deleteMembership", deleteGroup);
     };
-  }, [addChat, removeChat, updateLastMsg]);
+
+    /*Socket.IO bug: Reestablish the socket listeners on url search change.
+      For reasons I do not understand, the listener disappears when changing url query.
+      It is inconsistent, message listener continues to work in spite of it, but updateMembership listener fails.
+    */
+  }, [search, addChat, removeChat, updateLastMsg, updateGroup, deleteGroup]);
 
   //update rect at intervals
   useEffect(() => {
@@ -244,18 +297,12 @@ function PrivateInterface() {
         value={useMemo(
           () => ({
             client,
-            memberships,
+            groupList,
             friendships,
-            updateFriendships,
-            updateMemberships,
+            setFriendships,
+            setGroupList,
           }),
-          [
-            client,
-            memberships,
-            friendships,
-            updateFriendships,
-            updateMemberships,
-          ],
+          [client, groupList, friendships, setFriendships, setGroupList],
         )}
       >
         <Nav />

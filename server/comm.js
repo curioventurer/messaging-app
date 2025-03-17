@@ -14,6 +14,9 @@ import {
   findDirectChatSummary,
   getMemberships,
   postMessageDB,
+  postMembership,
+  deleteGroupApplication,
+  findGroupById,
 } from "./db/dbControls.js";
 import {
   ChatId,
@@ -257,6 +260,37 @@ function comm(server, sessionMiddleware, testLatency) {
         directMessageEmit(newMessage, socket.request.user.id);
         directMessageEmit(newMessage, directChat.user_id);
       }
+    });
+
+    socket.on("postMembership", async (data) => {
+      const membership = await postMembership(
+        data.group_id,
+        socket.request.user.id,
+      );
+      if (membership === false) return;
+
+      //Post successful, get data to sent to clients.
+      const group = await findGroupById(data.group_id);
+      if (group === false) return;
+
+      membership.name = socket.request.user.name;
+      group.membership = membership;
+
+      socket.emit("updateMembership", group);
+      io.to("group:" + data.group_id).emit("updateMembership", group);
+    });
+
+    socket.on("deleteGroupApplication", async (data) => {
+      const membership = await deleteGroupApplication(
+        data.group_id,
+        socket.request.user.id,
+      );
+      if (membership === false) return;
+
+      membership.name = socket.request.user.name;
+
+      socket.emit("deleteMembership", membership);
+      io.to("group:" + data.group_id).emit("deleteMembership", membership);
     });
 
     doPostConnect(socket);

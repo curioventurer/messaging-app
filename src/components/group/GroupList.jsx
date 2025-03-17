@@ -1,24 +1,27 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useContext, useCallback } from "react";
 import { Link } from "react-router-dom";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import GroupItem from "./GroupItem.jsx";
+import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import clearSocket from "../../controllers/clearSocket.js";
 import { allLinks } from "../../controllers/constant.js";
-import { Group } from "../../../js/chat-data.js";
+import { Group, Member } from "../../../js/chat-data.js";
 
 function GroupList() {
-  const parseGroups = useCallback(function (array, setGroups) {
-    if (array === false) return setGroups(false);
+  const { client } = useContext(InterfaceContext);
 
-    setGroups(array.map((group) => new Group(group)));
+  const parseGroupList = useCallback(function (array, setGroupList) {
+    if (array === false) return setGroupList(false);
+
+    setGroupList(array.map((group) => new Group(group)));
   }, []);
 
   //contain instances of Group - chat-data.js
-  const [groups, setGroups] = useFetchedState({
-    callback: parseGroups,
+  const [groupList, setGroupList] = useFetchedState({
+    callback: parseGroupList,
     path: "/api/group-list",
   });
 
@@ -26,41 +29,107 @@ function GroupList() {
     function (groupData = new Group({})) {
       const newGroup = new Group(groupData);
 
-      setGroups((prevGroups) => {
-        if (!prevGroups) return prevGroups;
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
 
-        const index = prevGroups.findIndex((group) => group.id === newGroup.id);
-        if (index !== -1) return prevGroups;
+        const index = prevGroupList.findIndex(
+          (group) => group.id === newGroup.id,
+        );
+        if (index !== -1) return prevGroupList;
 
-        const newGroups = Group.sortGroups([...prevGroups, newGroup]);
+        const newGroupList = Group.sortGroups([...prevGroupList, newGroup]);
 
-        return newGroups;
+        return newGroupList;
       });
     },
-    [setGroups],
+    [setGroupList],
+  );
+
+  const updateGroup = useCallback(
+    function (groupData = new Group({})) {
+      const newGroup = new Group(groupData);
+
+      //Not an update for user, return.
+      if (newGroup.membership.user_id !== client.id) return;
+
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
+
+        const index = prevGroupList.findIndex(
+          (group) => group.id === newGroup.id,
+        );
+        if (index === -1) return prevGroupList;
+
+        const newGroupList = [
+          ...prevGroupList.slice(0, index),
+          newGroup,
+          ...prevGroupList.slice(index + 1),
+        ];
+
+        return newGroupList;
+      });
+    },
+    [client.id, setGroupList],
+  );
+
+  const deleteMembership = useCallback(
+    function (membershipData = new Member({})) {
+      const membership = new Member(membershipData);
+
+      //Not an update for user, return.
+      if (membership.user_id !== client.id) return;
+
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
+
+        const index = prevGroupList.findIndex(
+          (group) => group.id === membership.group_id,
+        );
+        if (index === -1) return prevGroupList;
+
+        //replace membership with default value
+        const newGroup = new Group({
+          ...prevGroupList[index].toJSON(),
+          membership: new Member({}),
+        });
+
+        const newGroupList = [
+          ...prevGroupList.slice(0, index),
+          newGroup,
+          ...prevGroupList.slice(index + 1),
+        ];
+
+        return newGroupList;
+      });
+    },
+    [client.id, setGroupList],
   );
 
   useEffect(() => {
     window.socket.on("add group", addGroup);
+    window.socket.on("updateMembership", updateGroup);
+    window.socket.on("deleteMembership", deleteMembership);
 
     return () => {
       window.socket.off("add group", addGroup);
+      window.socket.off("updateMembership", updateGroup);
+      window.socket.off("deleteMembership", deleteMembership);
     };
-  }, [addGroup]);
+  }, [addGroup, updateGroup, deleteMembership]);
 
   useEffect(() => clearSocket, []);
 
   let content;
 
-  if (groups === undefined) content = <Loading name="group list" />;
-  else if (groups === null) content = <LoadFail name="group list" />;
-  else if (groups === false) content = <LoadError name="group list" />;
-  else if (groups.length === 0) content = <p>Group list is empty.</p>;
+  if (groupList === undefined) content = <Loading name="group list" />;
+  else if (groupList === null) content = <LoadFail name="group list" />;
+  else if (groupList === false) content = <LoadError name="group list" />;
+  else if (groupList.length === 0) content = <p>Group list is empty.</p>;
   else
     content = (
       <table className="list-table group">
         <tbody>
-          {groups.map((group) => (
+          {groupList.map((group) => (
             <GroupItem key={group.id} group={group} />
           ))}
         </tbody>

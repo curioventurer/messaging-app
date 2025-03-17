@@ -18,11 +18,11 @@ import {
 } from "../../../js/chat-data.js";
 
 function FriendshipPanel() {
-  const { friendships, updateFriendships } = useContext(InterfaceContext);
+  const { friendships, setFriendships } = useContext(InterfaceContext);
 
   const updateDirectId = useCallback(
     function (user_id, direct_chat_id) {
-      updateFriendships((prevFriendships) => {
+      setFriendships((prevFriendships) => {
         if (!prevFriendships) return prevFriendships;
 
         const index = prevFriendships.findIndex(
@@ -43,7 +43,7 @@ function FriendshipPanel() {
         return newFriendships;
       });
     },
-    [updateFriendships],
+    [setFriendships],
   );
 
   //Add or replace friendship entry.
@@ -51,7 +51,7 @@ function FriendshipPanel() {
     function (friendshipData = new UserFriendship({})) {
       const friendship = new UserFriendship(friendshipData);
 
-      updateFriendships((prevFriendships) => {
+      setFriendships((prevFriendships) => {
         if (!prevFriendships) return prevFriendships;
 
         const index = prevFriendships.findIndex(
@@ -72,14 +72,14 @@ function FriendshipPanel() {
         return sortFriendships(newFriendships);
       });
     },
-    [updateFriendships],
+    [setFriendships],
   );
 
   const updateFriendStatus = useCallback(
     function (statusData = new UserActivity({})) {
       const status = new UserActivity(statusData);
 
-      updateFriendships((prevFriendships) => {
+      setFriendships((prevFriendships) => {
         if (!prevFriendships) return prevFriendships;
 
         const index = prevFriendships.findIndex(
@@ -104,7 +104,7 @@ function FriendshipPanel() {
         return newFriendships;
       });
     },
-    [updateFriendships],
+    [setFriendships],
   );
 
   //specify either properties to identify entry
@@ -117,7 +117,7 @@ function FriendshipPanel() {
       //else use user_id
       else find = (friend) => friend.user_id === user_id;
 
-      updateFriendships((prevFriendships) => {
+      setFriendships((prevFriendships) => {
         if (!prevFriendships) return prevFriendships;
 
         const index = prevFriendships.findIndex(find);
@@ -130,7 +130,7 @@ function FriendshipPanel() {
         return newFriendships;
       });
     },
-    [updateFriendships],
+    [setFriendships],
   );
 
   useEffect(() => clearSocket, []);

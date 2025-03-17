@@ -10,6 +10,14 @@ function GroupItem({ group }) {
 
   const duration = useDuration(membership.modified, !isApplicant);
 
+  function postMembership() {
+    window.socket.emit("postMembership", { group_id: group.id });
+  }
+
+  function deleteGroupApplication() {
+    window.socket.emit("deleteGroupApplication", { group_id: group.id });
+  }
+
   let status;
   const buttonArray = [];
 
@@ -18,7 +26,7 @@ function GroupItem({ group }) {
 
     buttonArray.push({
       key: "apply",
-      element: <button>Apply</button>,
+      element: <button onClick={postMembership}>Apply</button>,
     });
   } else if (membership.state === RequestStatus.ACCEPTED) {
     status = membership.permission;
@@ -47,7 +55,7 @@ function GroupItem({ group }) {
 
     buttonArray.push({
       key: "cancel",
-      element: <button>Cancel</button>,
+      element: <button onClick={deleteGroupApplication}>Cancel</button>,
     });
   } else if (membership.state === RequestStatus.REJECTED) {
     status = (

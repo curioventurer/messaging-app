@@ -5,7 +5,7 @@ import { Member } from "../../../js/chat-data.js";
 
 function MemberSection({
   header = "",
-  members = [],
+  memberList = [],
   className = "",
   open = false,
   request = false,
@@ -15,12 +15,12 @@ function MemberSection({
       <details open={open}>
         <summary>
           <h3>
-            {header} ({members.length})
+            {header} ({memberList.length})
           </h3>
         </summary>
         <table className="list-table member">
           <tbody>
-            {members.map((member) =>
+            {memberList.map((member) =>
               request ? (
                 <MemberRequestItem key={member.id} member={member} />
               ) : (
@@ -36,7 +36,7 @@ function MemberSection({
 
 MemberSection.propTypes = {
   header: PropTypes.string.isRequired,
-  members: PropTypes.arrayOf(PropTypes.instanceOf(Member)).isRequired,
+  memberList: PropTypes.arrayOf(PropTypes.instanceOf(Member)).isRequired,
   className: PropTypes.string,
   open: PropTypes.bool,
   request: PropTypes.bool,

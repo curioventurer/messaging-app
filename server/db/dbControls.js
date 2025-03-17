@@ -136,6 +136,8 @@ export {
   getGroups,
   findGroupById,
   getMembersByGroupId,
+  postMembership,
+  deleteGroupApplication,
   postMessage as postMessageDB,
   getMessagesByChatId,
 } from "./queries.js";

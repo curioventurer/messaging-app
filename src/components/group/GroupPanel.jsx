@@ -9,20 +9,20 @@ import { allLinks } from "../../controllers/constant.js";
 import { RequestStatus } from "../../../js/chat-data.js";
 
 function GroupPanel() {
-  const { memberships } = useContext(InterfaceContext);
+  const { groupList } = useContext(InterfaceContext);
 
-  if (memberships === undefined) return <Loading name="memberships" />;
-  else if (memberships === null) return <LoadFail name="memberships" />;
-  else if (memberships === false) return <LoadError name="memberships" />;
-  else if (memberships.length === 0) return <p>memberships is empty.</p>;
+  if (groupList === undefined) return <Loading name="group panel" />;
+  else if (groupList === null) return <LoadFail name="group panel" />;
+  else if (groupList === false) return <LoadError name="group panel" />;
+  else if (groupList.length === 0) return <p>group panel is empty.</p>;
 
-  const pendingRequest = memberships.filter(
+  const pendingRequest = groupList.filter(
     (group) => group.membership.state === RequestStatus.PENDING,
   );
-  const acceptedRequest = memberships.filter(
+  const acceptedRequest = groupList.filter(
     (group) => group.membership.state === RequestStatus.ACCEPTED,
   );
-  const rejectedRequest = memberships.filter(
+  const rejectedRequest = groupList.filter(
     (group) => group.membership.state === RequestStatus.REJECTED,
   );
 
@@ -36,19 +36,19 @@ function GroupPanel() {
       {acceptedRequest.length > 0 ? (
         <>
           <div className="line"></div>
-          <GroupSection header="Groups" groups={acceptedRequest} open />
+          <GroupSection header="Groups" groupList={acceptedRequest} open />
         </>
       ) : null}
       {pendingRequest.length > 0 ? (
         <>
           <div className="line"></div>
-          <GroupSection header="Pending Request" groups={pendingRequest} />
+          <GroupSection header="Pending Request" groupList={pendingRequest} />
         </>
       ) : null}
       {rejectedRequest.length > 0 ? (
         <>
           <div className="line"></div>
-          <GroupSection header="Rejected Request" groups={rejectedRequest} />
+          <GroupSection header="Rejected Request" groupList={rejectedRequest} />
         </>
       ) : null}
     </div>

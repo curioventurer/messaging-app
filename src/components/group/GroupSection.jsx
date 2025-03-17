@@ -2,18 +2,18 @@ import PropTypes from "prop-types";
 import GroupItem from "./GroupItem.jsx";
 import { Group } from "../../../js/chat-data.js";
 
-function GroupSection({ header = "", groups = [], open = false }) {
+function GroupSection({ header = "", groupList = [], open = false }) {
   return (
     <section>
       <details open={open}>
         <summary>
           <h3>
-            {header} ({groups.length})
+            {header} ({groupList.length})
           </h3>
         </summary>
         <table className="list-table group">
           <tbody>
-            {groups.map((group) => (
+            {groupList.map((group) => (
               <GroupItem key={group.id} group={group} />
             ))}
           </tbody>
@@ -25,7 +25,7 @@ function GroupSection({ header = "", groups = [], open = false }) {
 
 GroupSection.propTypes = {
   header: PropTypes.string.isRequired,
-  groups: PropTypes.arrayOf(PropTypes.instanceOf(Group)).isRequired,
+  groupList: PropTypes.arrayOf(PropTypes.instanceOf(Group)).isRequired,
   open: PropTypes.bool,
 };
 

@@ -745,6 +745,72 @@ async function getMembersByGroupId(groupId) {
   }
 }
 
+async function findMembership(group_id, user_id) {
+  const SQL_FIND_MEMBERSHIP = `
+    SELECT id, group_id, user_id, permission, state, modified
+    FROM memberships
+    
+    WHERE group_id = $1
+    AND user_id = $2
+  `;
+  try {
+    const { rows } = await pool.query(SQL_FIND_MEMBERSHIP, [group_id, user_id]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
+async function postMembership(group_id, user_id) {
+  try {
+    const SQL_POST_MEMBERSHIP = `
+      INSERT INTO memberships
+      ( group_id, user_id)
+      VALUES ( $1, $2 )
+      RETURNING id, group_id, user_id, permission, state, modified;
+    `;
+
+    //return false, if membership already exists.
+    const membership = await findMembership(group_id, user_id);
+    if (membership) return false;
+
+    const { rows } = await pool.query(SQL_POST_MEMBERSHIP, [group_id, user_id]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
+async function deleteGroupApplication(group_id, user_id) {
+  const SQL_DELETE_MEMBERSHIP = `
+    DELETE FROM memberships
+    
+    WHERE group_id = $1
+    AND user_id = $2
+    AND state = '${RequestStatus.PENDING}'
+    
+    RETURNING id, group_id, user_id, permission, state, modified;
+  `;
+  try {
+    const { rows } = await pool.query(SQL_DELETE_MEMBERSHIP, [
+      group_id,
+      user_id,
+    ]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
 async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
   const SQL_POST_MESSAGE = `
     INSERT INTO messages
@@ -852,6 +918,8 @@ export {
   getGroups,
   findGroupById,
   getMembersByGroupId,
+  postMembership,
+  deleteGroupApplication,
   postMessage,
   getMessagesByChatId,
   findDirectChat,
