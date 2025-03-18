@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import ConfirmDialog from "../ConfirmDialog.jsx";
+import { socket } from "../../controllers/socket.js";
 
 function UnfriendButton({ friendship }) {
   const dialog = useRef(null);
@@ -10,7 +11,7 @@ function UnfriendButton({ friendship }) {
   }, []);
 
   function unfriend() {
-    window.socket.emit("unfriend", {
+    socket.emit("unfriend", {
       friendship_id: friendship.id,
     });
   }

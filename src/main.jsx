@@ -6,9 +6,9 @@ import {
   redirect,
 } from "react-router-dom";
 import { socket } from "./controllers/socket.js";
+import { memoize } from "./controllers/memoize.js";
 import { allLinks } from "./controllers/constant.js";
 import { User } from "../js/chat-data.js";
-
 import Title from "./components/layout/Title.jsx";
 import PublicInterface from "./components/layout/PublicInterface.jsx";
 import PrivateInterface from "./components/layout/PrivateInterface.jsx";
@@ -28,13 +28,17 @@ import Test from "./components/Test.jsx";
 import "normalize.css";
 import "./styles/main.scss";
 
-window.socket = socket;
-
-//Fetch user from localStorage. If found, user is logged in, return user. Else, return false to indicate logged out.
+/*Fetch user from localStorage.
+  If found, it means user is logged in, return user.
+  Else, return false to indicate user is logged out.
+*/
+const parseUser = memoize(function (string) {
+  return new User(JSON.parse(string));
+});
 async function getUser() {
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (user) return new User(user);
-  else return false;
+  const string = localStorage.getItem("user");
+  if (string === null) return false;
+  else return parseUser(string);
 }
 
 /*Only proceed with routing if logged in, else redirect to login page.

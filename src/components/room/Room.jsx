@@ -16,7 +16,8 @@ import ChatList from "../chatlist/ChatList.jsx";
 import RoomInfo from "./RoomInfo.jsx";
 import RoomUI from "./RoomUI.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
-import clearSocket from "../../controllers/clearSocket.js";
+import { socket } from "../../controllers/socket.js";
+import { clearSocket } from "../../controllers/socket.js";
 import { boolType, searchType } from "../../controllers/constant.js";
 import {
   DEFAULT_TEXT,
@@ -341,18 +342,18 @@ function Room({ isGroup = true, title = false }) {
   });
 
   useEffect(() => {
-    window.socket.on("unfriend", deleteDirectRoom);
-    window.socket.on("message", handleSocketMessage);
-    window.socket.on("updateGroupMember", updateMember);
-    window.socket.on("deleteGroupMember", deleteMember);
-    window.socket.on("deleteMembership", deleteGroupRoom);
+    socket.on("unfriend", deleteDirectRoom);
+    socket.on("message", handleSocketMessage);
+    socket.on("updateGroupMember", updateMember);
+    socket.on("deleteGroupMember", deleteMember);
+    socket.on("deleteMembership", deleteGroupRoom);
 
     return () => {
-      window.socket.off("unfriend", deleteDirectRoom);
-      window.socket.off("message", handleSocketMessage);
-      window.socket.off("updateGroupMember", updateMember);
-      window.socket.off("deleteGroupMember", deleteMember);
-      window.socket.off("deleteMembership", deleteGroupRoom);
+      socket.off("unfriend", deleteDirectRoom);
+      socket.off("message", handleSocketMessage);
+      socket.off("updateGroupMember", updateMember);
+      socket.off("deleteGroupMember", deleteMember);
+      socket.off("deleteMembership", deleteGroupRoom);
     };
   }, [
     deleteDirectRoom,

@@ -2,6 +2,7 @@ import { useRef, useContext, useCallback, memo } from "react";
 import PropTypes from "prop-types";
 import ConfirmDialog from "../ConfirmDialog.jsx";
 import { RoomContext } from "./Room.jsx";
+import { socket } from "../../controllers/socket.js";
 import { Member } from "../../../js/chat-data.js";
 
 function MemberItem({ member }) {
@@ -29,11 +30,11 @@ function MemberItem({ member }) {
   }
 
   function leaveGroup() {
-    window.socket.emit("leaveGroup", { id: member.id });
+    socket.emit("leaveGroup", { id: member.id });
   }
 
   function kickMember() {
-    window.socket.emit("kickMember", { id: member.id });
+    socket.emit("kickMember", { id: member.id });
   }
 
   const buttonArray = [];

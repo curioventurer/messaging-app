@@ -1,5 +1,6 @@
 import { useState, useRef, useContext } from "react";
 import { RoomContext } from "./Room.jsx";
+import { socket } from "../../controllers/socket.js";
 import { Message, PostMessage } from "../../../js/chat-data.js";
 
 function MessagingForm() {
@@ -35,7 +36,7 @@ function MessagingForm() {
       message,
     });
 
-    window.socket.emit("message", sentMessage, deleteSentMsg);
+    socket.emit("message", sentMessage, deleteSentMsg);
 
     setMessage("");
   }

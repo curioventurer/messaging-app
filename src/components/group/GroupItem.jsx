@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import useDuration from "../../hooks/useDuration.jsx";
+import { socket } from "../../controllers/socket.js";
 import { Group, Member, RequestStatus } from "../../../js/chat-data.js";
 
 function GroupItem({ group }) {
@@ -11,15 +12,15 @@ function GroupItem({ group }) {
   const duration = useDuration(membership.modified, !isApplicant);
 
   function postMembership() {
-    window.socket.emit("postMembership", { group_id: group.id });
+    socket.emit("postMembership", { group_id: group.id });
   }
 
   function deleteGroupApplication() {
-    window.socket.emit("deleteGroupApplication", { group_id: group.id });
+    socket.emit("deleteGroupApplication", { group_id: group.id });
   }
 
   function leaveGroup() {
-    window.socket.emit("leaveGroup", { id: membership.id });
+    socket.emit("leaveGroup", { id: membership.id });
   }
 
   let status;

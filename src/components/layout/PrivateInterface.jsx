@@ -9,6 +9,7 @@ import {
 import { Outlet, useLoaderData } from "react-router-dom";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
 import Nav from "./Nav.jsx";
+import { socket } from "../../controllers/socket.js";
 import updateRect from "../../controllers/updateRect.js";
 import sortFriendships from "../../controllers/sortFriendships.js";
 import {
@@ -319,22 +320,22 @@ function PrivateInterface() {
   );
 
   useEffect(() => {
-    window.socket.on("chat item", addChat);
-    window.socket.on("message", updateLastMsg);
-    window.socket.on("unfriend", deleteDirectChat);
-    window.socket.on("addGroup", addGroup);
-    window.socket.on("updateMembership", updateMembership);
-    window.socket.on("deleteMembership", deleteGroup);
-    window.socket.on("deleteMembership", deleteGroupChat);
+    socket.on("chat item", addChat);
+    socket.on("message", updateLastMsg);
+    socket.on("unfriend", deleteDirectChat);
+    socket.on("addGroup", addGroup);
+    socket.on("updateMembership", updateMembership);
+    socket.on("deleteMembership", deleteGroup);
+    socket.on("deleteMembership", deleteGroupChat);
 
     return () => {
-      window.socket.off("chat item", addChat);
-      window.socket.off("message", updateLastMsg);
-      window.socket.off("unfriend", deleteDirectChat);
-      window.socket.off("addGroup", addGroup);
-      window.socket.off("updateMembership", updateMembership);
-      window.socket.off("deleteMembership", deleteGroup);
-      window.socket.off("deleteMembership", deleteGroupChat);
+      socket.off("chat item", addChat);
+      socket.off("message", updateLastMsg);
+      socket.off("unfriend", deleteDirectChat);
+      socket.off("addGroup", addGroup);
+      socket.off("updateMembership", updateMembership);
+      socket.off("deleteMembership", deleteGroup);
+      socket.off("deleteMembership", deleteGroupChat);
     };
   }, [
     addChat,

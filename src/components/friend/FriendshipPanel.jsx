@@ -6,8 +6,9 @@ import LoadError from "../sys/LoadError.jsx";
 import FriendshipSection from "./FriendshipSection.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import { UpdateDirectIdContext } from "./FriendshipButtonBar.jsx";
+import { socket } from "../../controllers/socket.js";
 import sortFriendships from "../../controllers/sortFriendships.js";
-import clearSocket from "../../controllers/clearSocket.js";
+import { clearSocket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
 import {
   ChatItemData,
@@ -118,24 +119,24 @@ function FriendshipPanel() {
       updateDirectId(chatItem.user_id, chatItem.chatId.id);
     }
 
-    window.socket.on("chat item", socketChatItemCB);
+    socket.on("chat item", socketChatItemCB);
 
     return () => {
-      window.socket.off("chat item", socketChatItemCB);
+      socket.off("chat item", socketChatItemCB);
     };
   }, [updateDirectId]);
 
   useEffect(() => {
-    window.socket.on("update friendship", updateFriendship);
-    window.socket.on("friend", updateFriendStatus);
-    window.socket.on("unfriend", removeFriendship);
-    window.socket.on("delete friend request", removeFriendship);
+    socket.on("update friendship", updateFriendship);
+    socket.on("friend", updateFriendStatus);
+    socket.on("unfriend", removeFriendship);
+    socket.on("delete friend request", removeFriendship);
 
     return () => {
-      window.socket.off("update friendship", updateFriendship);
-      window.socket.off("friend", updateFriendStatus);
-      window.socket.off("unfriend", removeFriendship);
-      window.socket.off("delete friend request", removeFriendship);
+      socket.off("update friendship", updateFriendship);
+      socket.off("friend", updateFriendStatus);
+      socket.off("unfriend", removeFriendship);
+      socket.off("delete friend request", removeFriendship);
     };
   }, [removeFriendship, updateFriendStatus, updateFriendship]);
 

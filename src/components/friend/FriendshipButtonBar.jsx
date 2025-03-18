@@ -2,6 +2,7 @@ import { useContext, createContext, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import UnfriendButton from "./UnfriendButton.jsx";
+import { socket } from "../../controllers/socket.js";
 import { UserFriendship, RequestStatus } from "../../../js/chat-data.js";
 
 export const UpdateDirectIdContext = createContext(function () {});
@@ -10,26 +11,26 @@ function FriendshipButtonBar({ friendship }) {
   const updateDirectId = useContext(UpdateDirectIdContext);
 
   function addFriend() {
-    window.socket.emit("add friend", {
+    socket.emit("add friend", {
       id: friendship.user_id,
     });
   }
 
   function inverseAdd() {
-    window.socket.emit("reverse friend request", {
+    socket.emit("reverse friend request", {
       id: friendship.id,
     });
   }
 
   function answerRequest(event) {
-    window.socket.emit("friend request update", {
+    socket.emit("friend request update", {
       id: friendship.id,
       state: event.target.value,
     });
   }
 
   function deleteRequest() {
-    window.socket.emit("delete friend request", {
+    socket.emit("delete friend request", {
       id: friendship.id,
     });
   }

@@ -6,8 +6,9 @@ import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import UserItem from "./UserItem.jsx";
 import { UpdateDirectIdContext } from "../friend/FriendshipButtonBar.jsx";
+import { socket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
-import clearSocket from "../../controllers/clearSocket.js";
+import { clearSocket } from "../../controllers/socket.js";
 import { User, UserFriendship, ChatItemData } from "../../../js/chat-data.js";
 
 function UserList() {
@@ -140,16 +141,16 @@ function UserList() {
   );
 
   useEffect(() => {
-    window.socket.on("add user", addUser);
-    window.socket.on("update friendship", updateFriendship);
-    window.socket.on("unfriend", clearFriendship);
-    window.socket.on("delete friend request", clearFriendship);
+    socket.on("add user", addUser);
+    socket.on("update friendship", updateFriendship);
+    socket.on("unfriend", clearFriendship);
+    socket.on("delete friend request", clearFriendship);
 
     return () => {
-      window.socket.off("add user", addUser);
-      window.socket.off("update friendship", updateFriendship);
-      window.socket.off("unfriend", clearFriendship);
-      window.socket.off("delete friend request", clearFriendship);
+      socket.off("add user", addUser);
+      socket.off("update friendship", updateFriendship);
+      socket.off("unfriend", clearFriendship);
+      socket.off("delete friend request", clearFriendship);
     };
   }, [addUser, updateFriendship, clearFriendship]);
 
@@ -161,10 +162,10 @@ function UserList() {
       updateDirectId(chatItem.user_id, chatItem.chatId.id);
     }
 
-    window.socket.on("chat item", socketChatItemCB);
+    socket.on("chat item", socketChatItemCB);
 
     return () => {
-      window.socket.off("chat item", socketChatItemCB);
+      socket.off("chat item", socketChatItemCB);
     };
   }, [updateDirectId]);
 

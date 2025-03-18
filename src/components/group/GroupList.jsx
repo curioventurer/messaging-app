@@ -6,7 +6,8 @@ import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import GroupItem from "./GroupItem.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
-import clearSocket from "../../controllers/clearSocket.js";
+import { socket } from "../../controllers/socket.js";
+import { clearSocket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
 import { Group, Member } from "../../../js/chat-data.js";
 
@@ -111,14 +112,14 @@ function GroupList() {
   );
 
   useEffect(() => {
-    window.socket.on("add group", addGroup);
-    window.socket.on("updateMembership", updateMembership);
-    window.socket.on("deleteMembership", deleteMembership);
+    socket.on("add group", addGroup);
+    socket.on("updateMembership", updateMembership);
+    socket.on("deleteMembership", deleteMembership);
 
     return () => {
-      window.socket.off("add group", addGroup);
-      window.socket.off("updateMembership", updateMembership);
-      window.socket.off("deleteMembership", deleteMembership);
+      socket.off("add group", addGroup);
+      socket.off("updateMembership", updateMembership);
+      socket.off("deleteMembership", deleteMembership);
     };
   }, [addGroup, updateMembership, deleteMembership]);
 

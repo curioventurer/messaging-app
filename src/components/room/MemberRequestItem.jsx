@@ -2,6 +2,7 @@ import { useContext, memo } from "react";
 import PropTypes from "prop-types";
 import useDuration from "../../hooks/useDuration.jsx";
 import { RoomContext } from "./Room.jsx";
+import { socket } from "../../controllers/socket.js";
 import { Member, RequestStatus } from "../../../js/chat-data.js";
 
 function MemberRequestItem({ member }) {
@@ -11,7 +12,7 @@ function MemberRequestItem({ member }) {
   const duration = useDuration(member.modified);
 
   function putMemberRequest(state = RequestStatus.ACCEPTED) {
-    window.socket.emit("putMemberRequest", {
+    socket.emit("putMemberRequest", {
       id: member.id,
       state,
     });
