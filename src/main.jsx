@@ -5,7 +5,7 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
-import { io } from "socket.io-client";
+import { socket } from "./controllers/socket.js";
 import { allLinks } from "./controllers/constant.js";
 import { User } from "../js/chat-data.js";
 
@@ -28,6 +28,8 @@ import Test from "./components/Test.jsx";
 import "normalize.css";
 import "./styles/main.scss";
 
+window.socket = socket;
+
 //Fetch user from localStorage. If found, user is logged in, return user. Else, return false to indicate logged out.
 async function getUser() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -42,8 +44,8 @@ async function ensureLoggedIn({ request }) {
   const user = await getUser();
 
   if (user) {
-    //try socket io connect after login
-    window.socket = io();
+    //try Socket.IO connect after login
+    socket.connect();
 
     return user;
   } else {
@@ -66,7 +68,7 @@ async function ensureLoggedOut() {
 
 //Perform logout and if successful, redirect to login page, else error page.
 async function logout() {
-  if (window.socket) window.socket.disconnect();
+  socket.disconnect();
   localStorage.removeItem("user");
 
   const res = await fetch("/api/logout");

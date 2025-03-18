@@ -56,7 +56,6 @@ export const OutletContext = createContext(OUTLET_CONTEXT_DEFAULT);
 export const ChatListContext = createContext(CHAT_LIST_CONTEXT_DEFAULT);
 
 function PrivateInterface() {
-  const search = window.location.search;
   const client = useLoaderData();
 
   const parseGroupList = useCallback(function (array, setGroupList) {
@@ -337,13 +336,7 @@ function PrivateInterface() {
       window.socket.off("deleteMembership", deleteGroup);
       window.socket.off("deleteMembership", deleteGroupChat);
     };
-
-    /*Socket.IO bug: Reestablish the socket listeners on url search change.
-      For reasons I do not understand, the listener disappears when changing url query.
-      It is inconsistent, message listener continues to work in spite of it, but updateMembership listener fails.
-    */
   }, [
-    search,
     addChat,
     updateLastMsg,
     deleteDirectChat,

@@ -54,7 +54,6 @@ export const RoomContext = createContext(ROOM_CONTEXT_DEFAULT);
 export const MessageListContext = createContext(MESSAGE_LIST_CONTEXT_DEFAULT);
 
 function Room({ isGroup = true, title = false }) {
-  const search = window.location.search;
   const { chat_id } = useParams();
   const { client } = useContext(InterfaceContext);
 
@@ -355,10 +354,7 @@ function Room({ isGroup = true, title = false }) {
       window.socket.off("deleteGroupMember", deleteMember);
       window.socket.off("deleteMembership", deleteGroupRoom);
     };
-
-    //Socket.IO bug: Reestablish the socket listeners on url search change.
   }, [
-    search,
     deleteDirectRoom,
     handleSocketMessage,
     updateMember,
