@@ -1,13 +1,7 @@
-import { useEffect, useRef } from "react";
+import { memo } from "react";
 import PropTypes from "prop-types";
 
-function ConfirmDialog({ children, storeDialog, confirm }) {
-  const dialog = useRef(null);
-
-  useEffect(() => {
-    storeDialog(dialog.current);
-  }, [storeDialog]);
-
+function ConfirmDialog({ children, dialog, confirm }) {
   function confirmDialog() {
     closeDialog();
     confirm();
@@ -38,8 +32,8 @@ function ConfirmDialog({ children, storeDialog, confirm }) {
 
 ConfirmDialog.propTypes = {
   children: PropTypes.element.isRequired,
-  storeDialog: PropTypes.func.isRequired,
+  dialog: PropTypes.object.isRequired,
   confirm: PropTypes.func.isRequired,
 };
 
-export default ConfirmDialog;
+export default memo(ConfirmDialog);

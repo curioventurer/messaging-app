@@ -456,7 +456,7 @@ export class Member {
     return Member.getPower(this.permission);
   }
 
-  chatIdIsEqual(chatId = new ChatId({})) {
+  isSameRoom(chatId = new ChatId({})) {
     return chatId.isGroup && chatId.id === this.group_id;
   }
 

@@ -15,11 +15,16 @@ function MemberItem({ member }) {
   const notUser = membership.id !== member.id;
   const isOwner = membership.permission === Member.permission.OWNER;
 
-  const storeDialog = useCallback(function (element) {
-    dialog.current = element;
-  }, []);
+  const promote = useCallback(
+    function () {
+      socket.emit("promoteMember", { id: member.id });
+    },
+    [member.id],
+  );
 
-  const promote = useCallback(function () {}, []);
+  function demote() {
+    socket.emit("demoteMember", { id: member.id });
+  }
 
   //Show dialog if promoting an admin to owner.
   function handlePromote() {
@@ -51,7 +56,7 @@ function MemberItem({ member }) {
       element: (
         <>
           <button onClick={handlePromote}>Promote</button>
-          <ConfirmDialog storeDialog={storeDialog} confirm={promote}>
+          <ConfirmDialog dialog={dialog} confirm={promote}>
             <p>
               {"Are you sure you want to promote "}
               <span className="bold">{member.name}</span>
@@ -65,7 +70,7 @@ function MemberItem({ member }) {
     if (memberPower > 0)
       buttonArray.push({
         key: "demote",
-        element: <button>Demote</button>,
+        element: <button onClick={demote}>Demote</button>,
       });
   }
 

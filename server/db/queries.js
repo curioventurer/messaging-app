@@ -940,6 +940,69 @@ async function kickMember(id, user_id) {
   }
 }
 
+async function putMembershipPermission(
+  id,
+  permission = Member.permission.MEMBER,
+) {
+  const SQL_PUT_PERMISSION = `
+    UPDATE memberships
+    SET permission = $2
+    WHERE id = $1
+    RETURNING id, group_id, user_id, permission, state, modified;
+  `;
+  try {
+    const { rows } = await pool.query(SQL_PUT_PERMISSION, [id, permission]);
+    const entry = rows[0];
+
+    if (!entry) return false;
+    else return new Member(entry);
+  } catch {
+    return false;
+  }
+}
+
+//Promote target(other) to owner, and also demote user to admin.
+async function promoteToOwner(other_member_id, user_member_id) {
+  const SQL_PUT_PERMISSION = `
+    UPDATE memberships
+    SET permission = $2
+    WHERE id = $1
+    RETURNING id, group_id, user_id, permission, state, modified;
+  `;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const other_res = await client.query(SQL_PUT_PERMISSION, [
+      other_member_id,
+      Member.permission.OWNER,
+    ]);
+    const other = other_res.rows[0];
+    if (!other) throw "error";
+
+    const user_res = await client.query(SQL_PUT_PERMISSION, [
+      user_member_id,
+      Member.permission.ADMIN,
+    ]);
+    const user = user_res.rows[0];
+    if (!user) throw "error";
+
+    await client.query("COMMIT");
+
+    return {
+      other: new Member(other),
+      user: new Member(user),
+    };
+  } catch {
+    await client.query("ROLLBACK");
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
 async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
   const SQL_POST_MESSAGE = `
     INSERT INTO messages
@@ -1066,4 +1129,8 @@ export {
   getDirectSummaries,
   findDirectChatByUserId,
   deleteDirectChat,
+  findMembership,
+  findMembershipById,
+  putMembershipPermission,
+  promoteToOwner,
 };

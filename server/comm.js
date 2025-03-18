@@ -19,6 +19,8 @@ import {
   putMemberRequest,
   leaveGroup,
   kickMember,
+  demoteMember,
+  promoteMember,
   findGroupById,
   findGroupSummary,
 } from "./db/dbControls.js";
@@ -29,6 +31,7 @@ import {
   User,
   UserActivity,
   RequestStatus,
+  Member,
 } from "../js/chat-data.js";
 import { getTimestamp, waitDuration } from "./test-tools.js";
 
@@ -82,6 +85,16 @@ function emitUpdateFriendship(io, friendship = new Friendship({})) {
     io.in("user:" + sender_id).socketsJoin("friend:" + receiver_id);
     io.in("user:" + receiver_id).socketsJoin("friend:" + sender_id);
   }
+}
+
+function emitUpdateMembership(io, membership) {
+  io.to("user:" + membership.user_id).emit("updateMembership", membership);
+  io.to("group:" + membership.group_id).emit("updateGroupMember", membership);
+}
+
+function emitDeleteMembership(io, membership) {
+  io.to("user:" + membership.user_id).emit("deleteMembership", membership);
+  io.to("group:" + membership.group_id).emit("deleteGroupMember", membership);
 }
 
 function onlyForHandshake(middleware) {
@@ -271,18 +284,14 @@ function comm(server, sessionMiddleware, testLatency) {
         data.group_id,
         socket.request.user.id,
       );
-      if (membership === false) return;
+      if (membership === false) return false;
 
       membership.name = socket.request.user.name;
-      socket.emit("updateMembership", membership);
-      io.to("group:" + membership.group_id).emit(
-        "updateGroupMember",
-        membership,
-      );
+      emitUpdateMembership(io, membership);
 
       //For user, emit new group to group panel.
       const group = await findGroupById(membership.group_id);
-      if (group === false) return;
+      if (group === false) return false;
 
       group.membership = membership;
       socket.emit("addGroup", group);
@@ -293,15 +302,11 @@ function comm(server, sessionMiddleware, testLatency) {
         data.group_id,
         socket.request.user.id,
       );
-      if (membership === false) return;
+      if (membership === false) return false;
 
       membership.name = socket.request.user.name;
 
-      socket.emit("deleteMembership", membership);
-      io.to("group:" + membership.group_id).emit(
-        "deleteGroupMember",
-        membership,
-      );
+      emitDeleteMembership(io, membership);
     });
 
     socket.on("putMemberRequest", async (data) => {
@@ -310,13 +315,9 @@ function comm(server, sessionMiddleware, testLatency) {
         data.state,
         socket.request.user.id,
       );
-      if (membership === false) return;
+      if (membership === false) return false;
 
-      io.to("user:" + membership.user_id).emit("updateMembership", membership);
-      io.to("group:" + membership.group_id).emit(
-        "updateGroupMember",
-        membership,
-      );
+      emitUpdateMembership(io, membership);
 
       /*if membership accepted.
         Add user to group room to receive group updates.
@@ -330,7 +331,7 @@ function comm(server, sessionMiddleware, testLatency) {
         const chatItem = await findGroupSummary(
           new ChatId({ id: membership.group_id, isGroup: true }),
         );
-        if (chatItem === false) return;
+        if (chatItem === false) return false;
 
         io.to("user:" + membership.user_id).emit("chat item", chatItem);
       }
@@ -338,15 +339,11 @@ function comm(server, sessionMiddleware, testLatency) {
 
     socket.on("leaveGroup", async (data) => {
       const membership = await leaveGroup(data.id, socket.request.user.id);
-      if (membership === false) return;
+      if (membership === false) return false;
 
       membership.name = socket.request.user.name;
 
-      socket.emit("deleteMembership", membership);
-      io.to("group:" + membership.group_id).emit(
-        "deleteGroupMember",
-        membership,
-      );
+      emitDeleteMembership(io, membership);
 
       //leave room
       socket.leave("group:" + membership.group_id);
@@ -354,18 +351,33 @@ function comm(server, sessionMiddleware, testLatency) {
 
     socket.on("kickMember", async (data) => {
       const membership = await kickMember(data.id, socket.request.user.id);
-      if (membership === false) return;
+      if (membership === false) return false;
 
-      io.to("user:" + membership.user_id).emit("deleteMembership", membership);
-      io.to("group:" + membership.group_id).emit(
-        "deleteGroupMember",
-        membership,
-      );
+      emitDeleteMembership(io, membership);
 
       //leave room
       io.in("user:" + membership.user_id).socketsLeave(
         "group:" + membership.group_id,
       );
+    });
+
+    socket.on("demoteMember", async (data) => {
+      const membership = await demoteMember(data.id, socket.request.user.id);
+      if (membership === false) return false;
+
+      emitUpdateMembership(io, membership);
+    });
+
+    socket.on("promoteMember", async (data) => {
+      const res = await promoteMember(data.id, socket.request.user.id);
+      if (res === false) return false;
+
+      if (res instanceof Member) emitUpdateMembership(io, res);
+      else {
+        //Ownership transfer, update membership for both.
+        emitUpdateMembership(io, res.other);
+        emitUpdateMembership(io, res.user);
+      }
     });
 
     doPostConnect(socket);

@@ -103,6 +103,27 @@ function Room({ isGroup = true, title = false }) {
     [chatId, clearRoomData],
   );
 
+  const updateMembership = useCallback(
+    function (membershipData = new Member({})) {
+      const newMembership = new Member(membershipData);
+
+      //Not an update for this room
+      if (!newMembership.isSameRoom(chatId)) return;
+
+      setRoom((prevRoom) => {
+        if (!prevRoom) return prevRoom;
+
+        const newGroup = new Group({
+          ...prevRoom.toJSON(),
+          membership: newMembership,
+        });
+
+        return newGroup;
+      });
+    },
+    [chatId, setRoom],
+  );
+
   const appendMessage = useCallback(function (message = new Message({})) {
     setMessages((prevMessages) => {
       if (!prevMessages) return prevMessages;
@@ -147,7 +168,7 @@ function Room({ isGroup = true, title = false }) {
       const newMember = new Member(membershipData);
 
       //Not an update for this room, return.
-      if (!newMember.chatIdIsEqual(chatId)) return;
+      if (!newMember.isSameRoom(chatId)) return;
 
       setMemberList((prevMemberList) => {
         if (!prevMemberList) return prevMemberList;
@@ -181,7 +202,7 @@ function Room({ isGroup = true, title = false }) {
       const membership = new Member(membershipData);
 
       //Not an update for this room, return.
-      if (!membership.chatIdIsEqual(chatId)) return;
+      if (!membership.isSameRoom(chatId)) return;
 
       setMemberList((prevMemberList) => {
         if (!prevMemberList) return prevMemberList;
@@ -218,7 +239,7 @@ function Room({ isGroup = true, title = false }) {
       const membership = new Member(membershipData);
 
       //if same room, delete room
-      if (membership.chatIdIsEqual(chatId)) deleteRoom();
+      if (membership.isSameRoom(chatId)) deleteRoom();
     },
     [chatId, deleteRoom],
   );
@@ -346,6 +367,7 @@ function Room({ isGroup = true, title = false }) {
     socket.on("message", handleSocketMessage);
     socket.on("updateGroupMember", updateMember);
     socket.on("deleteGroupMember", deleteMember);
+    socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteGroupRoom);
 
     return () => {
@@ -353,6 +375,7 @@ function Room({ isGroup = true, title = false }) {
       socket.off("message", handleSocketMessage);
       socket.off("updateGroupMember", updateMember);
       socket.off("deleteGroupMember", deleteMember);
+      socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteGroupRoom);
     };
   }, [
@@ -360,6 +383,7 @@ function Room({ isGroup = true, title = false }) {
     handleSocketMessage,
     updateMember,
     deleteMember,
+    updateMembership,
     deleteGroupRoom,
   ]);
 

@@ -1,4 +1,9 @@
-import { ChatId, ChatItemData, RequestStatus } from "../../js/chat-data.js";
+import {
+  ChatId,
+  ChatItemData,
+  RequestStatus,
+  Member,
+} from "../../js/chat-data.js";
 import {
   findFriendshipById,
   setFriendshipStateById,
@@ -10,6 +15,10 @@ import {
   findDirectChatByUserId,
   deleteDirectChat,
   getMessagesByChatId,
+  findMembership,
+  findMembershipById,
+  putMembershipPermission,
+  promoteToOwner,
 } from "./queries.js";
 
 async function updateFriendRequest(id, user_id, state) {
@@ -129,6 +138,79 @@ async function getChatList(user_id) {
   return [...values[0], ...values[1]];
 }
 
+async function demoteMember(id, user_id) {
+  try {
+    //First, determine if membership can be modified. Member must be an admin to be demoted.
+
+    //return false, if membership does not exists.
+    const membership = await findMembershipById(id);
+    if (!membership) return false;
+
+    //return false, if not member.
+    if (membership.state !== RequestStatus.ACCEPTED) return false;
+
+    //return false, if member not admin.
+    if (membership.permission !== Member.permission.ADMIN) return false;
+
+    //Next, determine if user has the permission to demote. User must be owner.
+
+    //return false, if membership does not exists.
+    const userMembership = await findMembership(membership.group_id, user_id);
+    if (!userMembership) return false;
+
+    //return false, if not member.
+    if (userMembership.state !== RequestStatus.ACCEPTED) return false;
+
+    //return false, if user not owner.
+    if (userMembership.permission !== Member.permission.OWNER) return false;
+
+    //All test has passed, now proceed to demote.
+    const member = await putMembershipPermission(id, Member.permission.MEMBER);
+    return member;
+  } catch {
+    return false;
+  }
+}
+
+async function promoteMember(id, user_id) {
+  try {
+    //First, determine if membership can be modified. Member must not be an owner to be promoted.
+
+    //return false, if membership does not exists.
+    const membership = await findMembershipById(id);
+    if (!membership) return false;
+
+    //return false, if not member.
+    if (membership.state !== RequestStatus.ACCEPTED) return false;
+
+    //return false, if member is owner.
+    if (membership.permission === Member.permission.OWNER) return false;
+
+    //Next, determine if user has the permission to promote. User must be owner.
+
+    //return false, if membership does not exists.
+    const userMembership = await findMembership(membership.group_id, user_id);
+    if (!userMembership) return false;
+
+    //return false, if not member.
+    if (userMembership.state !== RequestStatus.ACCEPTED) return false;
+
+    //return false, if user not owner.
+    if (userMembership.permission !== Member.permission.OWNER) return false;
+
+    //All test has passed, proceed to promote.
+
+    //If permission is member, promote to admin.
+    if (membership.permission === Member.permission.MEMBER)
+      return await putMembershipPermission(id, Member.permission.ADMIN);
+
+    //Permission is admin, promote target to owner. Thus, also demote user to admin.
+    return await promoteToOwner(id, userMembership.id);
+  } catch {
+    return false;
+  }
+}
+
 export {
   updateFriendRequest,
   deleteFriendRequest,
@@ -136,6 +218,8 @@ export {
   findGroupSummary,
   findDirectChatSummary,
   getChatList,
+  demoteMember,
+  promoteMember,
 };
 
 export {

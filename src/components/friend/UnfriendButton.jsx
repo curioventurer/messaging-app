@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, memo } from "react";
 import PropTypes from "prop-types";
 import ConfirmDialog from "../ConfirmDialog.jsx";
 import { socket } from "../../controllers/socket.js";
@@ -6,15 +6,14 @@ import { socket } from "../../controllers/socket.js";
 function UnfriendButton({ friendship }) {
   const dialog = useRef(null);
 
-  const storeDialog = useCallback(function (element) {
-    dialog.current = element;
-  }, []);
-
-  function unfriend() {
-    socket.emit("unfriend", {
-      friendship_id: friendship.id,
-    });
-  }
+  const unfriend = useCallback(
+    function () {
+      socket.emit("unfriend", {
+        friendship_id: friendship.id,
+      });
+    },
+    [friendship.id],
+  );
 
   return (
     <>
@@ -25,7 +24,7 @@ function UnfriendButton({ friendship }) {
       >
         Unfriend
       </button>
-      <ConfirmDialog storeDialog={storeDialog} confirm={unfriend}>
+      <ConfirmDialog dialog={dialog} confirm={unfriend}>
         <p>
           {"Are you sure you want to unfriend "}
           <span className="bold">{friendship.name}</span>
@@ -42,4 +41,4 @@ UnfriendButton.propTypes = {
   friendship: PropTypes.object.isRequired,
 };
 
-export default UnfriendButton;
+export default memo(UnfriendButton);
