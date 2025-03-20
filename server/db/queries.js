@@ -653,12 +653,13 @@ async function getGroupSummaries(user_id) {
       }),
       name: group.name,
       membership_modified: group.mem_modified,
+      //When the column value is empty, null is returned. Replace it with undefined to use constructor defaults.
       lastMessage: new Message({
-        id: group.msg_id,
-        text: group.msg_text,
-        created: group.msg_created,
-        user_id: group.msg_user_id,
-        name: group.msg_name,
+        id: group.msg_id ?? undefined,
+        text: group.msg_text ?? undefined,
+        created: group.msg_created ?? undefined,
+        user_id: group.msg_user_id ?? undefined,
+        name: group.msg_name ?? undefined,
       }),
     }),
   );
@@ -705,12 +706,13 @@ async function getDirectSummaries(user_id) {
       name: direct.name,
       user_id: direct.user_id,
       time_shown: direct.time_shown,
+      //When the column value is empty, null is returned. Replace it with undefined to use constructor defaults.
       lastMessage: new Message({
-        id: direct.msg_id,
-        text: direct.msg_text,
-        created: direct.msg_created,
-        user_id: direct.msg_user_id,
-        name: direct.msg_name,
+        id: direct.msg_id ?? undefined,
+        text: direct.msg_text ?? undefined,
+        created: direct.msg_created ?? undefined,
+        user_id: direct.msg_user_id ?? undefined,
+        name: direct.msg_name ?? undefined,
       }),
     }),
   );
