@@ -632,10 +632,10 @@ async function getGroupSummaries(user_id) {
     INNER JOIN memberships
     ON groups.id = memberships.group_id
     
-    INNER JOIN messages
+    LEFT JOIN messages
     ON groups.id = messages.group_id
     
-    INNER JOIN users
+    LEFT JOIN users
     ON messages.user_id = users.id
 
     WHERE memberships.user_id = $1
@@ -682,10 +682,10 @@ async function getDirectSummaries(user_id) {
     INNER JOIN users
     ON agent2.user_id = users.id
 
-    INNER JOIN messages
+    LEFT JOIN messages
     ON agent1.direct_chat_id = messages.direct_chat_id
     
-    INNER JOIN users AS msg_user
+    LEFT JOIN users AS msg_user
     ON messages.user_id = msg_user.id
     
     WHERE agent1.user_id = $1
