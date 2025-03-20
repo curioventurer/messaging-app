@@ -12,6 +12,7 @@ import {
   findDirectChat,
   findDirectChatShown,
   findDirectChatSummary,
+  deleteGroup,
   getMemberships,
   postMessageDB,
   postMembership,
@@ -92,9 +93,12 @@ function emitUpdateMembership(io, membership) {
   io.to("group:" + membership.group_id).emit("updateGroupMember", membership);
 }
 
-function emitDeleteMembership(io, membership) {
-  io.to("user:" + membership.user_id).emit("deleteMembership", membership);
-  io.to("group:" + membership.group_id).emit("deleteGroupMember", membership);
+function emitDeleteMembership(io, group_id, membership_id, user_id) {
+  io.to("user:" + user_id).emit("deleteMembership", { group_id });
+  io.to("group:" + group_id).emit("deleteGroupMember", {
+    group_id,
+    membership_id,
+  });
 }
 
 function onlyForHandshake(middleware) {
@@ -279,6 +283,21 @@ function comm(server, sessionMiddleware, testLatency) {
       }
     });
 
+    socket.on("deleteGroup", async (data) => {
+      const group_id = data.id;
+      if (!Number.isSafeInteger(group_id)) return;
+
+      const res = await deleteGroup(group_id, socket.request.user.id);
+      if (!res) return;
+
+      const room = "group:" + group_id;
+      io.to(room).emit("deleteMembership", { group_id });
+      io.to(room).emit("deleteGroup", { group_id });
+
+      //leave room
+      io.in(room).socketsLeave(room);
+    });
+
     socket.on("postMembership", async (data) => {
       const membership = await postMembership(
         data.group_id,
@@ -306,7 +325,12 @@ function comm(server, sessionMiddleware, testLatency) {
 
       membership.name = socket.request.user.name;
 
-      emitDeleteMembership(io, membership);
+      emitDeleteMembership(
+        io,
+        membership.group_id,
+        membership.id,
+        membership.user_id,
+      );
     });
 
     socket.on("putMemberRequest", async (data) => {
@@ -334,7 +358,12 @@ function comm(server, sessionMiddleware, testLatency) {
 
       membership.name = socket.request.user.name;
 
-      emitDeleteMembership(io, membership);
+      emitDeleteMembership(
+        io,
+        membership.group_id,
+        membership.id,
+        membership.user_id,
+      );
 
       //leave room
       socket.leave("group:" + membership.group_id);
@@ -344,7 +373,12 @@ function comm(server, sessionMiddleware, testLatency) {
       const membership = await kickMember(data.id, socket.request.user.id);
       if (membership === false) return false;
 
-      emitDeleteMembership(io, membership);
+      emitDeleteMembership(
+        io,
+        membership.group_id,
+        membership.id,
+        membership.user_id,
+      );
 
       //leave room
       io.in("user:" + membership.user_id).socketsLeave(

@@ -149,15 +149,11 @@ function PrivateInterface() {
   );
 
   const deleteGroup = useCallback(
-    function (membershipData = new Member({})) {
-      const membership = new Member(membershipData);
-
+    function ({ group_id }) {
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
 
-        const index = prevGroupList.findIndex(
-          (group) => group.id === membership.group_id,
-        );
+        const index = prevGroupList.findIndex((group) => group.id === group_id);
         if (index === -1) return prevGroupList;
 
         //remove index.
@@ -277,15 +273,13 @@ function PrivateInterface() {
   );
 
   const deleteGroupChat = useCallback(
-    function (membershipData = new Member({})) {
-      const membership = new Member(membershipData);
-
+    function ({ group_id }) {
       const chatId = new ChatId({
-        id: membership.group_id,
+        id: group_id,
         isGroup: true,
       });
 
-      const find = (chat) => chatId.isEqual(chat.chatId);
+      const find = (chat) => chat.chatId.isEqual(chatId);
       deleteChat(find);
     },
     [deleteChat],

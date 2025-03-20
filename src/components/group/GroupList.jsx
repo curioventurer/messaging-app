@@ -1,19 +1,16 @@
-import { useEffect, useContext, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import GroupItem from "./GroupItem.jsx";
-import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import { socket } from "../../controllers/socket.js";
 import { clearSocket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
 import { Group, Member } from "../../../js/chat-data.js";
 
 function GroupList() {
-  const { client } = useContext(InterfaceContext);
-
   const parseGroupList = useCallback(function (array, setGroupList) {
     if (array === false) return setGroupList(false);
 
@@ -46,12 +43,28 @@ function GroupList() {
     [setGroupList],
   );
 
+  const deleteGroup = useCallback(
+    function ({ group_id }) {
+      setGroupList((prevGroupList) => {
+        if (!prevGroupList) return prevGroupList;
+
+        const index = prevGroupList.findIndex((group) => group.id === group_id);
+        if (index === -1) return prevGroupList;
+
+        const newGroupList = [
+          ...prevGroupList.slice(0, index),
+          ...prevGroupList.slice(index + 1),
+        ];
+
+        return newGroupList;
+      });
+    },
+    [setGroupList],
+  );
+
   const updateMembership = useCallback(
     function (membershipData = new Member({})) {
       const newMembership = new Member(membershipData);
-
-      //Not an update for user, return.
-      if (newMembership.user_id !== client.id) return;
 
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
@@ -75,22 +88,15 @@ function GroupList() {
         return newGroupList;
       });
     },
-    [client.id, setGroupList],
+    [setGroupList],
   );
 
   const deleteMembership = useCallback(
-    function (membershipData = new Member({})) {
-      const membership = new Member(membershipData);
-
-      //Not an update for user, return.
-      if (membership.user_id !== client.id) return;
-
+    function ({ group_id }) {
       setGroupList((prevGroupList) => {
         if (!prevGroupList) return prevGroupList;
 
-        const index = prevGroupList.findIndex(
-          (group) => group.id === membership.group_id,
-        );
+        const index = prevGroupList.findIndex((group) => group.id === group_id);
         if (index === -1) return prevGroupList;
 
         //replace membership with default value
@@ -108,20 +114,22 @@ function GroupList() {
         return newGroupList;
       });
     },
-    [client.id, setGroupList],
+    [setGroupList],
   );
 
   useEffect(() => {
     socket.on("addGroup", addGroup);
+    socket.on("deleteGroup", deleteGroup);
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteMembership);
 
     return () => {
       socket.off("addGroup", addGroup);
+      socket.off("deleteGroup", deleteGroup);
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteMembership);
     };
-  }, [addGroup, updateMembership, deleteMembership]);
+  }, [addGroup, deleteGroup, updateMembership, deleteMembership]);
 
   useEffect(() => clearSocket, []);
 

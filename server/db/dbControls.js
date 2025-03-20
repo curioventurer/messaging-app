@@ -246,6 +246,7 @@ export {
   findDirectChat,
   findDirectChatShown,
   postGroup,
+  deleteGroup,
   getMemberships,
   getUserGroups,
   getGroups,

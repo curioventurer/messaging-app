@@ -198,17 +198,20 @@ function Room({ isGroup = true, title = false }) {
   );
 
   const deleteMember = useCallback(
-    function (membershipData = new Member({})) {
-      const membership = new Member(membershipData);
+    function ({ group_id, membership_id }) {
+      const targetChatId = new ChatId({
+        id: group_id,
+        isGroup: true,
+      });
 
       //Not an update for this room, return.
-      if (!membership.isSameRoom(chatId)) return;
+      if (!chatId.isEqual(targetChatId)) return;
 
       setMemberList((prevMemberList) => {
         if (!prevMemberList) return prevMemberList;
 
         const index = prevMemberList.findIndex(
-          (member) => member.id === membership.id,
+          (member) => member.id === membership_id,
         );
         if (index === -1) return;
 
@@ -235,11 +238,14 @@ function Room({ isGroup = true, title = false }) {
   );
 
   const deleteGroupRoom = useCallback(
-    function (membershipData = new Member({})) {
-      const membership = new Member(membershipData);
+    function ({ group_id }) {
+      const targetChatId = new ChatId({
+        id: group_id,
+        isGroup: true,
+      });
 
       //if same room, delete room
-      if (membership.isSameRoom(chatId)) deleteRoom();
+      if (chatId.isEqual(targetChatId)) deleteRoom();
     },
     [chatId, deleteRoom],
   );

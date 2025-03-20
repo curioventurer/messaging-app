@@ -3,6 +3,7 @@ import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import MemberSection from "./MemberSection.jsx";
+import DeleteGroupButton from "./DeleteGroupButton.jsx";
 import { RoomContext } from "./Room.jsx";
 import DateFormat from "../../controllers/DateFormat.js";
 import { Member, RequestStatus } from "../../../js/chat-data.js";
@@ -13,6 +14,8 @@ function GroupInfo() {
   if (room === undefined) return <Loading name="group info" />;
   else if (room === null) return <LoadFail name="group info" />;
   else if (room === false) return <LoadError name="group info" />;
+
+  const isOwner = room.membership.permission === Member.permission.OWNER;
 
   const acceptedRequest = Member.filterByState(
     memberList,
@@ -64,6 +67,7 @@ function GroupInfo() {
           />
         </>
       ) : null}
+      {isOwner ? <DeleteGroupButton /> : null}
     </>
   );
 }

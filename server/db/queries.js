@@ -557,6 +557,38 @@ async function postGroup(name, user_id) {
   }
 }
 
+async function deleteGroup(group_id, user_id) {
+  //Check if user is owner of group.
+  try {
+    const membership = await findMembership(group_id, user_id);
+    if (!membership) return false;
+
+    if (membership.state !== RequestStatus.ACCEPTED) return false;
+    if (membership.permission !== Member.permission.OWNER) return false;
+  } catch {
+    return false;
+  }
+
+  //Transaction to delete group, memberships, and messages.
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN;");
+    await client.query("DELETE FROM memberships WHERE group_id=$1;", [
+      group_id,
+    ]);
+    await client.query("DELETE FROM messages WHERE group_id=$1;", [group_id]);
+    await client.query("DELETE FROM groups WHERE id=$1;", [group_id]);
+    await client.query("COMMIT;");
+
+    return true;
+  } catch {
+    await client.query("ROLLBACK");
+    return false;
+  } finally {
+    client.release();
+  }
+}
+
 /*Get memberships of the user depending on state.
   membership_state = "all" to specify retrieving all states.
 */
@@ -1164,6 +1196,7 @@ export {
   hideDirectChat,
   findDirectChatShown,
   postGroup,
+  deleteGroup,
   getMemberships,
   getUserGroups,
   getGroups,
