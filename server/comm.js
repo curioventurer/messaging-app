@@ -294,7 +294,7 @@ function comm(server, sessionMiddleware, testLatency) {
       if (group === false) return false;
 
       group.membership = membership;
-      socket.emit("addGroup", group);
+      socket.emit("addMembership", group);
     });
 
     socket.on("deleteGroupApplication", async (data) => {
@@ -324,16 +324,7 @@ function comm(server, sessionMiddleware, testLatency) {
         Emit chat item to user's chatlist.
       */
       if (membership.state === RequestStatus.ACCEPTED) {
-        io.in("user:" + membership.user_id).socketsJoin(
-          "group:" + membership.group_id,
-        );
-
-        const chatItem = await findGroupSummary(
-          new ChatId({ id: membership.group_id, isGroup: true }),
-        );
-        if (chatItem === false) return false;
-
-        io.to("user:" + membership.user_id).emit("chat item", chatItem);
+        joinGroup(membership);
       }
     });
 
@@ -387,6 +378,28 @@ function comm(server, sessionMiddleware, testLatency) {
     io.emit("add user", user);
   }
 
+  async function addGroup(group) {
+    io.emit("addGroup", group);
+  }
+
+  /*Adds group chat to user.
+    Add user to group room to receive group updates.
+    Emit chat item to user's chatlist.
+  */
+  async function joinGroup(membership) {
+    io.in("user:" + membership.user_id).socketsJoin(
+      "group:" + membership.group_id,
+    );
+
+    const chatItem = await findGroupSummary(
+      new ChatId({ id: membership.group_id, isGroup: true }),
+      membership.user_id,
+    );
+    if (chatItem === false) return false;
+
+    io.to("user:" + membership.user_id).emit("chat item", chatItem);
+  }
+
   async function addDirectChatItem(user_id = 0, direct_chat_id = 0) {
     const directChat = await findDirectChatSummary(
       new ChatId({ id: direct_chat_id, isGroup: false }),
@@ -397,7 +410,7 @@ function comm(server, sessionMiddleware, testLatency) {
     io.to("user:" + user_id).emit("chat item", directChat);
   }
 
-  return { addUser, addDirectChatItem };
+  return { addUser, addGroup, joinGroup, addDirectChatItem };
 }
 
 export default comm;

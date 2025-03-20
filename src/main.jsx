@@ -16,11 +16,12 @@ import Home from "./components/home/Home.jsx";
 import Room from "./components/room/Room.jsx";
 import GroupList from "./components/group/GroupList.jsx";
 import UserList from "./components/user/UserList.jsx";
+import CreateGroup from "./components/form/CreateGroup.jsx";
 import Intro from "./components/Intro.jsx";
 import About from "./components/About.jsx";
-import RegisterForm from "./components/auth/RegisterForm.jsx";
-import LoginForm from "./components/auth/LoginForm.jsx";
-import GuestLoginForm from "./components/auth/GuestLoginForm.jsx";
+import RegisterForm from "./components/form/RegisterForm.jsx";
+import LoginForm from "./components/form/LoginForm.jsx";
+import GuestLoginForm from "./components/form/GuestLoginForm.jsx";
 import AppError from "./components/sys/AppError.jsx";
 import RouteError from "./components/sys/RouteError.jsx";
 import Test from "./components/Test.jsx";
@@ -117,6 +118,14 @@ const router = createBrowserRouter([
         element: (
           <Title title={allLinks.userList.name}>
             <UserList />
+          </Title>
+        ),
+      },
+      {
+        path: allLinks.createGroup.href,
+        element: (
+          <Title title={allLinks.createGroup.name}>
+            <CreateGroup />
           </Title>
         ),
       },

@@ -78,7 +78,7 @@ a {
   color: aqua;
 
   &:visited {
-    color: #0a0;
+    color: #0f0;
   }
 
   &:active {
@@ -139,7 +139,7 @@ button {
   &:active {
     filter: brightness(0.7);
   }
-  &:disabled {
+  &:disabled:disabled {
     filter: brightness(0.3);
     cursor: default;
   }
@@ -177,6 +177,10 @@ td:empty {
 
 .s-pad {
   padding: 10px;
+}
+
+.s-block-margin {
+  margin-block: 20px;
 }
 
 .line {
@@ -365,10 +369,6 @@ nav.tabs {
 }
 
 .auth-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
   form + ul {
     margin-top: 1.5em;
 
@@ -379,7 +379,13 @@ nav.tabs {
   }
 }
 
-.auth-page form {
+.form-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-page form {
   max-width: 100%;
   width: 50ch;
 
@@ -446,12 +452,6 @@ nav.tabs {
     button {
       font-size: 1.2em;
     }
-  }
-}
-
-.list-page {
-  > p {
-    margin-bottom: 1em;
   }
 }
 

@@ -164,10 +164,16 @@ function FriendshipPanel() {
   return (
     <div className="s-pad">
       <h2>Friendship Panel</h2>
-      <p>
-        Your friends and pending request is managed here. Go to{" "}
-        <Link to={allLinks.userList.href}>user list</Link> to add users.
-      </p>
+      <p>Your friends and pending request is managed here.</p>
+      <nav className="s-block-margin">
+        <ul className="button-bar">
+          <li>
+            <Link to={allLinks.userList.href} className={"button-link"}>
+              {allLinks.userList.name}
+            </Link>
+          </li>
+        </ul>
+      </nav>
       <UpdateDirectIdContext.Provider value={updateDirectId}>
         {receivedRequest.length > 0 ? (
           <>

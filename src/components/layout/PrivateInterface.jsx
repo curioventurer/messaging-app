@@ -33,7 +33,7 @@ const INTERFACE_CONTEXT_DEFAULT = {
   friendships: undefined,
   updateDirectId: () => {},
   setFriendships: () => {},
-  setGroupList: () => {},
+  addGroup: () => {},
 };
 
 const MENU_CONTEXT_DEFAULT = {
@@ -323,7 +323,7 @@ function PrivateInterface() {
     socket.on("chat item", addChat);
     socket.on("message", updateLastMsg);
     socket.on("unfriend", deleteDirectChat);
-    socket.on("addGroup", addGroup);
+    socket.on("addMembership", addGroup);
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteGroup);
     socket.on("deleteMembership", deleteGroupChat);
@@ -332,7 +332,7 @@ function PrivateInterface() {
       socket.off("chat item", addChat);
       socket.off("message", updateLastMsg);
       socket.off("unfriend", deleteDirectChat);
-      socket.off("addGroup", addGroup);
+      socket.off("addMembership", addGroup);
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteGroup);
       socket.off("deleteMembership", deleteGroupChat);
@@ -375,17 +375,17 @@ function PrivateInterface() {
             client,
             groupList,
             friendships,
+            addGroup,
             updateDirectId,
             setFriendships,
-            setGroupList,
           }),
           [
             client,
             groupList,
             friendships,
+            addGroup,
             updateDirectId,
             setFriendships,
-            setGroupList,
           ],
         )}
       >

@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import AuthForm from "./AuthForm.jsx";
-import { User } from "../../../js/chat-data.js";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import useMsgQuery from "../../hooks/useMsgQuery.jsx";
+import Form from "./Form.jsx";
+import { FormDetail, User } from "../../../js/chat-data.js";
 
 function GuestLoginForm() {
   const [searchParams] = useSearchParams();
 
   const [username, setUsername] = useState(User.GUEST_LABEL);
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const usernameInput = useRef(null);
   const submitButton = useRef(null);
@@ -17,12 +18,14 @@ function GuestLoginForm() {
     ? "?rdr=" + encodeURIComponent(redirectPath)
     : "";
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     generateUsername();
   }, []);
 
-  function updateSubmitting(bool) {
-    setSubmitting(bool);
+  function updateIsSubmitting(bool) {
+    setIsSubmitting(bool);
   }
 
   function updateUsername(event) {
@@ -39,7 +42,7 @@ function GuestLoginForm() {
     setUsername(User.GUEST_LABEL + number.toString().padStart(DIGITS, "0"));
   }
 
-  function parseSubmitRes(err, info) {
+  function parseOutput(err, info) {
     let message, focusTarget;
 
     if (err) message = "database error";
@@ -54,23 +57,37 @@ function GuestLoginForm() {
     };
   }
 
-  const formInfo = {
+  function handleSubmitRes(err, user, info, updateOutput) {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+
+      navigate(searchParams.get("rdr") ?? "/home", {
+        replace: true,
+      });
+    } else updateOutput(parseOutput(err, info));
+  }
+
+  const message = useMsgQuery();
+  const outputInitial = message
+    ? "Result: " + message
+    : "Tip: generate or enter username";
+
+  const formDetail = new FormDetail({
     path: "/api/guest-login",
     data: { username },
-    initialOutput: "Tip: generate or enter username",
+    outputInitial,
     outputName: "guest login result",
     outputFor: "username",
-    submitting,
+    isSubmitting,
     submitButton,
-    validateInputs: () => true,
-    parseSubmitRes,
-    updateSubmitting,
-  };
+    handleSubmitRes,
+    updateIsSubmitting,
+  });
 
   return (
-    <div className="auth-page">
+    <div className="form-page auth-page">
       <h1>Guest Login</h1>
-      <AuthForm formInfo={formInfo}>
+      <Form formDetail={formDetail}>
         <ul>
           <li>
             <label htmlFor="username">Username</label>
@@ -78,7 +95,7 @@ function GuestLoginForm() {
               type="button"
               className="clear-background"
               onClick={generateUsername}
-              disabled={submitting}
+              disabled={isSubmitting}
             >
               Generate Username
             </button>
@@ -93,7 +110,7 @@ function GuestLoginForm() {
               value={username}
               onChange={updateUsername}
               autoComplete="off"
-              disabled={submitting}
+              disabled={isSubmitting}
               required
               autoFocus
             />
@@ -103,12 +120,12 @@ function GuestLoginForm() {
             </ul>
           </li>
           <li>
-            <button ref={submitButton} type="submit" disabled={submitting}>
-              {submitting ? "Waiting..." : "Login"}
+            <button ref={submitButton} type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Waiting..." : "Login"}
             </button>
           </li>
         </ul>
-      </AuthForm>
+      </Form>
       <ul>
         <li>
           <Link to={"/login" + redirectQuery}>Login</Link>

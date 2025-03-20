@@ -8,6 +8,7 @@ import {
   openDirectChat,
   hideDirectChat,
   findDirectChat,
+  postGroup,
   getChatList,
   getUserGroups,
   getGroups,
@@ -15,7 +16,7 @@ import {
   getMembersByGroupId,
   getMessagesByChatId,
 } from "./db/dbControls.js";
-import { ChatId } from "../js/chat-data.js";
+import { ChatId, Group, Member } from "../js/chat-data.js";
 
 function routes(app, ioHandlers) {
   //test code - api for testing.
@@ -69,14 +70,14 @@ function routes(app, ioHandlers) {
     if (user) {
       //perform login for the user after successful registration, before responding.
       req.logIn(user, function () {
-        res.json({ err, user, info });
+        res.json({ err, data: user, info });
       });
 
       //inform online users about the new user by socket io.
       ioHandlers.addUser(user);
     }
     //on failure, respond with information
-    else res.json({ err, user, info });
+    else res.json({ err, data: user, info });
   });
 
   app.post("/api/guest-login", async (req, res) => {
@@ -87,20 +88,20 @@ function routes(app, ioHandlers) {
     if (user) {
       //perform login for the user after successful registration, before responding.
       req.logIn(user, function () {
-        res.json({ err, user, info });
+        res.json({ err, data: user, info });
       });
 
       //inform online users about the new user by socket io.
       ioHandlers.addUser(user);
     }
     //on failure, respond with information
-    else res.json({ err, user, info });
+    else res.json({ err, data: user, info });
   });
 
   app.post("/api/login", (req, res, next) => {
     passport.authenticate("local", function (err, user, info) {
       req.logIn(user, function () {
-        res.json({ err, user, info });
+        res.json({ err, data: user, info });
       });
     })(req, res, next);
   });
@@ -113,6 +114,30 @@ function routes(app, ioHandlers) {
 
     user.clearSensitive();
     res.json(user);
+  });
+
+  app.post("/api/create-group", async (req, res) => {
+    if (!req.user) return res.json(false);
+
+    const name = req.body.name;
+
+    const { err, group, info } = await postGroup(name, req.user.id);
+
+    if (group) {
+      /*Inform online users about the new group by socket io.
+        Remove user's membership info from it beforehand.
+      */
+      const copy = new Group({
+        ...group.toJSON(),
+        membership: new Member({}),
+      });
+      ioHandlers.addGroup(copy);
+
+      //Add group chat to user.
+      ioHandlers.joinGroup(group.membership);
+    }
+
+    res.json({ err, data: group, info });
   });
 
   app.get("/api/user-list", async (req, res) => {

@@ -112,12 +112,12 @@ function GroupList() {
   );
 
   useEffect(() => {
-    socket.on("add group", addGroup);
+    socket.on("addGroup", addGroup);
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteMembership);
 
     return () => {
-      socket.off("add group", addGroup);
+      socket.off("addGroup", addGroup);
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteMembership);
     };
@@ -148,10 +148,27 @@ function GroupList() {
       <p>
         You can apply to join a group from the list of groups. After
         application, you will have to wait for the group owner or admin to
-        accept your request. You can check all your pending applications in{" "}
-        <Link to={allLinks.home.search.group.href}>group</Link> tab of home
+        accept your request. You can check all your pending applications at{" "}
+        <Link to={allLinks.home.search.group.href}>group panel</Link> in home
         page.
       </p>
+      <nav className="s-block-margin">
+        <ul className="button-bar">
+          <li>
+            <Link
+              to={allLinks.home.search.group.href}
+              className={"button-link"}
+            >
+              Group Panel
+            </Link>
+          </li>
+          <li>
+            <Link to={allLinks.createGroup.href} className={"button-link"}>
+              {allLinks.createGroup.name}
+            </Link>
+          </li>
+        </ul>
+      </nav>
       {content}
     </div>
   );

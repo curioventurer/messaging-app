@@ -507,6 +507,56 @@ async function findDirectChatShown(chatId = new ChatId({}), user_id) {
   return rows[0]?.is_shown;
 }
 
+async function postGroup(name, user_id) {
+  //Check if name is valid and not taken.
+  try {
+    if (!Group.isValidName(name)) return { info: { message: "invalid name" } };
+
+    const group = await findGroup(name);
+    if (group) return { info: { message: "name taken" } };
+  } catch (err) {
+    return { err };
+  }
+
+  //Transaction to create group and add user as owner.
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const SQL_POST_GROUP = `
+      INSERT INTO groups
+      ( name ) VALUES ( $1 )
+      RETURNING id, name, created;
+    `;
+    const group_res = await client.query(SQL_POST_GROUP, [name]);
+    if (!group_res.rows[0]) throw "error";
+    const group = new Group(group_res.rows[0]);
+
+    const SQL_POST_MEMBERSHIP = `
+      INSERT INTO memberships
+      ( group_id, user_id, permission, state )
+      VALUES ( $1, $2, '${Member.permission.OWNER}', '${RequestStatus.ACCEPTED}' )
+      RETURNING id, group_id, user_id, permission, state, modified;
+    `;
+    const mem_res = await client.query(SQL_POST_MEMBERSHIP, [
+      group.id,
+      user_id,
+    ]);
+    if (!mem_res.rows[0]) throw "error";
+    const membership = new Member(mem_res.rows[0]);
+
+    await client.query("COMMIT");
+
+    group.membership = membership;
+    return { group };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    return { err };
+  } finally {
+    client.release();
+  }
+}
+
 /*Get memberships of the user depending on state.
   membership_state = "all" to specify retrieving all states.
 */
@@ -720,6 +770,14 @@ async function findGroupById(groupId) {
   const { rows } = await pool.query(
     "SELECT id, name, created FROM groups WHERE id = $1",
     [groupId],
+  );
+  return rows[0] ? new Group(rows[0]) : false;
+}
+
+async function findGroup(name) {
+  const { rows } = await pool.query(
+    "SELECT id, name, created FROM groups WHERE name = $1;",
+    [name],
   );
   return rows[0] ? new Group(rows[0]) : false;
 }
@@ -1105,6 +1163,7 @@ export {
   showDirectChat,
   hideDirectChat,
   findDirectChatShown,
+  postGroup,
   getMemberships,
   getUserGroups,
   getGroups,

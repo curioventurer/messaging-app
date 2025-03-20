@@ -1,37 +1,14 @@
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState, useRef } from "react";
 import PropTypes from "prop-types";
+import { FormDetail } from "../../../js/chat-data.js";
 
 const FOCUS_DELAY = 100;
-const TIMEOUT_DURATION = 5000;
 
-function AuthForm({ children, formInfo }) {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const message = searchParams.get("msg");
-  let initialOutput;
-
-  if (message) initialOutput = "Result: " + message;
-  else initialOutput = formInfo.initialOutput;
-
-  const [output, setOutput] = useState(initialOutput);
+function Form({ children, formDetail }) {
+  const [output, setOutput] = useState(formDetail.outputInitial);
   const [isBlink, setIsBlink] = useState(false);
 
   const outputElement = useRef(null);
-
-  const navigate = useNavigate();
-
-  //Msg search query is only used once when the page is loaded to tell the output to show result from the previous page before redirect. Thus, it is cleared from the url after loading to prevent showing the message twice.
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const current = new URLSearchParams(prev);
-        current.delete("msg");
-        return current;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
 
   /*Show output message and blink.
     Also change focus if target is defined.
@@ -68,21 +45,21 @@ function AuthForm({ children, formInfo }) {
   function submit(event) {
     event.preventDefault();
 
-    if (formInfo.submitting) return;
+    if (formDetail.isSubmitting) return;
 
-    const result = formInfo.validateInputs();
+    const result = formDetail.validateInputs();
     if (result !== true) return updateOutput(result);
 
-    formInfo.updateSubmitting(true);
+    formDetail.updateIsSubmitting(true);
 
     const timeout = setTimeout(() => {
-      formInfo.updateSubmitting(false);
+      formDetail.updateIsSubmitting(false);
       updateOutput({
         message:
           "connection timeout.\nTry again in a moment, make sure your internet is connected.",
-        focusTarget: formInfo.submitButton,
+        focusTarget: formDetail.submitButton,
       });
-    }, TIMEOUT_DURATION);
+    }, formDetail.timeoutDuration);
 
     setOutput("Pending: Waiting for server response...");
 
@@ -90,9 +67,9 @@ function AuthForm({ children, formInfo }) {
       "Content-Type": "application/json",
     });
 
-    const request = new Request(formInfo.path, {
+    const request = new Request(formDetail.path, {
       method: "POST",
-      body: JSON.stringify(formInfo.data),
+      body: JSON.stringify(formDetail.data),
       headers,
     });
 
@@ -101,27 +78,26 @@ function AuthForm({ children, formInfo }) {
         clearTimeout(timeout);
         return res.json();
       })
-      .then(({ err, user, info }) => {
-        if (user) {
-          localStorage.setItem("user", JSON.stringify(user));
-
-          return navigate(searchParams.get("rdr") ?? "/home", {
-            replace: true,
-          });
-        }
-
-        updateOutput(formInfo.parseSubmitRes(err, info));
-        formInfo.updateSubmitting(false);
+      .then(({ err, data, info }) => {
+        return formDetail.handleSubmitRes(err, data, info, updateOutput);
       })
-      .catch(() => {});
+      .catch(() => {
+        clearTimeout(timeout);
+        updateOutput({
+          message: "submission error.",
+        });
+      })
+      .finally(() => {
+        formDetail.updateIsSubmitting(false);
+      });
   }
 
   return (
     <form onSubmit={submit}>
       {children}
       <output
-        name={formInfo.outputName}
-        htmlFor={formInfo.outputFor}
+        name={formDetail.outputName}
+        htmlFor={formDetail.outputFor}
         ref={outputElement}
         className={"pre-wrap" + (isBlink ? " blink" : "")}
       >
@@ -131,9 +107,9 @@ function AuthForm({ children, formInfo }) {
   );
 }
 
-AuthForm.propTypes = {
+Form.propTypes = {
   children: PropTypes.element.isRequired,
-  formInfo: PropTypes.object.isRequired,
+  formDetail: PropTypes.instanceOf(FormDetail).isRequired,
 };
 
-export default AuthForm;
+export default Form;

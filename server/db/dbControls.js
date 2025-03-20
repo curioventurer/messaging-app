@@ -93,18 +93,26 @@ async function unfriend(friendship_id, user_id) {
   return other_id;
 }
 
-async function findGroupSummary(chatId = new ChatId({})) {
+async function findGroupSummary(chatId = new ChatId({}), user_id) {
   const groupPromise = findGroupById(chatId.id);
   const messagesPromise = getMessagesByChatId(chatId, 1);
-  const values = await Promise.all([groupPromise, messagesPromise]);
+  const membershipPromise = findMembership(chatId.id, user_id);
+  const values = await Promise.all([
+    groupPromise,
+    messagesPromise,
+    membershipPromise,
+  ]);
 
   const group = values[0];
   if (group === false) return false;
 
+  const membership = values[2];
+  if (membership === false) return false;
+
   const chatItem = ChatItemData.createGroup({
     chatId,
     name: group.name,
-    membership_modified: group.membership.modified,
+    membership_modified: membership.modified,
     lastMessage: values[1][0],
   });
 
@@ -237,6 +245,7 @@ export {
   hideDirectChat,
   findDirectChat,
   findDirectChatShown,
+  postGroup,
   getMemberships,
   getUserGroups,
   getGroups,

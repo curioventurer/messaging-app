@@ -369,6 +369,8 @@ export class UserFriendship {
 export class Group {
   #membership;
 
+  static nameRegex = "^\\w+$";
+
   constructor({
     id = 0,
     name = DEFAULT_TEXT,
@@ -395,6 +397,15 @@ export class Group {
       ...this,
       membership: this.membership,
     };
+  }
+
+  //1-50 word characters (a-z, A-Z, 0-9, _)
+  static isValidName(name) {
+    if (name.length < 1 || name.length > 50) return false;
+
+    if (!name.match(this.nameRegex)) return false;
+
+    return true;
   }
 
   //groups: contain instances of Group - chat-data.js
@@ -735,5 +746,33 @@ export class ChatItemData {
     });
 
     return sortedChats;
+  }
+}
+
+export class FormDetail {
+  constructor({
+    path = "/api/test",
+    data = {},
+    outputInitial = "Tip: fill in the form",
+    outputName = "submission result",
+    outputFor = "",
+    isSubmitting = false,
+    submitButton,
+    timeoutDuration = 5000,
+    validateInputs = () => true,
+    handleSubmitRes = () => {},
+    updateIsSubmitting = () => {},
+  }) {
+    this.path = path;
+    this.data = data;
+    this.outputInitial = outputInitial;
+    this.outputName = outputName;
+    this.outputFor = outputFor;
+    this.isSubmitting = isSubmitting;
+    this.submitButton = submitButton;
+    this.timeoutDuration = timeoutDuration;
+    this.validateInputs = validateInputs;
+    this.handleSubmitRes = handleSubmitRes;
+    this.updateIsSubmitting = updateIsSubmitting;
   }
 }

@@ -1,12 +1,13 @@
 import { useState, useRef } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import AuthForm from "./AuthForm.jsx";
-import { User } from "../../../js/chat-data.js";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import useMsgQuery from "../../hooks/useMsgQuery.jsx";
+import Form from "./Form.jsx";
+import { FormDetail, User } from "../../../js/chat-data.js";
 
 function LoginForm() {
   const [searchParams] = useSearchParams();
 
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordIsShown, setPasswordIsShown] = useState(false);
@@ -20,8 +21,10 @@ function LoginForm() {
     ? "?rdr=" + encodeURIComponent(redirectPath)
     : "";
 
-  function updateSubmitting(bool) {
-    setSubmitting(bool);
+  const navigate = useNavigate();
+
+  function updateIsSubmitting(bool) {
+    setIsSubmitting(bool);
   }
 
   function updateUsername(event) {
@@ -40,7 +43,7 @@ function LoginForm() {
     }
   }
 
-  function parseSubmitRes(err, info) {
+  function parseOutput(err, info) {
     let message, focusTarget;
 
     if (err) message = "database error";
@@ -56,23 +59,37 @@ function LoginForm() {
     };
   }
 
-  const formInfo = {
+  function handleSubmitRes(err, user, info, updateOutput) {
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+
+      navigate(searchParams.get("rdr") ?? "/home", {
+        replace: true,
+      });
+    } else updateOutput(parseOutput(err, info));
+  }
+
+  const message = useMsgQuery();
+  const outputInitial = message
+    ? "Result: " + message
+    : "Tip: enter username and password to login";
+
+  const formDetail = new FormDetail({
     path: "/api/login",
     data: { username, password },
-    initialOutput: "Tip: enter username and password to login",
+    outputInitial,
     outputName: "login result",
     outputFor: "username current-password",
-    submitting,
+    isSubmitting,
     submitButton,
-    validateInputs: () => true,
-    parseSubmitRes,
-    updateSubmitting,
-  };
+    handleSubmitRes,
+    updateIsSubmitting,
+  });
 
   return (
-    <div className="auth-page">
+    <div className="form-page auth-page">
       <h1>Login</h1>
-      <AuthForm formInfo={formInfo}>
+      <Form formDetail={formDetail}>
         <ul>
           <li>
             <label htmlFor="username">Username</label>
@@ -86,7 +103,7 @@ function LoginForm() {
               value={username}
               onChange={updateUsername}
               autoComplete="username"
-              disabled={submitting}
+              disabled={isSubmitting}
               required
             />
           </li>
@@ -114,7 +131,7 @@ function LoginForm() {
               value={password}
               onChange={updatePassword}
               autoComplete="current-password"
-              disabled={submitting}
+              disabled={isSubmitting}
               required
             />
           </li>
@@ -122,14 +139,14 @@ function LoginForm() {
             <button
               ref={submitButton}
               type="submit"
-              disabled={submitting}
+              disabled={isSubmitting}
               autoFocus
             >
-              {submitting ? "Waiting..." : "Login"}
+              {isSubmitting ? "Waiting..." : "Login"}
             </button>
           </li>
         </ul>
-      </AuthForm>
+      </Form>
       <ul>
         <li>
           <Link to={"/guest-login" + redirectQuery}>Guest login</Link>

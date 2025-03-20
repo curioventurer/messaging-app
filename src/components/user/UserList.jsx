@@ -196,9 +196,22 @@ function UserList() {
       <p>
         You can add friends from the list of users. Once added, you will have to
         wait for them to accept your request. You can check all your pending
-        request in <Link to={allLinks.home.search.friend.href}>friend</Link> tab
-        of home page.
+        request at{" "}
+        <Link to={allLinks.home.search.friend.href}>friend panel</Link> in home
+        page.
       </p>
+      <nav className="s-block-margin">
+        <ul className="button-bar">
+          <li>
+            <Link
+              to={allLinks.home.search.friend.href}
+              className={"button-link"}
+            >
+              Friend Panel
+            </Link>
+          </li>
+        </ul>
+      </nav>
       {content}
     </div>
   );

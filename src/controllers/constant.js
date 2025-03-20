@@ -46,5 +46,10 @@ export const allLinks = {
     name: "User List",
     classes: ["private-link"],
   },
+  createGroup: {
+    href: "/create-group",
+    name: "Create Group",
+    classes: [],
+  },
   about: { href: "/about", name: "About", classes: [] },
 };

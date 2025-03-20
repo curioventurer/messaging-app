@@ -29,10 +29,21 @@ function GroupPanel() {
   return (
     <div className="s-pad">
       <h2>Group Panel</h2>
-      <p>
-        Groups you joined or applied to is managed here. Go to{" "}
-        <Link to={allLinks.groupList.href}>group list</Link> to apply to groups.
-      </p>
+      <p>Groups you joined or applied to is managed here.</p>
+      <nav className="s-block-margin">
+        <ul className="button-bar">
+          <li>
+            <Link to={allLinks.groupList.href} className={"button-link"}>
+              {allLinks.groupList.name}
+            </Link>
+          </li>
+          <li>
+            <Link to={allLinks.createGroup.href} className={"button-link"}>
+              {allLinks.createGroup.name}
+            </Link>
+          </li>
+        </ul>
+      </nav>
       {acceptedRequest.length > 0 ? (
         <>
           <div className="line"></div>
