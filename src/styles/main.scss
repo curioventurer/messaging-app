@@ -194,6 +194,10 @@ td:empty {
   text-overflow: ellipsis;
 }
 
+.list-header {
+  margin-top: 1em;
+}
+
 .marked-list {
   list-style-type: initial;
 
@@ -368,6 +372,12 @@ nav.tabs {
   }
 }
 
+.profile-page {
+  li {
+    margin-block: 10px;
+  }
+}
+
 .auth-page {
   form + ul {
     margin-top: 1.5em;
@@ -442,7 +452,7 @@ nav.tabs {
 }
 
 .confirmation-dialog {
-  ul {
+  .button-bar {
     display: flex;
     justify-content: center;
     column-gap: 2em;

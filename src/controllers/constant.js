@@ -36,6 +36,11 @@ export const allLinks = {
       friend: { param: "?tab=friend", name: "Friend", classes: [] },
     },
   }),
+  profile: {
+    href: "/profile",
+    name: "Profile",
+    classes: ["private-link"],
+  },
   groupList: {
     href: "/group-list",
     name: "Group List",

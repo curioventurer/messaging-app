@@ -14,7 +14,7 @@ function ConfirmDialog({ children, dialog, confirm }) {
   return (
     <dialog ref={dialog} className="confirmation-dialog">
       {children}
-      <ul>
+      <ul className="button-bar">
         <li>
           <button className="low-bright" onClick={confirmDialog}>
             Yes

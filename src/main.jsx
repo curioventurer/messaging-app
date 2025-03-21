@@ -13,6 +13,7 @@ import Title from "./components/layout/Title.jsx";
 import PublicInterface from "./components/layout/PublicInterface.jsx";
 import PrivateInterface from "./components/layout/PrivateInterface.jsx";
 import Home from "./components/home/Home.jsx";
+import Profile from "./components/profile/Profile.jsx";
 import Room from "./components/room/Room.jsx";
 import GroupList from "./components/group/GroupList.jsx";
 import UserList from "./components/user/UserList.jsx";
@@ -94,6 +95,14 @@ const router = createBrowserRouter([
         element: (
           <Title title={allLinks.home.name}>
             <Home />
+          </Title>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <Title title={allLinks.profile.name}>
+            <Profile />
           </Title>
         ),
       },

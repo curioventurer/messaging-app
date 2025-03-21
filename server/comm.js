@@ -446,7 +446,7 @@ function comm(server, sessionMiddleware, testLatency) {
     io.to("user:" + user_id).emit("chat item", directChat);
     io.to("user:" + user_id).emit("updateDirectId", {
       user_id: directChat.user_id,
-      direct_chat_id: directChat.id,
+      direct_chat_id: directChat.chatId.id,
     });
   }
 
