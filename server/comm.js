@@ -80,12 +80,11 @@ function emitUpdateFriendship(io, friendship = new Friendship({})) {
 
   const receiverResponse = friendship.getUserFriendship(false);
   io.to("user:" + receiver_id).emit("update friendship", receiverResponse);
+}
 
-  //if they become friends, join the respective friend rooms to receive friend updates
-  if (friendship.state === RequestStatus.ACCEPTED) {
-    io.in("user:" + sender_id).socketsJoin("friend:" + receiver_id);
-    io.in("user:" + receiver_id).socketsJoin("friend:" + sender_id);
-  }
+function emitDeleteFriendship(io, user_id, other_id) {
+  io.to("user:" + user_id).emit("deleteFriendship", { user_id: other_id });
+  io.to("user:" + other_id).emit("deleteFriendship", { user_id });
 }
 
 function emitUpdateMembership(io, membership) {
@@ -184,9 +183,18 @@ function comm(server, sessionMiddleware, testLatency) {
         socket.request.user.id,
         data.state,
       );
-
       if (!friendship) return;
-      else emitUpdateFriendship(io, friendship);
+
+      emitUpdateFriendship(io, friendship);
+
+      //if they become friends, join the respective friend rooms to receive friend updates
+      if (friendship.state === RequestStatus.ACCEPTED) {
+        const sender_id = friendship.sender_id;
+        const receiver_id = friendship.receiver_id;
+
+        io.in("user:" + sender_id).socketsJoin("friend:" + receiver_id);
+        io.in("user:" + receiver_id).socketsJoin("friend:" + sender_id);
+      }
     });
 
     socket.on("delete friend request", async (data) => {
@@ -196,10 +204,7 @@ function comm(server, sessionMiddleware, testLatency) {
       );
       if (!response) return;
 
-      socket.emit("delete friend request", { friendship_id: data.id });
-      io.to("user:" + response.other_id).emit("delete friend request", {
-        friendship_id: data.id,
-      });
+      emitDeleteFriendship(io, socket.request.user.id, response.other_id);
     });
 
     socket.on("reverse friend request", async (data) => {
@@ -219,10 +224,7 @@ function comm(server, sessionMiddleware, testLatency) {
       );
       if (other_id === false) return;
 
-      socket.emit("unfriend", { user_id: other_id });
-      io.to("user:" + other_id).emit("unfriend", {
-        user_id: socket.request.user.id,
-      });
+      emitDeleteFriendship(io, socket.request.user.id, other_id);
 
       //remove the users from their respective friend rooms to stop receiving friend updates
       socket.leave("friend:" + other_id);
@@ -442,6 +444,10 @@ function comm(server, sessionMiddleware, testLatency) {
     if (directChat === false) return;
 
     io.to("user:" + user_id).emit("chat item", directChat);
+    io.to("user:" + user_id).emit("updateDirectId", {
+      user_id: directChat.user_id,
+      direct_chat_id: directChat.id,
+    });
   }
 
   return { addUser, addGroup, joinGroup, addDirectChatItem };

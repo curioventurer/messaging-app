@@ -5,11 +5,10 @@ import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
 import UserItem from "./UserItem.jsx";
-import { UpdateDirectIdContext } from "../friend/FriendshipButtonBar.jsx";
 import { socket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
 import { clearSocket } from "../../controllers/socket.js";
-import { User, UserFriendship, ChatItemData } from "../../../js/chat-data.js";
+import { User, UserFriendship } from "../../../js/chat-data.js";
 
 function UserList() {
   const parseUsers = useCallback(function (array, setUsers) {
@@ -71,20 +70,13 @@ function UserList() {
     [setUsers],
   );
 
-  /*Reset friendship prop to default values, to indicate removal of the record.
-    Accepts either parameters for find.
-  */
-  const clearFriendship = useCallback(
-    function ({ friendship_id = 0, user_id = 0 }) {
-      //Determine find function to use, based on provided parameters.
-      let find = () => false;
-      if (user_id !== 0) find = (user) => user.id === user_id;
-      else find = (user) => user.friendship.id === friendship_id;
-
+  //Reset friendship prop to default values, to indicate removal of the record.
+  const deleteFriendship = useCallback(
+    function ({ user_id }) {
       setUsers((prevUsers) => {
         if (!prevUsers) return prevUsers;
 
-        const index = prevUsers.findIndex(find);
+        const index = prevUsers.findIndex((user) => user.id === user_id);
         if (index === -1) return prevUsers;
 
         const user = prevUsers[index];
@@ -110,7 +102,7 @@ function UserList() {
   );
 
   const updateDirectId = useCallback(
-    function (user_id, direct_chat_id) {
+    function ({ user_id, direct_chat_id }) {
       setUsers((prevUsers) => {
         if (!prevUsers) return prevUsers;
 
@@ -142,32 +134,17 @@ function UserList() {
 
   useEffect(() => {
     socket.on("add user", addUser);
+    socket.on("updateDirectId", updateDirectId);
     socket.on("update friendship", updateFriendship);
-    socket.on("unfriend", clearFriendship);
-    socket.on("delete friend request", clearFriendship);
+    socket.on("deleteFriendship", deleteFriendship);
 
     return () => {
       socket.off("add user", addUser);
+      socket.off("updateDirectId", updateDirectId);
       socket.off("update friendship", updateFriendship);
-      socket.off("unfriend", clearFriendship);
-      socket.off("delete friend request", clearFriendship);
+      socket.off("deleteFriendship", deleteFriendship);
     };
-  }, [addUser, updateFriendship, clearFriendship]);
-
-  useEffect(() => {
-    function socketChatItemCB(chatItemData = new ChatItemData({})) {
-      const chatItem = new ChatItemData(chatItemData);
-      if (chatItem.chatId.isGroup) return;
-
-      updateDirectId(chatItem.user_id, chatItem.chatId.id);
-    }
-
-    socket.on("chat item", socketChatItemCB);
-
-    return () => {
-      socket.off("chat item", socketChatItemCB);
-    };
-  }, [updateDirectId]);
+  }, [addUser, updateDirectId, updateFriendship, deleteFriendship]);
 
   useEffect(() => clearSocket, []);
 
@@ -179,15 +156,13 @@ function UserList() {
   else if (users.length === 0) content = <p>User list is empty.</p>;
   else
     content = (
-      <UpdateDirectIdContext.Provider value={updateDirectId}>
-        <table className="list-table user">
-          <tbody>
-            {users.map((user) => (
-              <UserItem key={user.id} user={user} />
-            ))}
-          </tbody>
-        </table>
-      </UpdateDirectIdContext.Provider>
+      <table className="list-table user">
+        <tbody>
+          {users.map((user) => (
+            <UserItem key={user.id} user={user} />
+          ))}
+        </tbody>
+      </table>
     );
 
   return (

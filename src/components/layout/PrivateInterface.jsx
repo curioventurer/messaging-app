@@ -14,6 +14,7 @@ import updateRect from "../../controllers/updateRect.js";
 import sortFriendships from "../../controllers/sortFriendships.js";
 import {
   UserFriendship,
+  UserActivity,
   User,
   Group,
   Member,
@@ -31,8 +32,6 @@ const INTERFACE_CONTEXT_DEFAULT = {
   client: new User({}),
   groupList: undefined,
   friendships: undefined,
-  updateDirectId: () => {},
-  setFriendships: () => {},
   addGroup: () => {},
 };
 
@@ -168,8 +167,89 @@ function PrivateInterface() {
     [setGroupList],
   );
 
+  //Add or replace friendship entry.
+  const updateFriendship = useCallback(
+    function (friendshipData = new UserFriendship({})) {
+      const friendship = new UserFriendship(friendshipData);
+
+      setFriendships((prevFriendships) => {
+        if (!prevFriendships) return prevFriendships;
+
+        const index = prevFriendships.findIndex(
+          (friend) => friend.id === friendship.id,
+        );
+
+        let newFriendships;
+        //add
+        if (index === -1) newFriendships = [friendship, ...prevFriendships];
+        //replace
+        else
+          newFriendships = [
+            ...prevFriendships.slice(0, index),
+            friendship,
+            ...prevFriendships.slice(index + 1),
+          ];
+
+        return sortFriendships(newFriendships);
+      });
+    },
+    [setFriendships],
+  );
+
+  const updateFriendStatus = useCallback(
+    function (statusData = new UserActivity({})) {
+      const status = new UserActivity(statusData);
+
+      setFriendships((prevFriendships) => {
+        if (!prevFriendships) return prevFriendships;
+
+        const index = prevFriendships.findIndex(
+          (friend) => friend.user_id === status.user_id,
+        );
+        if (index === -1) return prevFriendships;
+
+        const friendship = new UserFriendship({
+          ...prevFriendships[index],
+          activity: status.activity,
+        });
+
+        //if offline, store last_seen value.
+        if (status.activity === User.ACTIVITY.OFFLINE)
+          friendship.last_seen = status.last_seen;
+
+        const newFriendships = sortFriendships([
+          ...prevFriendships.slice(0, index),
+          friendship,
+          ...prevFriendships.slice(index + 1),
+        ]);
+        return newFriendships;
+      });
+    },
+    [setFriendships],
+  );
+
+  const deleteFriendship = useCallback(
+    function ({ user_id }) {
+      setFriendships((prevFriendships) => {
+        if (!prevFriendships) return prevFriendships;
+
+        const index = prevFriendships.findIndex(
+          (friend) => friend.user_id === user_id,
+        );
+        if (index === -1) return prevFriendships;
+
+        const newFriendships = [
+          ...prevFriendships.slice(0, index),
+          ...prevFriendships.slice(index + 1),
+        ];
+        return newFriendships;
+      });
+    },
+    [setFriendships],
+  );
+
   const updateDirectId = useCallback(
-    function (user_id, direct_chat_id) {
+    function ({ user_id, direct_chat_id }) {
       setFriendships((prevFriendships) => {
         if (!prevFriendships) return prevFriendships;
 
@@ -308,7 +388,7 @@ function PrivateInterface() {
       deleteDirectChat({ user_id });
 
       //clear direct id by setting to default of 0.
-      updateDirectId(user_id, 0);
+      updateDirectId({ user_id, direct_chat_id: 0 });
     },
     [deleteDirectChat, updateDirectId],
   );
@@ -316,7 +396,13 @@ function PrivateInterface() {
   useEffect(() => {
     socket.on("chat item", addChat);
     socket.on("message", updateLastMsg);
-    socket.on("unfriend", deleteDirectChat);
+
+    socket.on("update friendship", updateFriendship);
+    socket.on("updateDirectId", updateDirectId);
+    socket.on("friend", updateFriendStatus);
+    socket.on("deleteFriendship", deleteFriendship);
+    socket.on("deleteFriendship", deleteDirectChat);
+
     socket.on("addMembership", addGroup);
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteGroup);
@@ -325,7 +411,13 @@ function PrivateInterface() {
     return () => {
       socket.off("chat item", addChat);
       socket.off("message", updateLastMsg);
-      socket.off("unfriend", deleteDirectChat);
+
+      socket.off("update friendship", updateFriendship);
+      socket.off("updateDirectId", updateDirectId);
+      socket.off("friend", updateFriendStatus);
+      socket.off("deleteFriendship", deleteFriendship);
+      socket.off("deleteFriendship", deleteDirectChat);
+
       socket.off("addMembership", addGroup);
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteGroup);
@@ -334,7 +426,13 @@ function PrivateInterface() {
   }, [
     addChat,
     updateLastMsg,
+
+    updateFriendship,
+    updateDirectId,
+    updateFriendStatus,
+    deleteFriendship,
     deleteDirectChat,
+
     addGroup,
     updateMembership,
     deleteGroup,
@@ -370,17 +468,8 @@ function PrivateInterface() {
             groupList,
             friendships,
             addGroup,
-            updateDirectId,
-            setFriendships,
           }),
-          [
-            client,
-            groupList,
-            friendships,
-            addGroup,
-            updateDirectId,
-            setFriendships,
-          ],
+          [client, groupList, friendships, addGroup],
         )}
       >
         <Nav />

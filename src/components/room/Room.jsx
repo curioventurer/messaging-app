@@ -39,11 +39,11 @@ const ROOM_CONTEXT_DEFAULT = {
   chatId: new ChatId({}),
   room: undefined,
   memberList: undefined,
+  roomHeader: {},
   appendMessage: function () {},
   deleteSentMsg: function () {},
   updateRoomInfoIsShown: function () {},
   updateRoomInfoIsExpanded: function () {},
-  storeRoomHeaderRef: function () {},
 };
 
 /*Array containing instances of Message - chat-data.js
@@ -71,7 +71,7 @@ function Room({ isGroup = true, title = false }) {
     type: searchType.BOOL,
   });
 
-  const roomHeaderRef = useRef(null);
+  const roomHeader = useRef(null);
   const navigate = useNavigate();
 
   const chatId = useMemo(
@@ -331,7 +331,7 @@ function Room({ isGroup = true, title = false }) {
         //return focus to room header. use timeout to wait for display of room to be restored.
         function restoreFocus() {
           setTimeout(() => {
-            roomHeaderRef.current.focus();
+            roomHeader.current.focus();
           }, 0);
         }
       }
@@ -343,10 +343,6 @@ function Room({ isGroup = true, title = false }) {
       updateRoomInfoIsExpanded,
     ],
   );
-
-  const storeRoomHeaderRef = useCallback(function (element) {
-    roomHeaderRef.current = element;
-  }, []);
 
   const roomName = room ? room.name : DEFAULT_TEXT;
   useTitle((chatId.isGroup ? "Group" : "Chat") + " - " + roomName, !title);
@@ -369,20 +365,20 @@ function Room({ isGroup = true, title = false }) {
   });
 
   useEffect(() => {
-    socket.on("unfriend", deleteDirectRoom);
     socket.on("message", handleSocketMessage);
     socket.on("updateGroupMember", updateMember);
     socket.on("deleteGroupMember", deleteMember);
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteGroupRoom);
+    socket.on("deleteFriendship", deleteDirectRoom);
 
     return () => {
-      socket.off("unfriend", deleteDirectRoom);
       socket.off("message", handleSocketMessage);
       socket.off("updateGroupMember", updateMember);
       socket.off("deleteGroupMember", deleteMember);
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteGroupRoom);
+      socket.off("deleteFriendship", deleteDirectRoom);
     };
   }, [
     deleteDirectRoom,
@@ -402,11 +398,11 @@ function Room({ isGroup = true, title = false }) {
             chatId,
             room,
             memberList,
+            roomHeader,
             appendMessage,
             deleteSentMsg,
             updateRoomInfoIsShown,
             updateRoomInfoIsExpanded,
-            storeRoomHeaderRef,
           }),
           [
             client,
@@ -417,7 +413,6 @@ function Room({ isGroup = true, title = false }) {
             deleteSentMsg,
             updateRoomInfoIsShown,
             updateRoomInfoIsExpanded,
-            storeRoomHeaderRef,
           ],
         )}
       >

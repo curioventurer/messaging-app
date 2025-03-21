@@ -1,15 +1,11 @@
-import { useContext, createContext, memo } from "react";
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import UnfriendButton from "./UnfriendButton.jsx";
 import { socket } from "../../controllers/socket.js";
 import { UserFriendship, RequestStatus } from "../../../js/chat-data.js";
 
-export const UpdateDirectIdContext = createContext(function () {});
-
 function FriendshipButtonBar({ friendship }) {
-  const updateDirectId = useContext(UpdateDirectIdContext);
-
   function addFriend() {
     socket.emit("add friend", {
       id: friendship.user_id,
@@ -45,8 +41,6 @@ function FriendshipButtonBar({ friendship }) {
       .then((res) => res.json())
       .then((direct_id) => {
         if (direct_id === false) return;
-
-        updateDirectId(user_id, direct_id);
       })
       .catch(() => {});
   }
