@@ -107,10 +107,12 @@ function routes(app, ioHandlers) {
   });
 
   app.get("/api/user/:user_id", async (req, res) => {
+    if (!req.user) return res.json(false);
+
     const user_id = req.params.user_id;
 
     const user = await findUserById(user_id);
-    if (!user) return false;
+    if (!user) return res.json(false);
 
     user.clearSensitive();
     res.json(user);

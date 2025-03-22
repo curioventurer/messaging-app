@@ -1,4 +1,5 @@
 import { useRef, useContext, useCallback, memo } from "react";
+import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import ConfirmDialog from "../ConfirmDialog.jsx";
 import { RoomContext } from "./Room.jsx";
@@ -43,6 +44,15 @@ function MemberItem({ member }) {
   }
 
   const buttonArray = [];
+
+  buttonArray.push({
+    key: "profile",
+    element: (
+      <Link to={"/profile/" + member.user_id} className="button-link">
+        Profile
+      </Link>
+    ),
+  });
 
   if (!notUser) {
     if (!isOwner)

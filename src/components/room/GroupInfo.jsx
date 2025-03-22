@@ -6,12 +6,14 @@ import MemberSection from "./MemberSection.jsx";
 import DeleteGroupButton from "./DeleteGroupButton.jsx";
 import { RoomContext } from "./Room.jsx";
 import DateFormat from "../../controllers/DateFormat.js";
-import { Member, RequestStatus } from "../../../js/chat-data.js";
+import { Direct, Member, RequestStatus } from "../../../js/chat-data.js";
 
 function GroupInfo() {
   const { client, room, memberList } = useContext(RoomContext);
 
-  if (room === undefined) return <Loading name="group info" />;
+  //if not defined or contains old data of a different format.
+  if (room === undefined || room instanceof Direct)
+    return <Loading name="group info" />;
   else if (room === null) return <LoadFail name="group info" />;
   else if (room === false) return <LoadError name="group info" />;
 

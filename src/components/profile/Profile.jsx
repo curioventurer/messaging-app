@@ -1,38 +1,103 @@
-import { useContext } from "react";
+import { useContext, useCallback, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import PropTypes from "prop-types";
+import useTitle from "../../hooks/useTitle.jsx";
+import useFetchedState from "../../hooks/useFetchedState.jsx";
 import useDuration from "../../hooks/useDuration.jsx";
+import Loading from "../sys/Loading.jsx";
+import LoadFail from "../sys/LoadFail.jsx";
+import LoadError from "../sys/LoadError.jsx";
+import FriendshipDesc from "./FriendshipDesc.jsx";
+import FriendStatus from "../friend/FriendStatus.jsx";
+import FriendshipButtonBar from "../friend/FriendshipButtonBar.jsx";
 import DeleteAccountButton from "./DeleteAccountButton.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import DateFormat from "../../controllers/DateFormat.js";
+import { DEFAULT_TEXT, User, UserFriendship } from "../../../js/chat-data.js";
 
-function Profile() {
-  const { client } = useContext(InterfaceContext);
+//own: use own user_id from client or get from param.
+function Profile({ own = false }) {
+  const params = useParams();
+  const { client, friendships } = useContext(InterfaceContext);
 
-  const duration = useDuration(client.created);
+  const user_id = own ? client.id : parseInt(params.user_id);
+  const isOwn = user_id === client.id;
+
+  const parseUser = useCallback(function (data, setUser) {
+    if (data === false) return setUser(false);
+
+    setUser(new User(data));
+  }, []);
+
+  //contain instances of User - chat-data.js
+  const [user] = useFetchedState({
+    callback: parseUser,
+    path: `/api/user/${user_id}`,
+  });
+
+  const friendshipData = friendships
+    ? friendships.find((friend) => friend.user_id === user_id)
+    : undefined;
+  const friendship =
+    friendshipData ?? UserFriendship.createDefault(user?.id, user?.name);
+
+  const username = user ? user.name : DEFAULT_TEXT;
+  useTitle(!isOwn ? "Profile - " + username : "Your Profile");
+
+  const duration = useDuration(user?.created);
+  const excludedButtons = useMemo(() => ["profile"], []);
+
+  if (user === undefined) return <Loading name="profile" />;
+  else if (user === null) return <LoadFail name="profile" />;
+  else if (user === false) return <LoadError name="profile" />;
 
   return (
     <div className="profile-page">
-      <h1>Profile</h1>
-      <ul>
+      <h1>{isOwn ? "Your Profile" : "User Profile"}</h1>
+      <ul className="list">
         <li>
-          <span className="bold">Name:</span> {client.name}
+          <span className="bold">Name:</span> {user.name}
         </li>
         <li>
-          <span className="bold">ID:</span> {client.id}
+          <span className="bold">ID:</span> {user.id}
         </li>
         <li>
           <span className="bold">Created on: </span>
-          <time dateTime={client.created}>
-            {DateFormat.timestamp(client.created)}{" "}
+          <time dateTime={user.created}>
+            {DateFormat.timestamp(user.created)}{" "}
           </time>
           ({duration})
         </li>
         <li>
-          <span className="bold">Guest account:</span> {String(client.is_guest)}
+          <span className="bold">Guest account:</span> {String(user.is_guest)}
         </li>
+        {!isOwn ? (
+          <li>
+            <span className="bold">Friend: </span>
+            <FriendshipDesc friendship={friendship} />
+          </li>
+        ) : null}
+        {friendship.isAccepted() ? (
+          <li>
+            <span className="bold">Status: </span>
+            <FriendStatus friendship={friendship} />
+          </li>
+        ) : null}
       </ul>
-      <DeleteAccountButton />
+      {!isOwn ? (
+        <FriendshipButtonBar
+          friendship={friendship}
+          excluded={excludedButtons}
+          className="s-block-margin"
+        />
+      ) : null}
+      {isOwn ? <DeleteAccountButton /> : null}
     </div>
   );
 }
+
+Profile.propTypes = {
+  own: PropTypes.bool,
+};
 
 export default Profile;

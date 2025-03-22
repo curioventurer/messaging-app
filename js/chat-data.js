@@ -346,6 +346,10 @@ export class UserFriendship {
     return this.id !== 0;
   }
 
+  isAccepted() {
+    return this.state === RequestStatus.ACCEPTED;
+  }
+
   /*To indicate it is not defined anymore, when friendship record is deleted.
     Set all properties to defaults except user_id and name.
   */
@@ -363,6 +367,13 @@ export class UserFriendship {
   clearSensitive() {
     this.activity = User.ACTIVITY.OFFLINE;
     this.last_seen = DEFAULT_TIME;
+  }
+
+  /*Create object with defaults except for user_id and name.
+    For users without friendship record. A default object is used with functions that require friendship argument.
+  */
+  static createDefault(user_id = 0, name = DEFAULT_TEXT) {
+    return new this({ user_id, name });
   }
 }
 

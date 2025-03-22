@@ -5,7 +5,7 @@ import UnfriendButton from "./UnfriendButton.jsx";
 import { socket } from "../../controllers/socket.js";
 import { UserFriendship, RequestStatus } from "../../../js/chat-data.js";
 
-function FriendshipButtonBar({ friendship }) {
+function FriendshipButtonBar({ friendship, excluded = [], className = "" }) {
   function addFriend() {
     socket.emit("add friend", {
       id: friendship.user_id,
@@ -46,6 +46,15 @@ function FriendshipButtonBar({ friendship }) {
   }
 
   const buttonArray = [];
+
+  buttonArray.push({
+    key: "profile",
+    element: (
+      <Link to={"/profile/" + friendship.user_id} className="button-link">
+        Profile
+      </Link>
+    ),
+  });
 
   /*Default value is used, meaning the friendship relation is absent.
     Thus, provide add friend button.
@@ -113,11 +122,15 @@ function FriendshipButtonBar({ friendship }) {
     });
   }
 
-  if (buttonArray.length === 0) return null;
+  const includedButtons = buttonArray.filter(
+    (item) => !excluded.includes(item.key),
+  );
+
+  if (includedButtons.length === 0) return null;
 
   return (
-    <ul className="button-bar">
-      {buttonArray.map((item) => (
+    <ul className={"button-bar " + className}>
+      {includedButtons.map((item) => (
         <li key={item.key}>{item.element}</li>
       ))}
     </ul>
@@ -126,6 +139,8 @@ function FriendshipButtonBar({ friendship }) {
 
 FriendshipButtonBar.propTypes = {
   friendship: PropTypes.instanceOf(UserFriendship).isRequired,
+  excluded: PropTypes.array,
+  className: PropTypes.string,
 };
 
 export default memo(FriendshipButtonBar);

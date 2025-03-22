@@ -99,12 +99,12 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "/profile",
-        element: (
-          <Title title={allLinks.profile.name}>
-            <Profile />
-          </Title>
-        ),
+        path: allLinks.profile.href,
+        element: <Profile own />,
+      },
+      {
+        path: `${allLinks.profile.href}/:user_id`,
+        element: <Profile />,
       },
       {
         path: "/group/:chat_id",

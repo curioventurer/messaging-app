@@ -221,6 +221,7 @@ td:empty {
 .button-link {
   text-decoration: none;
   display: block;
+  max-width: max-content;
   padding: 0.5em;
   color: inherit;
   border: 1px solid #fff2;
@@ -235,6 +236,7 @@ td:empty {
   }
 
   &:active {
+    color: inherit;
     background: none;
   }
 }
@@ -373,7 +375,7 @@ nav.tabs {
 }
 
 .profile-page {
-  li {
+  .list li {
     margin-block: 10px;
   }
 }
@@ -607,6 +609,7 @@ nav.tabs {
 
   .button-link {
     cursor: default;
+    max-width: none;
     background: none;
     border: none;
 

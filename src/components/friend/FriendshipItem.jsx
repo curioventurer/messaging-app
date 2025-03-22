@@ -1,25 +1,15 @@
 import { memo } from "react";
 import PropTypes from "prop-types";
 import useDuration from "../../hooks/useDuration.jsx";
+import FriendStatus from "./FriendStatus.jsx";
 import FriendshipButtonBar from "./FriendshipButtonBar.jsx";
-import { User, UserFriendship, RequestStatus } from "../../../js/chat-data.js";
+import { UserFriendship } from "../../../js/chat-data.js";
 
 function FriendshipItem({ friendship = new UserFriendship({}) }) {
-  const activity = friendship.activity;
-  const isFriend = friendship.state === RequestStatus.ACCEPTED;
+  const isFriend = friendship.isAccepted();
   const time = isFriend ? friendship.last_seen : friendship.modified;
 
   const duration = useDuration(time);
-
-  let status;
-  if (activity === User.ACTIVITY.OFFLINE) {
-    status = (
-      <>
-        {"Last seen "}
-        <time>{duration}</time>
-      </>
-    );
-  } else status = activity.charAt(0).toUpperCase() + activity.slice(1);
 
   return (
     <tr>
@@ -28,7 +18,9 @@ function FriendshipItem({ friendship = new UserFriendship({}) }) {
       </td>
       <td>
         {isFriend ? (
-          <p className={"clipped-text status " + activity}>{status}</p>
+          <p className="clipped-text">
+            <FriendStatus friendship={friendship} />
+          </p>
         ) : (
           <time className="clipped-text">{duration}</time>
         )}
