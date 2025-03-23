@@ -67,10 +67,12 @@ function ChatItem({ chat = new ChatItemData({}) }) {
 
   let shownMessage = [];
   if (hasLastMessage) {
+    const message = chat.lastMessage;
+
     if (chat.chatId.isGroup) {
       shownMessage.push(
         <span key="name" className="clipped-text chat-item-name">
-          {chat.lastMessage.name}
+          {message.name}
         </span>,
       );
       shownMessage.push(
@@ -80,8 +82,14 @@ function ChatItem({ chat = new ChatItemData({}) }) {
       );
     }
     shownMessage.push(
-      <span key="message" className="clipped-text chat-item-text">
-        {chat.lastMessage.text}
+      <span
+        key="message"
+        className={
+          "clipped-text chat-item-text " +
+          (message.is_deleted ? " deleted" : "")
+        }
+      >
+        {message.is_deleted ? "deleted" : message.text}
       </span>,
     );
   } else

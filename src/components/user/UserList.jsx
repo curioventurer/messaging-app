@@ -41,6 +41,25 @@ function UserList() {
     [setUsers],
   );
 
+  const deleteUser = useCallback(
+    function ({ user_id }) {
+      setUsers((prevUsers) => {
+        if (!prevUsers) return prevUsers;
+
+        const index = prevUsers.findIndex((user) => user.id === user_id);
+        if (index === -1) return prevUsers;
+
+        const newUsers = [
+          ...prevUsers.slice(0, index),
+          ...prevUsers.slice(index + 1),
+        ];
+
+        return newUsers;
+      });
+    },
+    [setUsers],
+  );
+
   const updateFriendship = useCallback(
     function (friendshipData = new UserFriendship({})) {
       const friendship = new UserFriendship(friendshipData);
@@ -134,17 +153,19 @@ function UserList() {
 
   useEffect(() => {
     socket.on("add user", addUser);
+    socket.on("deleteUser", deleteUser);
     socket.on("updateDirectId", updateDirectId);
     socket.on("update friendship", updateFriendship);
     socket.on("deleteFriendship", deleteFriendship);
 
     return () => {
       socket.off("add user", addUser);
+      socket.off("deleteUser", deleteUser);
       socket.off("updateDirectId", updateDirectId);
       socket.off("update friendship", updateFriendship);
       socket.off("deleteFriendship", deleteFriendship);
     };
-  }, [addUser, updateDirectId, updateFriendship, deleteFriendship]);
+  }, [addUser, deleteUser, updateDirectId, updateFriendship, deleteFriendship]);
 
   useEffect(() => clearSocket, []);
 

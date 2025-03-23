@@ -98,6 +98,7 @@ export class User {
     password = DEFAULT_TEXT,
     activity = User.ACTIVITY.OFFLINE,
     is_guest = false,
+    is_deleted = false,
     last_seen = DEFAULT_TIME,
     created = DEFAULT_TIME,
     friendship = new UserFriendship({}),
@@ -107,6 +108,7 @@ export class User {
     this.password = password;
     this.activity = activity;
     this.is_guest = is_guest;
+    this.is_deleted = is_deleted;
     this.last_seen = last_seen;
     this.created = created;
     this.friendship = friendship;
@@ -385,11 +387,13 @@ export class Group {
   constructor({
     id = 0,
     name = DEFAULT_TEXT,
+    is_deleted = false,
     created = DEFAULT_TIME,
     membership = new Member({}),
   }) {
     this.id = id;
     this.name = name;
+    this.is_deleted = is_deleted;
     this.created = created;
     this.membership = membership;
   }
@@ -593,12 +597,14 @@ export class Message {
     created = DEFAULT_TIME,
     user_id = 0,
     name = DEFAULT_TEXT,
+    is_deleted = false,
   }) {
     this.id = id;
     this.text = text;
     this.created = created;
     this.user_id = user_id;
     this.name = name;
+    this.is_deleted = is_deleted;
   }
 
   //Is the instance defined? If id = 0, indicating defaults, false.

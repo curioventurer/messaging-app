@@ -4,6 +4,7 @@ import {
   registerGuest,
   getUsers,
   findUserById,
+  deleteAccount,
   getFriendships,
   openDirectChat,
   hideDirectChat,
@@ -116,6 +117,19 @@ function routes(app, ioHandlers) {
 
     user.clearSensitive();
     res.json(user);
+  });
+
+  app.delete("/api/user", async (req, res) => {
+    if (!req.user) return res.json(false);
+
+    const result = await deleteAccount(req.user.id);
+    if (!result) return res.json(false);
+
+    ioHandlers.deleteUser(result, req.user.id);
+
+    req.logout(() => {
+      res.json(true);
+    });
   });
 
   app.post("/api/create-group", async (req, res) => {

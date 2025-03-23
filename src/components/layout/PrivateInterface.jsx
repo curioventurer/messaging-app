@@ -325,6 +325,42 @@ function PrivateInterface() {
     [setChats],
   );
 
+  const deleteUserMessage = useCallback(
+    function ({ group_id, user_id }) {
+      const chatId = new ChatId({ id: group_id, isGroup: true });
+
+      setChats((prevChats) => {
+        if (!prevChats) return prevChats;
+
+        const index = prevChats.findIndex(
+          (chat) =>
+            chat.chatId.isEqual(chatId) && chat.lastMessage.user_id === user_id,
+        );
+        if (index === -1) return prevChats;
+
+        const newMessage = new Message({
+          ...prevChats[index].lastMessage,
+          text: "",
+          is_deleted: true,
+        });
+
+        const updatedChat = new ChatItemData({
+          ...prevChats[index].toJSON(),
+          lastMessage: newMessage,
+        });
+
+        const newChats = ChatItemData.sortChats([
+          ...prevChats.slice(0, index),
+          updatedChat,
+          ...prevChats.slice(index + 1),
+        ]);
+
+        return newChats;
+      });
+    },
+    [setChats],
+  );
+
   const deleteChat = useCallback(
     function (find = () => {}) {
       setChats((prevChats) => {
@@ -396,6 +432,7 @@ function PrivateInterface() {
   useEffect(() => {
     socket.on("chat item", addChat);
     socket.on("message", updateLastMsg);
+    socket.on("deleteUserMessages", deleteUserMessage);
 
     socket.on("update friendship", updateFriendship);
     socket.on("updateDirectId", updateDirectId);
@@ -411,6 +448,7 @@ function PrivateInterface() {
     return () => {
       socket.off("chat item", addChat);
       socket.off("message", updateLastMsg);
+      socket.off("deleteUserMessages", deleteUserMessage);
 
       socket.off("update friendship", updateFriendship);
       socket.off("updateDirectId", updateDirectId);
@@ -426,6 +464,7 @@ function PrivateInterface() {
   }, [
     addChat,
     updateLastMsg,
+    deleteUserMessage,
 
     updateFriendship,
     updateDirectId,

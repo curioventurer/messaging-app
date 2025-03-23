@@ -237,6 +237,7 @@ export {
   findUserById,
   findUser,
   putUserActivity,
+  deleteAccount,
   addFriend,
   getFriendships,
   reverseFriendRequest,

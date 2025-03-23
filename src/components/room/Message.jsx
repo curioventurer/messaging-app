@@ -24,7 +24,13 @@ function Message({ message, isJoined = false }) {
         <p className="message-sender clipped-text">{message.name}</p>
       ) : null}
       <div className="message-body">
-        <p className="message-text pre-wrap">{message.text}</p>
+        <p
+          className={
+            "message-text pre-wrap" + (message.is_deleted ? " deleted" : "")
+          }
+        >
+          {message.is_deleted ? "deleted" : message.text}
+        </p>
         <p className="message-footer">
           <time dateTime={message.created}>
             {DateFormat.time(message.created)}

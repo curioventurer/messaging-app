@@ -227,6 +227,32 @@ function Room({ isGroup = true, title = false }) {
     [chatId, setMemberList],
   );
 
+  //Delete all messages belonging to a user.
+  const deleteUserMessages = useCallback(
+    function ({ group_id, user_id }) {
+      //Not for this room
+      if (!chatId.isGroup || chatId.id !== group_id) return;
+
+      setMessages((prevMessages) => {
+        if (!prevMessages) return prevMessages;
+
+        //Delete by marking matching messages with deleted status and clearing text value.
+        const newMessages = prevMessages.map((message) => {
+          if (message.user_id !== user_id) return message;
+
+          return new Message({
+            ...message,
+            text: "",
+            is_deleted: true,
+          });
+        });
+
+        return newMessages;
+      });
+    },
+    [chatId, setMessages],
+  );
+
   //Redirect to home when the room is deleted by removing friend or leaving group.
   const deleteRoom = useCallback(
     function () {
@@ -371,6 +397,7 @@ function Room({ isGroup = true, title = false }) {
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteGroupRoom);
     socket.on("deleteFriendship", deleteDirectRoom);
+    socket.on("deleteUserMessages", deleteUserMessages);
 
     return () => {
       socket.off("message", handleSocketMessage);
@@ -379,6 +406,7 @@ function Room({ isGroup = true, title = false }) {
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteGroupRoom);
       socket.off("deleteFriendship", deleteDirectRoom);
+      socket.off("deleteUserMessages", deleteUserMessages);
     };
   }, [
     deleteDirectRoom,
@@ -387,6 +415,7 @@ function Room({ isGroup = true, title = false }) {
     deleteMember,
     updateMembership,
     deleteGroupRoom,
+    deleteUserMessages,
   ]);
 
   return (

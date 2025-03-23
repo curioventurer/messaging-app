@@ -670,6 +670,10 @@ nav.tabs {
   .chat-item-separator {
     font-weight: bold;
   }
+
+  .chat-item-text.deleted {
+    font-style: italic;
+  }
 }
 
 .chat-item-menu {
@@ -808,7 +812,7 @@ nav.tabs {
   max-width: max-content;
   min-width: var(--min-width);
   padding: 10px;
-  margin-block-start: 7px;
+  margin-block-start: 14px;
   margin-inline: var(--margin-inline-small) var(--margin-inline-large);
 
   border-radius: var(--border-radius);
@@ -833,7 +837,7 @@ nav.tabs {
   }
 
   &.joined-message {
-    margin-block-start: 2px;
+    margin-block-start: 1px;
     border-radius: var(--border-radius);
 
     &::before {
@@ -850,6 +854,10 @@ nav.tabs {
     display: flex;
     column-gap: 0.5em;
     flex-wrap: wrap;
+
+    .message-text.deleted {
+      color: #aaa;
+    }
 
     .message-footer {
       color: #aaa;

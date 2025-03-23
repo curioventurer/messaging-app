@@ -2,7 +2,7 @@
 
 import { RequestStatus, Member } from "./js/chat-data.js";
 import "dotenv/config";
-import { getGroupSummaries } from "./server/db/queries.js";
+import { deleteAccount } from "./server/db/queries.js";
 
 const array = [
   {
@@ -42,6 +42,6 @@ const array = [
 //const newArr = Member.sortApplications(array);
 //console.log(newArr);
 //palace: 6, owner: 3
-getGroupSummaries(1).then((i) => {
-  //console.log(i);
+deleteAccount(7).then((i) => {
+  console.log(i);
 });

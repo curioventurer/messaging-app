@@ -36,7 +36,8 @@ function auth(app) {
 
         const user = await findUser(username);
 
-        if (!user) return done(null, false, { message: "wrong username" });
+        if (!user || user.is_deleted)
+          return done(null, false, { message: "wrong username" });
         else if (!bcrypt.compareSync(password, user.password))
           return done(null, false, { message: "wrong password" });
         else {

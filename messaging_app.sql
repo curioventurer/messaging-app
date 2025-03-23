@@ -18,6 +18,7 @@ CREATE TABLE users (
   password VARCHAR ( 255 ) NOT NULL,
   activity user_activity DEFAULT 'offline',
   is_guest BOOLEAN DEFAULT FALSE,
+  is_deleted BOOLEAN DEFAULT FALSE,
   last_seen TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
@@ -35,7 +36,7 @@ CREATE TRIGGER friendships_update_modified
 
 create table friendship_agents (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  friendship_id INT NOT NULL REFERENCES friendships ( id ),
+  friendship_id INT NOT NULL REFERENCES friendships ( id ) ON DELETE CASCADE,
   user_id INT NOT NULL REFERENCES users ( id ),
   is_initiator BOOLEAN DEFAULT TRUE
 );
@@ -47,6 +48,7 @@ CREATE TABLE direct_chats (
 CREATE TABLE groups (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name VARCHAR ( 255 ) NOT NULL,
+  is_deleted BOOLEAN DEFAULT FALSE,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -72,16 +74,16 @@ create table messages (
   group_id INT REFERENCES groups ( id ),
   direct_chat_id INT REFERENCES direct_chats ( id ),
   user_id INT NOT NULL REFERENCES users ( id ),
+  is_deleted BOOLEAN DEFAULT FALSE,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE direct_chat_agents (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-  direct_chat_id INT NOT NULL REFERENCES direct_chats ( id ),
+  direct_chat_id INT NOT NULL REFERENCES direct_chats ( id ) ON DELETE CASCADE,
   user_id INT NOT NULL REFERENCES users ( id ),
   is_shown BOOLEAN DEFAULT FALSE,
-  time_shown TIMESTAMPTZ,
-  last_read_message_id INT REFERENCES messages ( id )
+  time_shown TIMESTAMPTZ
 );
 
 INSERT INTO users ( name, password, created ) VALUES
@@ -95,6 +97,9 @@ INSERT INTO users ( name, password, created ) VALUES
   ( 'bob_train', '$2b$12$n4R06F2BYEkw0rDnDebeqOm5p60/QuYj6ppkGAJfYKsDB8xFIM90S', '2024-10-17 10:07:00+08' ), --password: 'keg590'
   ( 'lock', '$2b$12$beSME/2kKsIioQg8WvAwy.Tos5Lfc6BsRDgYb7XdqtAv51jYfMCGu', '2024-10-18 10:07:00+08' ), --password: 'bun390'
   ( 'orange', '$2b$12$jWyt8QZtUdvdZqYKZaRTo.HmV8zCGN9q3INHLlHTKn1SNoO17yXsK', '2024-10-19 10:07:00+08' ); --password: 'sweet20'
+
+INSERT INTO users ( name, password, created, is_deleted ) VALUES
+  ( 'erased_user', '', '2024-08-20 10:07:00+08', TRUE );
 
 INSERT INTO friendships ( state, modified ) VALUES
   ( 'accepted', '2023-10-13 09:07:00+07' ),
@@ -140,6 +145,9 @@ INSERT INTO groups ( name, created ) VALUES
   ( 'ender', '2024-10-02 8:00:00-01' ),
   ( 'whatever', '2024-10-03 8:00:00-01' ),
   ( 'palace', '2024-10-04 8:00:00-01' );
+
+INSERT INTO groups ( name, is_deleted ) VALUES
+  ( 'erased_group', TRUE );
 
 INSERT INTO memberships ( group_id, user_id, permission, state, modified ) VALUES
   ( 1, 1, 'owner', 'accepted', '2020-08-31 13:07:30+06' ),
@@ -199,6 +207,12 @@ INSERT INTO messages ( text, direct_chat_id, user_id, created ) VALUES
   ( 'you still there', 1, 1, '2024-11-02 13:58:58+06' ),
   ( 'I am fine', 1, 3, '2024-11-03 13:59:58+04' ),
   ( 'great', 1, 1, '2024-11-04 13:57:58+06' );
+
+INSERT INTO messages ( text, group_id, user_id, is_deleted, created ) VALUES
+  ( '', 1, 11, TRUE, '2023-10-22 13:59:58+06' ),
+  ( '', 1, 11, TRUE,'2023-10-23 13:59:58+06' ),
+  ( '', 1, 11, TRUE,'2023-10-23 13:59:59+06' ),
+  ( '', 1, 11, TRUE,'2024-12-23 13:59:59+06' );
 
 INSERT INTO direct_chat_agents ( direct_chat_id, user_id, is_shown, time_shown ) VALUES
   ( 1, 1, TRUE, '2024-10-31 13:57:58+06'),

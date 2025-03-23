@@ -22,7 +22,6 @@ import {
   kickMember,
   demoteMember,
   promoteMember,
-  findGroupById,
   findGroupSummary,
 } from "./db/dbControls.js";
 import {
@@ -301,20 +300,11 @@ function comm(server, sessionMiddleware, testLatency) {
     });
 
     socket.on("postMembership", async (data) => {
-      const membership = await postMembership(
-        data.group_id,
-        socket.request.user.id,
-      );
-      if (membership === false) return false;
-
-      membership.name = socket.request.user.name;
-      emitUpdateMembership(io, membership);
-
-      //For user, emit new group to group panel.
-      const group = await findGroupById(membership.group_id);
+      const group = await postMembership(data.group_id, socket.request.user.id);
       if (group === false) return false;
 
-      group.membership = membership;
+      group.membership.name = socket.request.user.name;
+      emitUpdateMembership(io, group.membership);
       socket.emit("addMembership", group);
     });
 
@@ -414,6 +404,25 @@ function comm(server, sessionMiddleware, testLatency) {
     io.emit("add user", user);
   }
 
+  async function deleteUser(result, user_id) {
+    result.memberships.forEach((member) => {
+      io.to("group:" + member.group_id).emit("deleteGroupMember", {
+        group_id: member.group_id,
+        membership_id: member.id,
+      });
+    });
+    result.friendships.forEach((friend) => {
+      io.to("user:" + friend.user_id).emit("deleteFriendship", { user_id });
+    });
+    result.groups.forEach((id) => {
+      io.to("group:" + id).emit("deleteUserMessages", {
+        group_id: id,
+        user_id,
+      });
+    });
+    io.emit("deleteUser", { user_id });
+  }
+
   async function addGroup(group) {
     io.emit("addGroup", group);
   }
@@ -450,7 +459,7 @@ function comm(server, sessionMiddleware, testLatency) {
     });
   }
 
-  return { addUser, addGroup, joinGroup, addDirectChatItem };
+  return { addUser, deleteUser, addGroup, joinGroup, addDirectChatItem };
 }
 
 export default comm;

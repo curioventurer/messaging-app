@@ -1,4 +1,4 @@
-import { useContext, useCallback, useMemo } from "react";
+import { useEffect, useContext, useCallback, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import useTitle from "../../hooks/useTitle.jsx";
@@ -12,6 +12,7 @@ import FriendStatus from "../friend/FriendStatus.jsx";
 import FriendshipButtonBar from "../friend/FriendshipButtonBar.jsx";
 import DeleteAccountButton from "./DeleteAccountButton.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
+import { socket } from "../../controllers/socket.js";
 import DateFormat from "../../controllers/DateFormat.js";
 import { DEFAULT_TEXT, User, UserFriendship } from "../../../js/chat-data.js";
 
@@ -30,7 +31,7 @@ function Profile({ own = false }) {
   }, []);
 
   //contain instances of User - chat-data.js
-  const [user] = useFetchedState({
+  const [user, setUser] = useFetchedState({
     callback: parseUser,
     path: `/api/user/${user_id}`,
   });
@@ -41,11 +42,36 @@ function Profile({ own = false }) {
   const friendship =
     friendshipData ?? UserFriendship.createDefault(user?.id, user?.name);
 
+  const deleteUser = useCallback(
+    function ({ user_id: id }) {
+      if (user_id !== id) return;
+
+      setUser((prevUser) => {
+        if (!prevUser) return prevUser;
+
+        const newUser = new User({
+          ...prevUser.toJSON(),
+          is_deleted: true,
+        });
+        return newUser;
+      });
+    },
+    [user_id, setUser],
+  );
+
   const username = user ? user.name : DEFAULT_TEXT;
   useTitle(!isOwn ? "Profile - " + username : "Your Profile");
 
   const duration = useDuration(user?.created);
   const excludedButtons = useMemo(() => ["profile"], []);
+
+  useEffect(() => {
+    socket.on("deleteUser", deleteUser);
+
+    return () => {
+      socket.off("deleteUser", deleteUser);
+    };
+  }, [deleteUser]);
 
   if (user === undefined) return <Loading name="profile" />;
   else if (user === null) return <LoadFail name="profile" />;
@@ -53,7 +79,10 @@ function Profile({ own = false }) {
 
   return (
     <div className="profile-page">
-      <h1>{isOwn ? "Your Profile" : "User Profile"}</h1>
+      <h1>
+        {isOwn ? "Your Profile" : "User Profile"}{" "}
+        {user.is_deleted ? " (Deleted)" : ""}
+      </h1>
       <ul className="list">
         <li>
           <span className="bold">Name:</span> {user.name}

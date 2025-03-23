@@ -75,7 +75,7 @@ async function registerGuest(name) {
 */
 async function findUser(name) {
   const { rows } = await pool.query(
-    "SELECT id, name, password, activity, is_guest, last_seen, created FROM users WHERE name = $1",
+    "SELECT id, name, password, activity, is_guest, is_deleted, last_seen, created FROM users WHERE name = $1",
     [name],
   );
   const response = rows[0];
@@ -89,7 +89,7 @@ async function findUser(name) {
 async function findUserById(id) {
   try {
     const { rows } = await pool.query(
-      "SELECT id, name, activity, is_guest, last_seen, created FROM users WHERE id = $1",
+      "SELECT id, name, activity, is_guest, is_deleted, last_seen, created FROM users WHERE id = $1",
       [id],
     );
     const response = rows[0];
@@ -107,6 +107,7 @@ async function getUsers(user_id) {
     SELECT id, name, is_guest, created
     FROM users
     WHERE id != $1
+    AND is_deleted = FALSE
     ORDER BY name
   `;
   const usersPromise = pool.query(SQL_GET_USERS, [user_id]);
@@ -126,6 +127,82 @@ async function getUsers(user_id) {
   }
 
   return users;
+}
+
+async function deleteAccount(user_id) {
+  const [memberships, friendships] = await Promise.all([
+    getMemberships(user_id, RequestStatus.ACCEPTED),
+    getFriendships(user_id, "all"),
+  ]);
+
+  //Must not be in any groups.
+  if (memberships.length > 0) return false;
+
+  const friends = friendships.filter(
+    (friend) => friend.state === RequestStatus.ACCEPTED,
+  );
+  //Must not have any friends.
+  if (friends.length > 0) return false;
+
+  const SQL_DELETE_MEMBERSHIP = `
+    DELETE FROM memberships
+    WHERE user_id = $1
+    RETURNING id, group_id;
+  `;
+
+  const SQL_DELETE_FRIENDSHIP = `
+    DELETE FROM friendships A
+    USING friendship_agents B
+    WHERE A.id = B.friendship_id
+    AND B.user_id = $1;
+  `;
+
+  const SQL_CLEAR_MESSAGE = `
+    UPDATE messages
+    SET text = '',
+    is_deleted = TRUE
+    WHERE user_id = $1
+    RETURNING group_id;
+  `;
+
+  const SQL_CLEAR_USER = `
+    UPDATE users
+    SET password = '',
+    is_deleted = TRUE
+    WHERE id = $1;
+  `;
+
+  /*Transaction to delete group/friend applications.
+    And mark as deleted messages, and user.
+  */
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN;");
+    const memberships = (await client.query(SQL_DELETE_MEMBERSHIP, [user_id]))
+      .rows;
+    await client.query(SQL_DELETE_FRIENDSHIP, [user_id]);
+    const messages = (await client.query(SQL_CLEAR_MESSAGE, [user_id])).rows;
+    await client.query(SQL_CLEAR_USER, [user_id]);
+    await client.query("COMMIT;");
+
+    //Get uniques group ids for messages
+    const groups = [];
+    messages.forEach((message) => {
+      if (groups.findIndex((id) => id === message.group_id) === -1)
+        groups.push(message.group_id);
+    });
+
+    return {
+      memberships,
+      friendships,
+      groups,
+    };
+  } catch {
+    await client.query("ROLLBACK");
+    return false;
+  } finally {
+    client.release();
+  }
 }
 
 async function putUserActivity(id = 0, activity = User.ACTIVITY.OFFLINE) {
@@ -154,16 +231,10 @@ async function putUserActivity(id = 0, activity = User.ACTIVITY.OFFLINE) {
 }
 
 async function deleteFriendship(friendship_id) {
-  await pool.query("DELETE FROM friendship_agents WHERE friendship_id=$1", [
-    friendship_id,
-  ]);
   await pool.query("DELETE FROM friendships WHERE id=$1", [friendship_id]);
 }
 
 async function deleteDirectChat(direct_chat_id) {
-  await pool.query("DELETE FROM direct_chat_agents WHERE direct_chat_id=$1", [
-    direct_chat_id,
-  ]);
   await pool.query("DELETE FROM messages WHERE direct_chat_id=$1", [
     direct_chat_id,
   ]);
@@ -179,7 +250,7 @@ async function addFriend(user_id, other_id) {
 
   //verify that the other user exist
   const other_user = await findUserById(other_id);
-  if (!other_user) return false;
+  if (!other_user || other_user.is_deleted) return false;
 
   //make sure there isn't a previous entry
   const SQL_FIND_ENTRY = `
@@ -577,7 +648,9 @@ async function deleteGroup(group_id, user_id) {
       group_id,
     ]);
     await client.query("DELETE FROM messages WHERE group_id=$1;", [group_id]);
-    await client.query("DELETE FROM groups WHERE id=$1;", [group_id]);
+    await client.query("UPDATE groups SET is_deleted = TRUE WHERE id=$1;", [
+      group_id,
+    ]);
     await client.query("COMMIT;");
 
     return true;
@@ -625,7 +698,7 @@ async function getGroupSummaries(user_id) {
     
     groups.id, groups.name, memberships.modified AS mem_modified,
 
-    messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.user_id AS msg_user_id, users.name AS msg_name
+    messages.id AS msg_id, messages.text AS msg_text, messages.is_deleted AS msg_is_deleted, messages.created AS msg_created, messages.user_id AS msg_user_id, users.name AS msg_name
     
     FROM groups
     
@@ -660,6 +733,7 @@ async function getGroupSummaries(user_id) {
         created: group.msg_created ?? undefined,
         user_id: group.msg_user_id ?? undefined,
         name: group.msg_name ?? undefined,
+        is_deleted: group.msg_is_deleted ?? undefined,
       }),
     }),
   );
@@ -673,7 +747,7 @@ async function getDirectSummaries(user_id) {
     
     agent1.direct_chat_id AS id, users.name, users.id AS user_id, agent1.time_shown,
 
-    messages.id AS msg_id, messages.text AS msg_text, messages.created AS msg_created, messages.user_id AS msg_user_id, msg_user.name AS msg_name
+    messages.id AS msg_id, messages.text AS msg_text, messages.is_deleted AS msg_is_deleted, messages.created AS msg_created, messages.user_id AS msg_user_id, msg_user.name AS msg_name
     
     FROM direct_chat_agents AS agent1
     
@@ -713,6 +787,7 @@ async function getDirectSummaries(user_id) {
         created: direct.msg_created ?? undefined,
         user_id: direct.msg_user_id ?? undefined,
         name: direct.msg_name ?? undefined,
+        is_deleted: direct.msg_is_deleted ?? undefined,
       }),
     }),
   );
@@ -780,6 +855,7 @@ async function getGroups(user_id) {
   const SQL_GET_GROUPS = `
     SELECT id, name, created
     FROM groups
+    WHERE is_deleted = FALSE
     ORDER BY name;
   `;
 
@@ -802,7 +878,7 @@ async function getGroups(user_id) {
 
 async function findGroupById(groupId) {
   const { rows } = await pool.query(
-    "SELECT id, name, created FROM groups WHERE id = $1",
+    "SELECT id, name, created, is_deleted FROM groups WHERE id = $1",
     [groupId],
   );
   return rows[0] ? new Group(rows[0]) : false;
@@ -810,7 +886,7 @@ async function findGroupById(groupId) {
 
 async function findGroup(name) {
   const { rows } = await pool.query(
-    "SELECT id, name, created FROM groups WHERE name = $1;",
+    "SELECT id, name, created, is_deleted FROM groups WHERE name = $1;",
     [name],
   );
   return rows[0] ? new Group(rows[0]) : false;
@@ -887,11 +963,17 @@ async function postMembership(group_id, user_id) {
     const membership = await findMembership(group_id, user_id);
     if (membership) return false;
 
+    //return false, if group does not exists or is deleted
+    const group = await findGroupById(group_id);
+    if (!group || group.is_deleted) return false;
+
     const { rows } = await pool.query(SQL_POST_MEMBERSHIP, [group_id, user_id]);
     const entry = rows[0];
-
     if (!entry) return false;
-    else return new Member(entry);
+
+    const newMembership = new Member(entry);
+    group.membership = newMembership;
+    return group;
   } catch {
     return false;
   }
@@ -1123,7 +1205,7 @@ async function postMessage(user_id = 0, postMessage = new PostMessage({})) {
 //limit: number of most recent messages to retrieve. Default(-1) indicates to retrieve all.
 async function getMessagesByChatId(chatId = new ChatId({}), limit = -1) {
   const SQL_GET_MESSAGES = `
-    SELECT messages.id, messages.text, messages.created, users.id AS user_id, users.name
+    SELECT messages.id, messages.text, messages.is_deleted, messages.created, users.id AS user_id, users.name
     FROM messages
     INNER JOIN users
     ON messages.user_id = users.id
@@ -1189,6 +1271,7 @@ export {
   findUser,
   findUserById,
   getUsers,
+  deleteAccount,
   getFriendships,
   putUserActivity,
   addFriend,
