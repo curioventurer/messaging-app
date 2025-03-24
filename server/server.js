@@ -41,6 +41,13 @@ app.use(function (req, _, next) {
   next();
 });
 
+// Update a value in the cookie so that the set-cookie will be sent.
+// Only changes every hour so that it's not sent with every request.
+app.use(function (req, _, next) {
+  req.session.t = Math.floor(Date.now() / 36e5);
+  next();
+});
+
 const ioHandlers = comm(server, sessionMiddleware, testLatency);
 auth(app);
 app.use(bodyParser.urlencoded({ extended: false }));

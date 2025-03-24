@@ -30,6 +30,7 @@ function DeleteAccountButton() {
 
           socket.disconnect();
           localStorage.removeItem("user");
+          localStorage.removeItem("session-date");
           navigate(allLinks.login.href + "?msg=account+deleted");
         });
     },

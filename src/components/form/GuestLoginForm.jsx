@@ -60,6 +60,7 @@ function GuestLoginForm() {
   function handleSubmitRes(err, user, info, updateOutput) {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("session-date", JSON.stringify(Date.now()));
 
       navigate(searchParams.get("rdr") ?? "/home", {
         replace: true,
