@@ -485,42 +485,42 @@ async function findDirectChatByUserId(user_id, other_id) {
 }
 
 async function openDirectChat(user_id, other_id) {
-  if (user_id === other_id) return false; //Must not reference yourself
-
   //search for preexisting direct chat, and show it if found.
   try {
     const direct = await findDirectChatByUserId(user_id, other_id);
     if (direct) {
-      if (direct.is_shown === false)
-        await showDirectChat(
-          new ChatId({ id: direct.id, isGroup: false }),
-          user_id,
-        );
+      //Chat already exists and is shown, no action is required, return false.
+      if (direct.is_shown) return false;
 
+      //Show chat, and return direct id.
+      await showDirectChat(
+        new ChatId({ id: direct.id, isGroup: false }),
+        user_id,
+      );
       return direct.id;
     }
+
+    //direct chat not found, create a new one.
+    const SQL_FIND_FRIENDSHIP = `
+      SELECT friendships.state
+      FROM friendships
+      INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
+      INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
+      WHERE agent1.user_id = $1
+      AND agent2.user_id = $2
+    `;
+    const friendship = (
+      await pool.query(SQL_FIND_FRIENDSHIP, [user_id, other_id])
+    ).rows[0];
+
+    //Friendship not found, or not friends. Abort
+    if (friendship?.state !== RequestStatus.ACCEPTED) return false;
+
+    const direct_chat_id = await createDirectChat(user_id, other_id);
+    return direct_chat_id;
   } catch {
     return false;
   }
-
-  //direct chat not found, create a new one.
-  const SQL_FIND_FRIENDSHIP = `
-    SELECT friendships.state
-    FROM friendships
-    INNER JOIN friendship_agents AS agent1 ON friendships.id = agent1.friendship_id
-    INNER JOIN friendship_agents AS agent2 ON friendships.id = agent2.friendship_id
-    WHERE agent1.user_id = $1
-    AND agent2.user_id = $2
-  `;
-  const friendship = (
-    await pool.query(SQL_FIND_FRIENDSHIP, [user_id, other_id])
-  ).rows[0];
-
-  //Friendship not found, or not friends. Abort
-  if (friendship?.state !== RequestStatus.ACCEPTED) return false;
-
-  const direct_chat_id = await createDirectChat(user_id, other_id);
-  return direct_chat_id;
 }
 
 async function createDirectChat(user_id, other_id) {

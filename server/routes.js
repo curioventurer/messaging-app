@@ -6,10 +6,7 @@ import {
   findUserById,
   deleteAccount,
   getFriendships,
-  openDirectChat,
-  hideDirectChat,
   findDirectChat,
-  postGroup,
   getChatList,
   getUserGroups,
   getGroups,
@@ -17,7 +14,7 @@ import {
   getMembersByGroupId,
   getMessagesByChatId,
 } from "./db/dbControls.js";
-import { ChatId, Group, Member } from "../js/chat-data.js";
+import { ChatId } from "../js/chat-data.js";
 
 function routes(app, ioHandlers) {
   //test code - api for testing.
@@ -132,30 +129,6 @@ function routes(app, ioHandlers) {
     });
   });
 
-  app.post("/api/create-group", async (req, res) => {
-    if (!req.user) return res.json(false);
-
-    const name = req.body.name;
-
-    const { err, group, info } = await postGroup(name, req.user.id);
-
-    if (group) {
-      /*Inform online users about the new group by socket io.
-        Remove user's membership info from it beforehand.
-      */
-      const copy = new Group({
-        ...group.toJSON(),
-        membership: new Member({}),
-      });
-      ioHandlers.addGroup(copy);
-
-      //Add group chat to user.
-      ioHandlers.joinGroup(group.membership);
-    }
-
-    res.json({ err, data: group, info });
-  });
-
   app.get("/api/user-list", async (req, res) => {
     if (!req.user) return res.json(false);
 
@@ -241,30 +214,6 @@ function routes(app, ioHandlers) {
       room: direct,
       messages,
     });
-  });
-
-  app.post("/api/open_chat/:other_id", async (req, res) => {
-    if (!req.user) return res.json(false);
-
-    const direct_chat_id = await openDirectChat(
-      req.user.id,
-      req.params.other_id,
-    );
-    res.json(direct_chat_id);
-
-    if (direct_chat_id !== false)
-      ioHandlers.addDirectChatItem(req.user.id, direct_chat_id);
-  });
-
-  app.put("/api/chat/:direct_chat_id/hide", async (req, res) => {
-    if (!req.user) return res.json(false);
-
-    const chatId = new ChatId({
-      id: req.params.direct_chat_id,
-      isGroup: false,
-    });
-    const isValid = await hideDirectChat(chatId, req.user.id);
-    res.json(isValid);
   });
 }
 

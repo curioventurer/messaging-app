@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import PropTypes from "prop-types";
 import { MenuContext, OutletContext } from "../layout/PrivateInterface.jsx";
+import { socket } from "../../controllers/socket.js";
 import { ChatItemData } from "../../../js/chat-data.js";
 
 function ChatItemMenu({ chat, containerRect, targetRect }) {
-  const { hideChat, closeMenu } = useContext(MenuContext);
+  const { closeMenu } = useContext(MenuContext);
   const outletRect = useContext(OutletContext);
 
   const [menuRect, setMenuRect] = useState(new DOMRect());
@@ -80,17 +81,8 @@ function ChatItemMenu({ chat, containerRect, targetRect }) {
     setMenuRect(() => menuRef.current.getBoundingClientRect());
   }
 
-  function handleHideChat() {
-    const request = new Request(`/api/chat/${chat.chatId.id}/hide`, {
-      method: "PUT",
-    });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data) hideChat(chat.user_id);
-      })
-      .catch(() => {});
+  function hideChat() {
+    socket.emit("hideChat", { direct_id: chat.chatId.id });
   }
 
   //Prevent default behavior and propagation of click beyond the menu.
@@ -109,7 +101,7 @@ function ChatItemMenu({ chat, containerRect, targetRect }) {
         <li>
           <button
             className="clear-background hover-whitening"
-            onClick={handleHideChat}
+            onClick={hideChat}
           >
             hide chat
           </button>

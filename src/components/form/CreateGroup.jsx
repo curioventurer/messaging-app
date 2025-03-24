@@ -1,12 +1,10 @@
-import { useState, useRef, useContext } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Form from "./Form.jsx";
-import { InterfaceContext } from "../layout/PrivateInterface.jsx";
 import { allLinks } from "../../controllers/constant.js";
 import { FormDetail, Group } from "../../../js/chat-data.js";
 
 function CreateGroup() {
-  const { addGroup } = useContext(InterfaceContext);
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +39,6 @@ function CreateGroup() {
   function handleSubmitRes(err, groupData, info, updateOutput) {
     if (groupData) {
       const group = new Group(groupData);
-      addGroup(group);
       navigate(`/group/${group.id}?info`);
     } else updateOutput(parseOutput(err, info));
   }
@@ -53,6 +50,7 @@ function CreateGroup() {
     outputFor: "name",
     isSubmitting,
     submitButton,
+    isSocket: true,
     handleSubmitRes,
     updateIsSubmitting,
   });

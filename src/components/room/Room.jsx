@@ -255,34 +255,28 @@ function Room({ isGroup = true, title = false }) {
 
   //Redirect to home when the room is deleted by removing friend or leaving group.
   const deleteRoom = useCallback(
-    function () {
-      navigate("/home", {
-        replace: true,
-      });
-    },
-    [navigate],
-  );
+    function ({ group_id, user_id }) {
+      let is_deleted = false;
 
-  const deleteGroupRoom = useCallback(
-    function ({ group_id }) {
-      const targetChatId = new ChatId({
-        id: group_id,
-        isGroup: true,
-      });
+      if (group_id) {
+        const targetChatId = new ChatId({
+          id: group_id,
+          isGroup: true,
+        });
 
-      //if same room, delete room
-      if (chatId.isEqual(targetChatId)) deleteRoom();
-    },
-    [chatId, deleteRoom],
-  );
+        if (chatId.isEqual(targetChatId)) is_deleted = true;
+      } else if (user_id) {
+        const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
+        if (directChatUserId === user_id) is_deleted = true;
+      }
 
-  //if current room shows the direct chat of removed friend, delete room.
-  const directChatUserId = chatId.isGroup ? undefined : room?.user_id;
-  const deleteDirectRoom = useCallback(
-    function ({ user_id }) {
-      if (directChatUserId === user_id) deleteRoom();
+      if (is_deleted) {
+        navigate("/home", {
+          replace: true,
+        });
+      }
     },
-    [directChatUserId, deleteRoom],
+    [chatId, room, navigate],
   );
 
   const updateRoomInfoIsExpanded = useCallback(
@@ -395,8 +389,8 @@ function Room({ isGroup = true, title = false }) {
     socket.on("updateGroupMember", updateMember);
     socket.on("deleteGroupMember", deleteMember);
     socket.on("updateMembership", updateMembership);
-    socket.on("deleteMembership", deleteGroupRoom);
-    socket.on("deleteFriendship", deleteDirectRoom);
+    socket.on("deleteMembership", deleteRoom);
+    socket.on("deleteFriendship", deleteRoom);
     socket.on("deleteUserMessages", deleteUserMessages);
 
     return () => {
@@ -404,17 +398,16 @@ function Room({ isGroup = true, title = false }) {
       socket.off("updateGroupMember", updateMember);
       socket.off("deleteGroupMember", deleteMember);
       socket.off("updateMembership", updateMembership);
-      socket.off("deleteMembership", deleteGroupRoom);
-      socket.off("deleteFriendship", deleteDirectRoom);
+      socket.off("deleteMembership", deleteRoom);
+      socket.off("deleteFriendship", deleteRoom);
       socket.off("deleteUserMessages", deleteUserMessages);
     };
   }, [
-    deleteDirectRoom,
+    deleteRoom,
     handleSocketMessage,
     updateMember,
     deleteMember,
     updateMembership,
-    deleteGroupRoom,
     deleteUserMessages,
   ]);
 

@@ -32,13 +32,11 @@ const INTERFACE_CONTEXT_DEFAULT = {
   client: new User({}),
   groupList: undefined,
   friendships: undefined,
-  addGroup: () => {},
 };
 
 const MENU_CONTEXT_DEFAULT = {
   isMenuVisible: false,
   menuChatId: new ChatId({}),
-  hideChat: function () {},
   openMenu: function () {},
   closeMenu: function () {},
 };
@@ -274,6 +272,33 @@ function PrivateInterface() {
     [setFriendships],
   );
 
+  //Set direct id to default(0)
+  const clearDirectId = useCallback(
+    function ({ direct_id }) {
+      setFriendships((prevFriendships) => {
+        if (!prevFriendships) return prevFriendships;
+
+        const index = prevFriendships.findIndex(
+          (friend) => friend.direct_chat_id === direct_id,
+        );
+        if (index === -1) return prevFriendships;
+
+        const friendship = new UserFriendship({
+          ...prevFriendships[index],
+          direct_chat_id: 0,
+        });
+
+        const newFriendships = [
+          ...prevFriendships.slice(0, index),
+          friendship,
+          ...prevFriendships.slice(index + 1),
+        ];
+        return newFriendships;
+      });
+    },
+    [setFriendships],
+  );
+
   const addChat = useCallback(
     function (chatItemData = new ChatItemData({})) {
       const chatItem = new ChatItemData(chatItemData);
@@ -362,7 +387,22 @@ function PrivateInterface() {
   );
 
   const deleteChat = useCallback(
-    function (find = () => {}) {
+    function ({ chatId: chatIdData, group_id, user_id }) {
+      let find = () => false;
+
+      if (chatIdData) {
+        const chatId = new ChatId(chatIdData);
+        find = (chat) => chat.chatId.isEqual(chatId);
+      } else if (group_id) {
+        const chatId = new ChatId({
+          id: group_id,
+          isGroup: true,
+        });
+        find = (chat) => chat.chatId.isEqual(chatId);
+      } else if (user_id) {
+        find = (chat) => chat.user_id === user_id;
+      }
+
       setChats((prevChats) => {
         if (!prevChats) return prevChats;
 
@@ -373,32 +413,10 @@ function PrivateInterface() {
           ...prevChats.slice(0, index),
           ...prevChats.slice(index + 1),
         ];
-
         return newChats;
       });
     },
     [setChats],
-  );
-
-  const deleteDirectChat = useCallback(
-    function ({ user_id }) {
-      const find = (chat) => chat.user_id === user_id;
-      deleteChat(find);
-    },
-    [deleteChat],
-  );
-
-  const deleteGroupChat = useCallback(
-    function ({ group_id }) {
-      const chatId = new ChatId({
-        id: group_id,
-        isGroup: true,
-      });
-
-      const find = (chat) => chat.chatId.isEqual(chatId);
-      deleteChat(find);
-    },
-    [deleteChat],
   );
 
   const closeMenu = useCallback(function () {
@@ -419,63 +437,57 @@ function PrivateInterface() {
     [isMenuVisible, menuChatId, closeMenu],
   );
 
-  const hideChat = useCallback(
-    function (user_id) {
-      deleteDirectChat({ user_id });
-
-      //clear direct id by setting to default of 0.
-      updateDirectId({ user_id, direct_chat_id: 0 });
-    },
-    [deleteDirectChat, updateDirectId],
-  );
-
   useEffect(() => {
-    socket.on("chat item", addChat);
+    socket.on("addChat", addChat);
+    socket.on("deleteChat", deleteChat);
     socket.on("message", updateLastMsg);
     socket.on("deleteUserMessages", deleteUserMessage);
 
     socket.on("update friendship", updateFriendship);
     socket.on("updateDirectId", updateDirectId);
+    socket.on("clearDirectId", clearDirectId);
     socket.on("friend", updateFriendStatus);
     socket.on("deleteFriendship", deleteFriendship);
-    socket.on("deleteFriendship", deleteDirectChat);
+    socket.on("deleteFriendship", deleteChat);
 
     socket.on("addMembership", addGroup);
     socket.on("updateMembership", updateMembership);
     socket.on("deleteMembership", deleteGroup);
-    socket.on("deleteMembership", deleteGroupChat);
+    socket.on("deleteMembership", deleteChat);
 
     return () => {
-      socket.off("chat item", addChat);
+      socket.off("addChat", addChat);
+      socket.off("deleteChat", deleteChat);
       socket.off("message", updateLastMsg);
       socket.off("deleteUserMessages", deleteUserMessage);
 
       socket.off("update friendship", updateFriendship);
       socket.off("updateDirectId", updateDirectId);
+      socket.off("clearDirectId", clearDirectId);
       socket.off("friend", updateFriendStatus);
       socket.off("deleteFriendship", deleteFriendship);
-      socket.off("deleteFriendship", deleteDirectChat);
+      socket.off("deleteFriendship", deleteChat);
 
       socket.off("addMembership", addGroup);
       socket.off("updateMembership", updateMembership);
       socket.off("deleteMembership", deleteGroup);
-      socket.off("deleteMembership", deleteGroupChat);
+      socket.off("deleteMembership", deleteChat);
     };
   }, [
     addChat,
+    deleteChat,
     updateLastMsg,
     deleteUserMessage,
 
     updateFriendship,
     updateDirectId,
+    clearDirectId,
     updateFriendStatus,
     deleteFriendship,
-    deleteDirectChat,
 
     addGroup,
     updateMembership,
     deleteGroup,
-    deleteGroupChat,
   ]);
 
   //update rect at intervals
@@ -506,9 +518,8 @@ function PrivateInterface() {
             client,
             groupList,
             friendships,
-            addGroup,
           }),
-          [client, groupList, friendships, addGroup],
+          [client, groupList, friendships],
         )}
       >
         <Nav />
@@ -517,11 +528,10 @@ function PrivateInterface() {
             () => ({
               isMenuVisible,
               menuChatId,
-              hideChat,
               openMenu,
               closeMenu,
             }),
-            [isMenuVisible, menuChatId, hideChat, openMenu, closeMenu],
+            [isMenuVisible, menuChatId, openMenu, closeMenu],
           )}
         >
           <OutletContext.Provider value={outletRect}>

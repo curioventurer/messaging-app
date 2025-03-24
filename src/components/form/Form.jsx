@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { FormDetail } from "../../../js/chat-data.js";
+import { socket } from "../../controllers/socket.js";
 
 const FOCUS_DELAY = 100;
 
@@ -51,6 +52,7 @@ function Form({ children, formDetail }) {
     if (result !== true) return updateOutput(result);
 
     formDetail.updateIsSubmitting(true);
+    setOutput("Pending: Waiting for server response...");
 
     const timeout = setTimeout(() => {
       formDetail.updateIsSubmitting(false);
@@ -61,8 +63,19 @@ function Form({ children, formDetail }) {
       });
     }, formDetail.timeoutDuration);
 
-    setOutput("Pending: Waiting for server response...");
+    if (formDetail.isSocket) socketSubmit(timeout);
+    else fetchSubmit(timeout);
+  }
 
+  function socketSubmit(timeout) {
+    socket.emit(formDetail.path, formDetail.data, ({ err, data, info }) => {
+      clearTimeout(timeout);
+      formDetail.handleSubmitRes(err, data, info, updateOutput);
+      formDetail.updateIsSubmitting(false);
+    });
+  }
+
+  function fetchSubmit(timeout) {
     const headers = new Headers({
       "Content-Type": "application/json",
     });

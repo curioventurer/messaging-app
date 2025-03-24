@@ -776,6 +776,7 @@ export class FormDetail {
     isSubmitting = false,
     submitButton,
     timeoutDuration = 5000,
+    isSocket = false, //use socket instead of fetch if true
     validateInputs = () => true,
     handleSubmitRes = () => {},
     updateIsSubmitting = () => {},
@@ -788,6 +789,7 @@ export class FormDetail {
     this.isSubmitting = isSubmitting;
     this.submitButton = submitButton;
     this.timeoutDuration = timeoutDuration;
+    this.isSocket = isSocket;
     this.validateInputs = validateInputs;
     this.handleSubmitRes = handleSubmitRes;
     this.updateIsSubmitting = updateIsSubmitting;

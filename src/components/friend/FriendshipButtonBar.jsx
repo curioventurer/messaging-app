@@ -32,17 +32,9 @@ function FriendshipButtonBar({ friendship, excluded = [], className = "" }) {
   }
 
   function showChat() {
-    const user_id = friendship.user_id;
-    const request = new Request(`/api/open_chat/${user_id}`, {
-      method: "POST",
+    socket.emit("showChat", {
+      other_id: friendship.user_id,
     });
-
-    fetch(request)
-      .then((res) => res.json())
-      .then((direct_id) => {
-        if (direct_id === false) return;
-      })
-      .catch(() => {});
   }
 
   const buttonArray = [];
