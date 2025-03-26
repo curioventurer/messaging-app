@@ -1,10 +1,11 @@
-import { useMemo } from "react";
-import { Outlet, useLoaderData } from "react-router-dom";
+import { useContext, useMemo } from "react";
+import { Outlet } from "react-router-dom";
 import Nav from "./Nav.jsx";
+import { AppContext } from "../sys/App.jsx";
 import { InterfaceContext } from "./PrivateInterface.jsx";
 
 function PublicInterface() {
-  const client = useLoaderData();
+  const { client } = useContext(AppContext);
 
   return (
     <div className="interface">

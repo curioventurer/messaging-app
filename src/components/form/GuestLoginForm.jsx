@@ -1,10 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef, useContext } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import useMsgQuery from "../../hooks/useMsgQuery.jsx";
 import Form from "./Form.jsx";
+import { AppContext } from "../sys/App.jsx";
 import { FormDetail, User } from "../../../js/chat-data.js";
 
 function GuestLoginForm() {
+  const { login } = useContext(AppContext);
   const [searchParams] = useSearchParams();
 
   const [username, setUsername] = useState(User.GUEST_LABEL);
@@ -17,8 +19,6 @@ function GuestLoginForm() {
   const redirectQuery = redirectPath
     ? "?rdr=" + encodeURIComponent(redirectPath)
     : "";
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     generateUsername();
@@ -59,12 +59,7 @@ function GuestLoginForm() {
 
   function handleSubmitRes(err, user, info, updateOutput) {
     if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("session-date", JSON.stringify(Date.now()));
-
-      navigate(searchParams.get("rdr") ?? "/home", {
-        replace: true,
-      });
+      login(user);
     } else updateOutput(parseOutput(err, info));
   }
 

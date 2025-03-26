@@ -1,14 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  createBrowserRouter,
-  RouterProvider,
-  redirect,
-} from "react-router-dom";
-import { socket } from "./controllers/socket.js";
-import { memoize } from "./controllers/memoize.js";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { allLinks } from "./controllers/constant.js";
-import { User } from "../js/chat-data.js";
+
+import App from "./components/sys/App.jsx";
+import LoginWrapper from "./components/sys/LoginWrapper.jsx";
+import LogoutWrapper from "./components/sys/LogoutWrapper.jsx";
+import Logout from "./components/sys/Logout.jsx";
 import Title from "./components/layout/Title.jsx";
 import PublicInterface from "./components/layout/PublicInterface.jsx";
 import PrivateInterface from "./components/layout/PrivateInterface.jsx";
@@ -30,142 +28,93 @@ import Test from "./components/Test.jsx";
 import "normalize.css";
 import "./styles/main.scss";
 
-//Checks if session is expired.
-function isSessionExpired() {
-  const date = JSON.parse(localStorage.getItem("session-date"));
-
-  //If not defined, invalid. Clear storage and return true. Requires another login.
-  if (date === null) {
-    localStorage.removeItem("user");
-    return true;
-  }
-
-  /*If duration exceeds 29days(approaches cookie expiration of 30days), cookie might be expired.
-    Clear storage and return true. Requires another login.
-  */
-  const duration = Date.now() - date;
-  if (duration > 29 * 24 * 60 * 60e3) {
-    localStorage.removeItem("user");
-    localStorage.removeItem("session-date");
-    return true;
-  }
-
-  //Session is still valid, return false and refresh the session date.
-  localStorage.setItem("session-date", JSON.stringify(Date.now()));
-  return false;
-}
-
-const parseUser = memoize(function (string) {
-  return new User(JSON.parse(string));
-});
-
-/*Fetch user from localStorage.
-  If found, it means user is logged in, return user.
-  Else, return false to indicate user is logged out.
-  Also return false if session is expired and require login.
-*/
-async function getUser() {
-  const userString = localStorage.getItem("user");
-  if (userString === null) return false;
-
-  if (isSessionExpired()) return false;
-
-  return parseUser(userString);
-}
-
-/*Only proceed with routing if logged in, else redirect to login page.
-  Also returns user as loader data.
-*/
-async function ensureLoggedIn({ request }) {
-  const user = await getUser();
-
-  if (user) {
-    //try Socket.IO connect after login
-    socket.connect();
-
-    return user;
-  } else {
-    const url = new URL(request.url);
-    const redirectPath = url.pathname + url.search;
-
-    return redirect(
-      allLinks.login.href + "?rdr=" + encodeURIComponent(redirectPath),
-    );
-  }
-}
-
-//Only proceed with routing if logged out, else redirect to home.
-async function ensureLoggedOut() {
-  const user = await getUser();
-
-  if (user) return redirect(allLinks.home.href);
-  else return null;
-}
-
-//Perform logout and if successful, redirect to login page, else error page.
-async function logout() {
-  socket.disconnect();
-  localStorage.removeItem("user");
-  localStorage.removeItem("session-date");
-
-  const res = await fetch("/api/logout");
-  const isSuccess = await res.json();
-
-  if (isSuccess)
-    return redirect(allLinks.login.href + "?msg=successful+logout");
-  else return redirect("/error?err=logout");
-}
-
 const router = createBrowserRouter([
   {
-    element: <PrivateInterface />,
-    loader: ensureLoggedIn,
+    element: <LogoutWrapper />,
     children: [
       {
-        path: allLinks.home.href,
+        path: allLinks.logout.href,
+        element: <Logout />,
+      },
+      {
+        element: <PrivateInterface />,
+        children: [
+          {
+            path: allLinks.home.href,
+            element: (
+              <Title title={allLinks.home.name}>
+                <Home />
+              </Title>
+            ),
+          },
+          {
+            path: allLinks.profile.href,
+            element: <Profile own />,
+          },
+          {
+            path: `${allLinks.profile.href}/:user_id`,
+            element: <Profile />,
+          },
+          {
+            path: "/group/:chat_id",
+            element: <Room isGroup={true} title />,
+          },
+          {
+            path: "/chat/:chat_id",
+            element: <Room isGroup={false} title />,
+          },
+          {
+            path: allLinks.groupList.href,
+            element: (
+              <Title title={allLinks.groupList.name}>
+                <GroupList />
+              </Title>
+            ),
+          },
+          {
+            path: allLinks.userList.href,
+            element: (
+              <Title title={allLinks.userList.name}>
+                <UserList />
+              </Title>
+            ),
+          },
+          {
+            path: allLinks.createGroup.href,
+            element: (
+              <Title title={allLinks.createGroup.name}>
+                <CreateGroup />
+              </Title>
+            ),
+          },
+        ],
+      },
+    ],
+  },
+  {
+    element: <LoginWrapper />,
+    children: [
+      {
+        path: allLinks.register.href,
         element: (
-          <Title title={allLinks.home.name}>
-            <Home />
+          <Title title={allLinks.register.name}>
+            <RegisterForm />
           </Title>
         ),
       },
       {
-        path: allLinks.profile.href,
-        element: <Profile own />,
-      },
-      {
-        path: `${allLinks.profile.href}/:user_id`,
-        element: <Profile />,
-      },
-      {
-        path: "/group/:chat_id",
-        element: <Room isGroup={true} title />,
-      },
-      {
-        path: "/chat/:chat_id",
-        element: <Room isGroup={false} title />,
-      },
-      {
-        path: allLinks.groupList.href,
+        path: allLinks.login.href,
         element: (
-          <Title title={allLinks.groupList.name}>
-            <GroupList />
+          <Title title={allLinks.login.name}>
+            <LoginForm />
           </Title>
         ),
       },
       {
-        path: allLinks.userList.href,
+        path: allLinks.guestLogin.href,
         element: (
-          <Title title={allLinks.userList.name}>
-            <UserList />
-          </Title>
-        ),
-      },
-      {
-        path: allLinks.createGroup.href,
-        element: (
-          <Title title={allLinks.createGroup.name}>
-            <CreateGroup />
+          <Title title={allLinks.guestLogin.name}>
+            <GuestLoginForm />
           </Title>
         ),
       },
@@ -173,7 +122,6 @@ const router = createBrowserRouter([
   },
   {
     element: <PublicInterface />,
-    loader: getUser,
     children: [
       {
         index: true,
@@ -192,37 +140,6 @@ const router = createBrowserRouter([
         ),
       },
     ],
-  },
-  {
-    path: allLinks.register.href,
-    element: (
-      <Title title={allLinks.register.name}>
-        <RegisterForm />
-      </Title>
-    ),
-    loader: ensureLoggedOut,
-  },
-  {
-    path: allLinks.login.href,
-    element: (
-      <Title title={allLinks.login.name}>
-        <LoginForm />
-      </Title>
-    ),
-    loader: ensureLoggedOut,
-  },
-  {
-    path: allLinks.guestLogin.href,
-    element: (
-      <Title title={allLinks.guestLogin.name}>
-        <GuestLoginForm />
-      </Title>
-    ),
-    loader: ensureLoggedOut,
-  },
-  {
-    path: allLinks.logout.href,
-    loader: logout,
   },
   {
     path: "/error",
@@ -253,6 +170,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <App>
+      <RouterProvider router={router} />
+    </App>
   </StrictMode>,
 );

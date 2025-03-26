@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
-import ConfirmDialog from "../ConfirmDialog.jsx";
+import ConfirmDialog from "../sys/ConfirmDialog.jsx";
+import { AppContext } from "../sys/App.jsx";
 import { InterfaceContext } from "../layout/PrivateInterface.jsx";
-import { socket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
 import { Member, RequestStatus } from "../../../js/chat-data.js";
 
 function DeleteAccountButton() {
+  const { logout } = useContext(AppContext);
   const { client, friendships, groupList } = useContext(InterfaceContext);
   const dialog = useRef(null);
 
@@ -28,13 +29,11 @@ function DeleteAccountButton() {
         .then((data) => {
           if (!data) return;
 
-          socket.disconnect();
-          localStorage.removeItem("user");
-          localStorage.removeItem("session-date");
+          logout();
           navigate(allLinks.login.href + "?msg=account+deleted");
         });
     },
-    [navigate],
+    [logout, navigate],
   );
 
   if (friendships === false || groupList === false)

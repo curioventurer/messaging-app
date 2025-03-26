@@ -1,5 +1,5 @@
 import { useRef, useContext, useCallback } from "react";
-import ConfirmDialog from "../ConfirmDialog.jsx";
+import ConfirmDialog from "../sys/ConfirmDialog.jsx";
 import { RoomContext } from "./Room.jsx";
 import { socket } from "../../controllers/socket.js";
 

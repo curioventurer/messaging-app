@@ -1,7 +1,7 @@
 import { useRef, useContext, useCallback, memo } from "react";
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
-import ConfirmDialog from "../ConfirmDialog.jsx";
+import ConfirmDialog from "../sys/ConfirmDialog.jsx";
 import { RoomContext } from "./Room.jsx";
 import { socket } from "../../controllers/socket.js";
 import { Member } from "../../../js/chat-data.js";

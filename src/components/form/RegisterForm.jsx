@@ -1,10 +1,12 @@
-import { useState, useRef } from "react";
-import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { useState, useRef, useContext } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import useMsgQuery from "../../hooks/useMsgQuery.jsx";
 import Form from "./Form.jsx";
+import { AppContext } from "../sys/App.jsx";
 import { FormDetail, User } from "../../../js/chat-data.js";
 
 function RegisterForm() {
+  const { login } = useContext(AppContext);
   const [searchParams] = useSearchParams();
 
   const [username, setUsername] = useState("");
@@ -20,8 +22,6 @@ function RegisterForm() {
   const redirectQuery = redirectPath
     ? "?rdr=" + encodeURIComponent(redirectPath)
     : "";
-
-  const navigate = useNavigate();
 
   function updateIsSubmitting(bool) {
     setIsSubmitting(bool);
@@ -72,12 +72,7 @@ function RegisterForm() {
 
   function handleSubmitRes(err, user, info, updateOutput) {
     if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("session-date", JSON.stringify(Date.now()));
-
-      navigate(searchParams.get("rdr") ?? "/home", {
-        replace: true,
-      });
+      login(user);
     } else updateOutput(parseOutput(err, info));
   }
 

@@ -7,10 +7,13 @@ function useFetch({
   path = "/api/test",
   options = null,
   timeoutDuration = 5000,
+  disable = false,
 }) {
   const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
+    if (disable) return;
+
     setIsExpired(false);
     function expire() {
       setIsExpired(true);
@@ -37,7 +40,7 @@ function useFetch({
     return () => {
       controller.abort(new Error(FETCH_ABORT));
     };
-  }, [callback, path, options, timeoutDuration]);
+  }, [callback, path, options, timeoutDuration, disable]);
 
   return isExpired;
 }

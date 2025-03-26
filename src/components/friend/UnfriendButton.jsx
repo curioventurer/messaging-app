@@ -1,6 +1,6 @@
 import { useRef, useCallback, memo } from "react";
 import PropTypes from "prop-types";
-import ConfirmDialog from "../ConfirmDialog.jsx";
+import ConfirmDialog from "../sys/ConfirmDialog.jsx";
 import { socket } from "../../controllers/socket.js";
 
 function UnfriendButton({ friendship }) {

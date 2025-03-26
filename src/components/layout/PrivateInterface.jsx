@@ -4,11 +4,13 @@ import {
   useRef,
   useCallback,
   useMemo,
+  useContext,
   createContext,
 } from "react";
-import { Outlet, useLoaderData } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import useFetchedState from "../../hooks/useFetchedState.jsx";
 import Nav from "./Nav.jsx";
+import { AppContext } from "../sys/App.jsx";
 import { socket } from "../../controllers/socket.js";
 import updateRect from "../../controllers/updateRect.js";
 import sortFriendships from "../../controllers/sortFriendships.js";
@@ -54,7 +56,7 @@ export const OutletContext = createContext(OUTLET_CONTEXT_DEFAULT);
 export const ChatListContext = createContext(CHAT_LIST_CONTEXT_DEFAULT);
 
 function PrivateInterface() {
-  const client = useLoaderData();
+  const { client } = useContext(AppContext);
 
   const parseGroupList = useCallback(function (array, setGroupList) {
     if (array === false) return setGroupList(false);
@@ -437,6 +439,7 @@ function PrivateInterface() {
     [isMenuVisible, menuChatId, closeMenu],
   );
 
+  //Register socket listeners.
   useEffect(() => {
     socket.on("addChat", addChat);
     socket.on("deleteChat", deleteChat);
