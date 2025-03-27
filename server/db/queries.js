@@ -578,7 +578,7 @@ async function findDirectChatShown(chatId = new ChatId({}), user_id) {
   return rows[0]?.is_shown;
 }
 
-async function postGroup(name, user_id) {
+async function postGroup(name, is_public, user_id) {
   //Check if name is valid and not taken.
   try {
     if (!Group.isValidName(name)) return { info: { message: "invalid name" } };
@@ -596,10 +596,10 @@ async function postGroup(name, user_id) {
 
     const SQL_POST_GROUP = `
       INSERT INTO groups
-      ( name ) VALUES ( $1 )
-      RETURNING id, name, created;
+      ( name, is_public ) VALUES ( $1, $2 )
+      RETURNING id, name, is_public, created;
     `;
-    const group_res = await client.query(SQL_POST_GROUP, [name]);
+    const group_res = await client.query(SQL_POST_GROUP, [name, is_public]);
     if (!group_res.rows[0]) throw "error";
     const group = new Group(group_res.rows[0]);
 
@@ -819,7 +819,7 @@ async function getDirectChats(user_id) {
 //Retrieves groups that linked to user's memberships.
 async function getUserGroups(user_id) {
   const SQL_GET_GROUPS = `
-    SELECT groups.id, groups.name, groups.created,
+    SELECT groups.id, groups.name, groups.is_public, groups.created,
     memberships.id AS mem_id, memberships.permission, memberships.state, memberships.modified
     
     FROM groups
@@ -837,6 +837,7 @@ async function getUserGroups(user_id) {
     return new Group({
       id: group.id,
       name: group.name,
+      is_public: group.is_public,
       created: group.created,
       membership: new Member({
         id: group.mem_id,
@@ -853,7 +854,7 @@ async function getUserGroups(user_id) {
 //Retrieves all groups
 async function getGroups(user_id) {
   const SQL_GET_GROUPS = `
-    SELECT id, name, created
+    SELECT id, name, is_public, created
     FROM groups
     WHERE is_deleted = FALSE
     ORDER BY name;
@@ -878,7 +879,7 @@ async function getGroups(user_id) {
 
 async function findGroupById(groupId) {
   const { rows } = await pool.query(
-    "SELECT id, name, created, is_deleted FROM groups WHERE id = $1",
+    "SELECT id, name, created, is_public, is_deleted FROM groups WHERE id = $1",
     [groupId],
   );
   return rows[0] ? new Group(rows[0]) : false;
@@ -886,7 +887,7 @@ async function findGroupById(groupId) {
 
 async function findGroup(name) {
   const { rows } = await pool.query(
-    "SELECT id, name, created, is_deleted FROM groups WHERE name = $1;",
+    "SELECT id, name, created, is_public, is_deleted FROM groups WHERE name = $1;",
     [name],
   );
   return rows[0] ? new Group(rows[0]) : false;
@@ -954,8 +955,8 @@ async function postMembership(group_id, user_id) {
   try {
     const SQL_POST_MEMBERSHIP = `
       INSERT INTO memberships
-      ( group_id, user_id)
-      VALUES ( $1, $2 )
+      ( group_id, user_id, state )
+      VALUES ( $1, $2, $3 )
       RETURNING id, group_id, user_id, permission, state, modified;
     `;
 
@@ -967,7 +968,16 @@ async function postMembership(group_id, user_id) {
     const group = await findGroupById(group_id);
     if (!group || group.is_deleted) return false;
 
-    const { rows } = await pool.query(SQL_POST_MEMBERSHIP, [group_id, user_id]);
+    //If public, no approval needed to join. Skip pending state and directly give accepted status.
+    const state = group.is_public
+      ? RequestStatus.ACCEPTED
+      : RequestStatus.PENDING;
+
+    const { rows } = await pool.query(SQL_POST_MEMBERSHIP, [
+      group_id,
+      user_id,
+      state,
+    ]);
     const entry = rows[0];
     if (!entry) return false;
 

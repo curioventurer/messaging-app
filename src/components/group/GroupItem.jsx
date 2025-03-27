@@ -31,7 +31,11 @@ function GroupItem({ group }) {
 
     buttonArray.push({
       key: "apply",
-      element: <button onClick={postMembership}>Apply</button>,
+      element: (
+        <button onClick={postMembership}>
+          {group.is_public ? "Join" : "Apply"}
+        </button>
+      ),
     });
   } else if (membership.state === RequestStatus.ACCEPTED) {
     status = membership.permission;
@@ -75,6 +79,11 @@ function GroupItem({ group }) {
     <tr>
       <td>
         <p className="clipped-text bold">{group.name}</p>
+      </td>
+      <td>
+        <p className={"group-type " + (group.is_public ? "public" : "private")}>
+          {group.is_public ? "Public" : "Private"}
+        </p>
       </td>
       <td>
         <p className="clipped-text">{status}</p>

@@ -370,7 +370,11 @@ async function handleConnection(io, socket, testLatency) {
     if (!(callback instanceof Function)) return;
 
     const user_id = socket.request.user.id;
-    const { err, group, info } = await postGroup(data.name, user_id);
+    const { err, group, info } = await postGroup(
+      data.name,
+      data.is_public,
+      user_id,
+    );
     callback({ err, data: group, info });
 
     //If successful, emit to users.
@@ -408,9 +412,12 @@ async function handleConnection(io, socket, testLatency) {
     const group = await postMembership(data.group_id, socket.request.user.id);
     if (group === false) return false;
 
-    group.membership.name = socket.request.user.name;
-    emitUpdateMembership(io, group.membership);
+    const membership = group.membership;
+    membership.name = socket.request.user.name;
+    emitUpdateMembership(io, membership);
     io.to("user:" + socket.request.user.id).emit("addMembership", group);
+
+    if (membership.state === RequestStatus.ACCEPTED) joinGroup(io, membership);
   });
 
   socket.on("deleteGroupApplication", async (data) => {

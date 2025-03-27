@@ -387,12 +387,14 @@ export class Group {
   constructor({
     id = 0,
     name = DEFAULT_TEXT,
+    is_public = false,
     is_deleted = false,
     created = DEFAULT_TIME,
     membership = new Member({}),
   }) {
     this.id = id;
     this.name = name;
+    this.is_public = is_public;
     this.is_deleted = is_deleted;
     this.created = created;
     this.membership = membership;

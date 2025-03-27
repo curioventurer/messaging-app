@@ -145,6 +145,11 @@ button {
   }
 }
 
+input[type="checkbox"] {
+  aspect-ratio: 1;
+  height: 1em;
+}
+
 ul {
   list-style: none;
   padding: 0;
@@ -262,6 +267,15 @@ td:empty {
 
 .important-link {
   background: #f003;
+}
+
+.group-type {
+  &.private {
+    color: #00bcd4;
+  }
+  &.public {
+    color: orange;
+  }
 }
 
 .loading-text {
@@ -414,6 +428,12 @@ nav.tabs {
     }
   }
 
+  li.checkbox {
+    flex-direction: row;
+    align-items: center;
+    column-gap: 20px;
+  }
+
   .form-hint li {
     margin-block: 0.2em;
   }
@@ -544,7 +564,7 @@ nav.tabs {
 
 .list-table.group {
   tbody {
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: 1fr auto 1fr auto;
   }
 }
 

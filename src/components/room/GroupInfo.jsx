@@ -36,7 +36,7 @@ function GroupInfo() {
   return (
     <>
       <p>
-        {`Group "${room.name}" was created on `}
+        {`${room.is_public ? "Public" : "Private"} group "${room.name}" was created on `}
         <time dateTime={room.created}>
           {DateFormat.timestamp(room.created)}
         </time>

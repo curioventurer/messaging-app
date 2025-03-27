@@ -6,6 +6,7 @@ import { FormDetail, Group } from "../../../js/chat-data.js";
 
 function CreateGroup() {
   const [name, setName] = useState("");
+  const [is_public, set_is_public] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const nameInput = useRef(null);
@@ -19,6 +20,10 @@ function CreateGroup() {
 
   function updateName(event) {
     setName(event.target.value);
+  }
+
+  function updateIsPublic(event) {
+    set_is_public(event.target.checked);
   }
 
   function parseOutput(err, info) {
@@ -45,7 +50,7 @@ function CreateGroup() {
 
   const formDetail = new FormDetail({
     path: "/api/create-group",
-    data: { name },
+    data: { name, is_public: is_public },
     outputName: "create group result",
     outputFor: "name",
     isSubmitting,
@@ -80,6 +85,17 @@ function CreateGroup() {
             <ul id="name-hint" className="form-hint marked-list">
               <li>1-50 word characters (a-z, A-Z, 0-9, _).</li>
             </ul>
+          </li>
+          <li className="checkbox">
+            <label htmlFor="is_public">Public</label>
+            <input
+              type="checkbox"
+              name="is_public"
+              id="is_public"
+              onChange={updateIsPublic}
+              autoComplete="off"
+              disabled={isSubmitting}
+            />
           </li>
           <li>
             <button ref={submitButton} type="submit" disabled={isSubmitting}>

@@ -154,9 +154,10 @@ function GroupList() {
     <div className="list-page">
       <h1>Group List</h1>
       <p>
-        You can apply to join a group from the list of groups. After
-        application, you will have to wait for the group owner or admin to
-        accept your request. You can check all your pending applications at{" "}
+        You can directly join public groups while private groups require you to
+        apply. After application, you will have to wait for the group owner or
+        admin to accept your request. You can check all your pending
+        applications at{" "}
         <Link to={allLinks.home.search.group.href}>group panel</Link> in home
         page.
       </p>
