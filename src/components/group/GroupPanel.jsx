@@ -16,11 +16,13 @@ function GroupPanel() {
   else if (groupList === false) return <LoadError name="group panel" />;
   else if (groupList.length === 0) return <p>group panel is empty.</p>;
 
+  const defaultGroups = groupList.filter((group) => group.is_reserved);
+  const userGroups = groupList.filter(
+    (group) =>
+      !group.is_reserved && group.membership.state === RequestStatus.ACCEPTED,
+  );
   const pendingRequest = groupList.filter(
     (group) => group.membership.state === RequestStatus.PENDING,
-  );
-  const acceptedRequest = groupList.filter(
-    (group) => group.membership.state === RequestStatus.ACCEPTED,
   );
   const rejectedRequest = groupList.filter(
     (group) => group.membership.state === RequestStatus.REJECTED,
@@ -44,10 +46,20 @@ function GroupPanel() {
           </li>
         </ul>
       </nav>
-      {acceptedRequest.length > 0 ? (
+      {defaultGroups.length > 0 ? (
         <>
           <div className="line"></div>
-          <GroupSection header="Groups" groupList={acceptedRequest} open />
+          <GroupSection
+            header="Default Groups"
+            groupList={defaultGroups}
+            open
+          />
+        </>
+      ) : null}
+      {userGroups.length > 0 ? (
+        <>
+          <div className="line"></div>
+          <GroupSection header="User Groups" groupList={userGroups} open />
         </>
       ) : null}
       {pendingRequest.length > 0 ? (

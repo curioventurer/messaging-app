@@ -387,6 +387,7 @@ export class Group {
   constructor({
     id = 0,
     name = DEFAULT_TEXT,
+    is_reserved = false,
     is_public = false,
     is_deleted = false,
     created = DEFAULT_TIME,
@@ -394,6 +395,7 @@ export class Group {
   }) {
     this.id = id;
     this.name = name;
+    this.is_reserved = is_reserved;
     this.is_public = is_public;
     this.is_deleted = is_deleted;
     this.created = created;

@@ -48,6 +48,7 @@ CREATE TABLE direct_chats (
 CREATE TABLE groups (
   id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   name VARCHAR ( 255 ) NOT NULL,
+  is_reserved BOOLEAN DEFAULT FALSE,
   is_public BOOLEAN DEFAULT FALSE,
   is_deleted BOOLEAN DEFAULT FALSE,
   created TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
@@ -153,6 +154,10 @@ INSERT INTO groups ( name, is_public ) VALUES
 INSERT INTO groups ( name, is_deleted ) VALUES
   ( 'erased_group', TRUE );
 
+INSERT INTO groups ( name, is_reserved, is_public ) VALUES
+  ( 'Public_Chat', TRUE, TRUE ),
+  ( 'Spam_Chat', TRUE, TRUE );
+
 INSERT INTO memberships ( group_id, user_id, permission, state, modified ) VALUES
   ( 1, 1, 'owner', 'accepted', '2020-08-31 13:07:30+06' ),
   ( 1, 2, 'member', 'accepted', '2023-10-24 13:07:30+07' ),
@@ -182,7 +187,9 @@ INSERT INTO memberships ( group_id, user_id, permission, state, modified ) VALUE
   ( 5, 1, 'member', 'rejected', '2024-10-03 9:00:00-01' ),
 
   ( 6, 3, 'owner', 'accepted', '2024-10-04 9:00:00-01' ),
-  ( 7, 3, 'owner', 'accepted', '2024-10-04 9:00:00-01' );
+  ( 7, 3, 'owner', 'accepted', '2024-10-04 9:00:00-01' ),
+
+  ( 9, 1, 'member', 'accepted', '2024-10-04 9:00:00-01' );
 
 INSERT INTO messages ( text, group_id, user_id, created ) VALUES
   ( 'A new comic is releasing soon.', 1, 1, '2020-10-25 13:57:58+06' ),

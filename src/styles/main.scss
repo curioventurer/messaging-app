@@ -604,6 +604,10 @@ nav.tabs {
   h2 {
     margin-block: 0;
   }
+
+  > p {
+    margin-block: 10px;
+  }
 }
 
 .room-info-header {

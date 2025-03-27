@@ -4,7 +4,7 @@ import useFetchedState from "../../hooks/useFetchedState.jsx";
 import Loading from "../sys/Loading.jsx";
 import LoadFail from "../sys/LoadFail.jsx";
 import LoadError from "../sys/LoadError.jsx";
-import GroupItem from "./GroupItem.jsx";
+import GroupTable from "./GroupTable.jsx";
 import { socket } from "../../controllers/socket.js";
 import { clearSocket } from "../../controllers/socket.js";
 import { allLinks } from "../../controllers/constant.js";
@@ -139,16 +139,23 @@ function GroupList() {
   else if (groupList === null) content = <LoadFail name="group list" />;
   else if (groupList === false) content = <LoadError name="group list" />;
   else if (groupList.length === 0) content = <p>Group list is empty.</p>;
-  else
+  else {
+    const reservedGroups = groupList.filter((group) => group.is_reserved);
+    const userGroups = groupList.filter((group) => !group.is_reserved);
+
     content = (
-      <table className="list-table group">
-        <tbody>
-          {groupList.map((group) => (
-            <GroupItem key={group.id} group={group} />
-          ))}
-        </tbody>
-      </table>
+      <>
+        <section>
+          <h2>Default Groups</h2>
+          <GroupTable groupList={reservedGroups} />
+        </section>
+        <section>
+          <h2>User Groups</h2>
+          <GroupTable groupList={userGroups} />
+        </section>
+      </>
     );
+  }
 
   return (
     <div className="list-page">

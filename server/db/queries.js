@@ -31,13 +31,15 @@ async function registerUser(name, password) {
     const hash = bcrypt.hashSync(password, saltRounds);
 
     const { rows } = await pool.query(
-      "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, created",
+      "INSERT INTO users ( name, password ) VALUES ( $1, $2 ) RETURNING id, name, is_guest, created",
       [name, hash],
     );
     const response = rows[0];
 
     if (response) {
-      return { user: new User(response) };
+      const user = new User(response);
+      await postDefaultMembership(user.id);
+      return { user };
     } else {
       return { info: { message: "database returning failure" } };
     }
@@ -55,13 +57,15 @@ async function registerGuest(name) {
     if (existingUser) return { info: { message: "username taken" } };
 
     const { rows } = await pool.query(
-      "INSERT INTO users ( name, password, is_guest ) VALUES ( $1, $2, TRUE ) RETURNING id, name, created",
+      "INSERT INTO users ( name, password, is_guest ) VALUES ( $1, $2, TRUE ) RETURNING id, name, is_guest, created",
       [name, "guest"],
     );
     const response = rows[0];
 
     if (response) {
-      return { user: new User({ ...response, is_guest: true }) };
+      const user = new User(response);
+      await postDefaultMembership(user.id);
+      return { user };
     } else {
       return { info: { message: "database returning failure" } };
     }
@@ -596,7 +600,7 @@ async function postGroup(name, is_public, user_id) {
 
     const SQL_POST_GROUP = `
       INSERT INTO groups
-      ( name, is_public ) VALUES ( $1, $2 )
+      ( name, is_reserved, is_public ) VALUES ( $1, $2 )
       RETURNING id, name, is_public, created;
     `;
     const group_res = await client.query(SQL_POST_GROUP, [name, is_public]);
@@ -819,7 +823,7 @@ async function getDirectChats(user_id) {
 //Retrieves groups that linked to user's memberships.
 async function getUserGroups(user_id) {
   const SQL_GET_GROUPS = `
-    SELECT groups.id, groups.name, groups.is_public, groups.created,
+    SELECT groups.id, groups.name, groups.is_reserved, groups.is_public, groups.created,
     memberships.id AS mem_id, memberships.permission, memberships.state, memberships.modified
     
     FROM groups
@@ -837,6 +841,7 @@ async function getUserGroups(user_id) {
     return new Group({
       id: group.id,
       name: group.name,
+      is_reserved: group.is_reserved,
       is_public: group.is_public,
       created: group.created,
       membership: new Member({
@@ -854,7 +859,7 @@ async function getUserGroups(user_id) {
 //Retrieves all groups
 async function getGroups(user_id) {
   const SQL_GET_GROUPS = `
-    SELECT id, name, is_public, created
+    SELECT id, name, is_reserved, is_public, created
     FROM groups
     WHERE is_deleted = FALSE
     ORDER BY name;
@@ -879,7 +884,7 @@ async function getGroups(user_id) {
 
 async function findGroupById(groupId) {
   const { rows } = await pool.query(
-    "SELECT id, name, created, is_public, is_deleted FROM groups WHERE id = $1",
+    "SELECT id, name, created, is_reserved, is_public, is_deleted FROM groups WHERE id = $1",
     [groupId],
   );
   return rows[0] ? new Group(rows[0]) : false;
@@ -887,7 +892,7 @@ async function findGroupById(groupId) {
 
 async function findGroup(name) {
   const { rows } = await pool.query(
-    "SELECT id, name, created, is_public, is_deleted FROM groups WHERE name = $1;",
+    "SELECT id, name, created, is_reserved, is_public, is_deleted FROM groups WHERE name = $1;",
     [name],
   );
   return rows[0] ? new Group(rows[0]) : false;
@@ -984,6 +989,25 @@ async function postMembership(group_id, user_id) {
     const newMembership = new Member(entry);
     group.membership = newMembership;
     return group;
+  } catch {
+    return false;
+  }
+}
+
+async function postDefaultMembership(user_id) {
+  try {
+    const SQL_POST_MEMBERSHIP = `
+      INSERT INTO memberships
+      ( group_id, user_id, state )
+      VALUES ( $1, $2, '${RequestStatus.ACCEPTED}' );
+    `;
+
+    const group = await findGroup("Public_Chat");
+    if (!group) return false;
+
+    await pool.query(SQL_POST_MEMBERSHIP, [group.id, user_id]);
+
+    return true;
   } catch {
     return false;
   }

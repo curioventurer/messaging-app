@@ -42,6 +42,9 @@ function GroupInfo() {
         </time>
         {"."}
       </p>
+      {room.is_reserved ? (
+        <p>This is a default group created by the application.</p>
+      ) : null}
       {pendingRequest.length > 0 ? (
         <>
           <div className="line"></div>
