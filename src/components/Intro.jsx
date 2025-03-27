@@ -6,7 +6,7 @@ function Intro() {
   const { client } = useContext(InterfaceContext);
 
   return (
-    <div className="intro">
+    <div className="intro p-has-margin">
       <h1>Intro</h1>
       {client ? (
         <p>
@@ -30,6 +30,11 @@ function Intro() {
           </ul>
         </>
       )}
+      <p>
+        This Messaging App is a portfolio project. It is a fullstack SPA web
+        application that allows real time exchange of plain text messages in
+        private and group chats.
+      </p>
     </div>
   );
 }

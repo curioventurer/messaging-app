@@ -4,7 +4,7 @@ function AppError() {
   const [searchParams] = useSearchParams();
 
   return (
-    <div className="error-page">
+    <div className="error-page p-has-margin">
       <h1>Application Error</h1>
       <p>Error with {searchParams.get("err")}.</p>
       <p>
